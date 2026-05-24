@@ -8,8 +8,10 @@ const PORT = 3847;
 let mainWindow = null;
 let updaterReady = false;
 let updateDownloaded = false;
+let lastUpdateStatus = { status: 'idle', message: '' };
 
 function sendUpdateStatus(payload) {
+  lastUpdateStatus = payload;
   mainWindow?.webContents.send('update-status', payload);
 }
 
@@ -145,6 +147,7 @@ function setupAutoUpdater() {
     sendUpdateStatus({
       status: 'error',
       message: formatUpdateError(err),
+      canRetry: true,
     });
   });
 
@@ -158,59 +161,91 @@ function setupAutoUpdater() {
   setTimeout(() => autoUpdater.checkForUpdatesAndNotify(), 5000);
 }
 
-async function checkDownloadAndReport() {
-  const result = await autoUpdater.checkForUpdates();
-
-  if (!result?.updateInfo) {
-    return { status: 'none', message: 'Estás en la última versión publicada.' };
+ipcMain.handle('get-update-state', () => {
+  if (isDev) {
+    return { status: 'dev', message: 'Solo en app instalada' };
   }
-
-  const version = result.updateInfo.version;
-  sendUpdateStatus({
-    status: 'downloading',
-    message: `Descargando v${version}…`,
-    version,
-  });
-
-  if (result.downloadPromise) {
-    await result.downloadPromise;
-  }
-
   if (updateDownloaded) {
     return {
       status: 'downloaded',
-      message: `v${version} descargada. Pulsa «Reiniciar e instalar».`,
-      version,
+      message: 'Actualización lista.',
       canInstall: true,
+      canRetry: false,
+      percent: 100,
     };
   }
-
-  return {
-    status: 'available',
-    message: `Actualización v${version} en curso…`,
-    version,
-  };
-}
+  return lastUpdateStatus.status !== 'idle' ?
+      { ...lastUpdateStatus, canRetry: lastUpdateStatus.canRetry ?? false }
+    : { status: 'idle', message: '' };
+});
 
 ipcMain.handle('check-for-updates', async () => {
-  if (isDev) return { status: 'dev', message: 'Actualizaciones desactivadas en desarrollo' };
+  if (isDev) {
+    return { status: 'dev', message: 'Actualizaciones desactivadas en desarrollo', canRetry: false };
+  }
 
   if (!updaterReady) {
-    return { status: 'error', message: formatUpdateError(new Error('no token')) };
+    return {
+      status: 'error',
+      message: formatUpdateError(new Error('no token')),
+      canRetry: false,
+    };
   }
 
   if (updateDownloaded) {
-    return {
+    const done = {
       status: 'downloaded',
-      message: 'Actualización lista. Pulsa «Reiniciar e instalar».',
+      message: 'Listo para instalar.',
       canInstall: true,
+      canRetry: false,
+      percent: 100,
     };
+    sendUpdateStatus(done);
+    return done;
   }
 
   try {
-    return await checkDownloadAndReport();
+    sendUpdateStatus({ status: 'checking', message: 'Buscando actualizaciones…', percent: 0 });
+
+    const result = await autoUpdater.checkForUpdates();
+
+    if (!result?.updateInfo) {
+      const none = { status: 'none', message: 'Estás en la última versión.', canRetry: false, percent: 0 };
+      sendUpdateStatus(none);
+      return none;
+    }
+
+    const version = result.updateInfo.version;
+    const downloading = {
+      status: 'downloading',
+      message: `Descargando v${version}…`,
+      version,
+      percent: 0,
+      canRetry: true,
+    };
+    sendUpdateStatus(downloading);
+
+    if (result.downloadPromise) {
+      result.downloadPromise.catch((err) => {
+        sendUpdateStatus({
+          status: 'error',
+          message: formatUpdateError(err),
+          canRetry: true,
+          percent: 0,
+        });
+      });
+    }
+
+    return downloading;
   } catch (e) {
-    return { status: 'error', message: formatUpdateError(e) };
+    const errState = {
+      status: 'error',
+      message: formatUpdateError(e),
+      canRetry: true,
+      percent: 0,
+    };
+    sendUpdateStatus(errState);
+    return errState;
   }
 });
 
