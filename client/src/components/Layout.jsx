@@ -12,9 +12,23 @@ export default function Layout() {
   const [appVersion, setAppVersion] = useState('');
 
   useEffect(() => {
-    api.health()
-      .then((r) => setAppVersion(r.version || ''))
-      .catch(() => {});
+    const loadVersion = async () => {
+      if (window.electronAPI?.getAppVersion) {
+        try {
+          const v = await window.electronAPI.getAppVersion();
+          if (v) {
+            setAppVersion(v);
+            return;
+          }
+        } catch {
+          /* fallback */
+        }
+      }
+      api.health()
+        .then((r) => setAppVersion(r.version || ''))
+        .catch(() => {});
+    };
+    loadVersion();
   }, []);
 
   const applyUpdateStatus = useCallback((data) => {
@@ -60,8 +74,17 @@ export default function Layout() {
 
   const installUpdate = async () => {
     if (!window.electronAPI?.quitAndInstall) return;
-    applyUpdateStatus({ status: 'installing', message: 'Reiniciando…', percent: 100 });
+    applyUpdateStatus({
+      status: 'installing',
+      message: 'Cerrando e instalando… (10–20 s)',
+      percent: 100,
+    });
     await window.electronAPI.quitAndInstall();
+  };
+
+  const retryUpdate = async () => {
+    await window.electronAPI?.clearUpdateCache?.().catch(() => {});
+    await checkUpdates();
   };
 
   const showProgress =

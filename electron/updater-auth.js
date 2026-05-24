@@ -23,32 +23,21 @@ function getPublishConfig() {
   }
 }
 
+/** Usa app-update.yml del empaquetado + token en headers (repo privado). */
 function configureGithubUpdater(autoUpdater) {
   const publish = getPublishConfig();
   const token = loadUpdateToken();
   const isPrivate = publish.private === true;
 
   if (isPrivate && !token) {
-    console.warn(
-      '[updater] Repo privado sin token embebido. Recompila con: export GH_TOKEN=... && npm run dist:publish'
-    );
+    console.warn('[updater] Sin token — recompila con GH_TOKEN en .env y npm run dist:publish');
     return { ok: false, isPrivate, hasToken: false };
   }
 
-  if (publish.provider === 'github' && publish.owner && publish.repo) {
-    autoUpdater.setFeedURL({
-      provider: 'github',
-      owner: publish.owner,
-      repo: publish.repo,
-      private: isPrivate,
-      ...(token ? { token } : {}),
-    });
-  }
-
   if (token) {
-    // Fine-grained y classic: Bearer funciona en ambos
     autoUpdater.requestHeaders = {
       Authorization: `Bearer ${token}`,
+      'User-Agent': 'cotizaciones-app-updater',
     };
   }
 
