@@ -36,7 +36,13 @@ jobs:
       - run: npm run build
 
       - name: Recompilar better-sqlite3 (Electron)
-        run: npm run rebuild:electron
+        run: |
+          if [ "${{ matrix.platform }}" = "win" ]; then
+            node scripts/rebuild-sqlite.js win32 x64
+            node scripts/verify-win-native.js
+          else
+            node scripts/rebuild-sqlite.js darwin $(uname -m)
+          fi
 
       - name: Verificar módulo nativo (macOS)
         if: matrix.platform == 'mac'

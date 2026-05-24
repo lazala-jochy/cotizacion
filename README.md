@@ -140,7 +140,7 @@ npm run dist
 
 **Instalar:** ejecuta el `.exe` y sigue el asistente.
 
-**No compilar Windows desde Mac:** el `.exe` llevaría un `better_sqlite3.node` de macOS y fallará con *not a valid win32 application*. Usa GitHub Actions o una PC Windows (`npm run dist:publish:win`).
+**Desde Mac:** `npm run dist` usa `prebuild-install` para el binario Windows correcto antes de empaquetar. Si el `.exe` falla con *not a valid win32 application*, vuelve a publicar con `npm run dist:publish` (no mezcles builds viejos).
 
 ---
 
@@ -176,8 +176,9 @@ chmod +x "Cotizaciones-"*.AppImage
 
 | Sistema | Comando | Instalador generado |
 |---------|---------|---------------------|
-| macOS | `npm run dist` | `.dmg`, `.zip` |
-| Windows | `npm run dist:win` (en PC Windows o GitHub Actions) | `Setup.exe` (NSIS) |
+| macOS + Windows (desde Mac) | `npm run dist` | `.dmg`, `.zip`, `Setup.exe` |
+| Solo Mac | `npm run dist:mac` | `.dmg`, `.zip` |
+| Solo Windows | `npm run dist:win` | `Setup.exe` (NSIS) |
 | Linux | `npm run dist` | `.AppImage` (con target `linux` configurado) |
 
 ---
@@ -357,16 +358,10 @@ npm run dist:publish
 **Qué hace `npm run dist:publish` (desde Mac):**
 
 1. `vite build` → genera `dist/`
-2. Publica solo **macOS** (`.dmg`, `.zip`, `latest-mac.yml`)
+2. Descarga el binario correcto de `better-sqlite3` para **Windows** y luego para **macOS** (`prebuild-install`)
+3. Genera `.exe` (NSIS) y `.dmg`/`.zip` y los sube al mismo Release en GitHub
 
-**Windows (.exe):** no compilar desde Mac — el módulo `better-sqlite3` debe generarse en Windows. Usa una de estas opciones:
-
-| Método | Cómo |
-|--------|------|
-| **GitHub Actions** (recomendado) | Sube el tag `v1.6.10` o ejecuta el workflow *Release* en Actions. Compila Mac + Win en paralelo y sube al mismo Release. |
-| **PC Windows** | `npm run dist:publish:win` con `GH_TOKEN` en `.env` |
-
-Configura el secret `GH_TOKEN` en el repo: **Settings → Secrets → Actions**.
+> Si falla el instalador NSIS en Mac: `brew install --cask wine-stable`
 
 ---
 
@@ -501,7 +496,7 @@ Todo lo listado en [`.gitignore`](.gitignore), en especial:
 | Pantalla en blanco en dev | Verificar que API y Vite estén arriba antes de abrir Electron |
 | `better-sqlite3` no compila | `xcode-select --install` (Mac) o instalar build tools en Linux |
 | `NODE_MODULE_VERSION` / `ERR_DLOPEN_FAILED` | En dev: `npm run rebuild:dev`. En Mac: `npm run dist:publish`. En Windows: compilar en PC o con GitHub Actions |
-| `better_sqlite3.node is not a valid win32 application` | El `.exe` se generó en Mac. Publica de nuevo con GitHub Actions o `npm run dist:publish:win` en una PC Windows |
+| `better_sqlite3.node is not a valid win32 application` | Release antiguo sin `prebuild-install`. Ejecuta `npm run dist:publish` de nuevo desde Mac (script `dist-all.sh`) |
 | App instalada pantalla en blanco | Servidor no arrancó (SQLite mal compilado). Reinstala el instalador del último release |
 
 ---
