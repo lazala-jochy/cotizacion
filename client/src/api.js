@@ -1,4 +1,5 @@
-const API_BASE = import.meta.env.DEV ? '' : 'http://127.0.0.1:3847';
+// Misma origen en prod (Express sirve dist + API en :3847)
+const API_BASE = '';
 
 function getToken() {
   return localStorage.getItem('token');

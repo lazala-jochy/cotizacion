@@ -22,8 +22,9 @@ export default function Layout() {
       setUpdateMsg('Actualizaciones automáticas disponibles en la app instalada.');
       return;
     }
+    setUpdateMsg('Buscando actualizaciones…');
     const r = await window.electronAPI.checkForUpdates();
-    setUpdateMsg(r.message || 'Buscando actualizaciones…');
+    setUpdateMsg(r.message || 'Listo.');
   };
 
   return (

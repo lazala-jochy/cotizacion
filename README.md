@@ -222,7 +222,8 @@ Estos campos ya están definidos en el proyecto (no uses placeholders):
     "publish": {
       "provider": "github",
       "owner": "lazala-jochy",
-      "repo": "cotizacion"
+      "repo": "cotizacion",
+      "private": true
     }
   }
 }
@@ -234,7 +235,39 @@ Estos campos ya están definidos en el proyecto (no uses placeholders):
 | `repository.url` | Enlace al repo (electron-builder / metadatos) |
 | `build.publish.owner` | Usuario de GitHub |
 | `build.publish.repo` | Nombre del repo |
+| `build.publish.private` | `true` = repo privado (requiere token al compilar) |
 | `build.appId` | ID de la app; **no cambiar** después del primer release público |
+
+---
+
+### Repo privado (tu caso)
+
+GitHub **no permite** que la app instalada vea releases sin autenticación. Por eso:
+
+1. Al compilar (`npm run dist:publish`), el token se guarda en `electron/update-token.json` (no se sube a git).
+2. Esa build puede buscar actualizaciones en el repo privado.
+3. Cada vez que publiques una versión nueva, debes **recompilar e instalar** (o los usuarios reciben el update automático si ya tienen una build con token embebido).
+
+**Crear token (fine-grained recomendado):**
+
+- Repositorio: solo `lazala-jochy/cotizacion`
+- Permisos: **Contents → Read and write** (para publicar) y **Metadata → Read**
+
+**Publicar (obligatorio `GH_TOKEN` antes):**
+
+```bash
+export GH_TOKEN=ghp_tu_token
+cd /Users/joserosario/Desktop/cotizacion
+npm version patch
+git push origin main
+npm run dist:publish
+```
+
+El script `predist:publish` falla si no hay `GH_TOKEN`.
+
+**Instalar:** descarga el `.dmg` del Release y ábrelo. Luego **Buscar actualizaciones** debería funcionar.
+
+> El token queda dentro del `.app`. Usa un token solo para esta app; no compartas el instalador públicamente si te preocupa la seguridad.
 
 ---
 
@@ -383,6 +416,8 @@ npm run build && npx electron-builder --linux --publish always
 | La app no actualiza | Subiste `version` y hay Release nuevo con número mayor |
 | Falta `latest-mac.yml` | Volver a ejecutar `npm run dist:publish` |
 | Updates en `npm run dev` | Normal: no aplica; usar app instalada del `.dmg` |
+| Error `404` / `releases.atom` | Repo privado: recompila con `export GH_TOKEN=... && npm run dist:publish`. O aún no hay Release en GitHub |
+| Repo privado sin token en la app | La instalación es anterior al soporte privado; instala un `.dmg` nuevo generado con `GH_TOKEN` exportado |
 
 ---
 
@@ -490,7 +525,8 @@ Todo lo listado en [`.gitignore`](.gitignore), en especial:
 | `EADDRINUSE` puerto 3847 | `npm run free-ports` o cierra la app instalada / otra terminal con el servidor |
 | Pantalla en blanco en dev | Verificar que API y Vite estén arriba antes de abrir Electron |
 | `better-sqlite3` no compila | `xcode-select --install` (Mac) o instalar build tools en Linux |
-| `NODE_MODULE_VERSION` / `ERR_DLOPEN_FAILED` tras `npm run dist` | `npm rebuild better-sqlite3` y luego `npm run dev` |
+| `NODE_MODULE_VERSION` / `ERR_DLOPEN_FAILED` | En dev: `npm run rebuild:dev`. Tras `npm install`, empaquetar con `npm run dist:publish` (recompila para Electron) |
+| App instalada pantalla en blanco | Servidor no arrancó (SQLite mal compilado). Reinstala build nueva tras `npm run dist:publish` |
 
 ---
 

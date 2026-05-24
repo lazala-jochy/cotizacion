@@ -12,7 +12,7 @@ const emisorRoutes = require('./routes/emisor');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, version: require('../package.json').version });
@@ -25,16 +25,35 @@ app.use('/api/quotes', quotesRoutes);
 
 const distPath = path.join(__dirname, '..', 'dist');
 app.use(express.static(distPath));
+
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
   const index = path.join(distPath, 'index.html');
   res.sendFile(index, (err) => {
-    if (err) next();
+    if (err) next(err);
   });
 });
 
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`Servidor en http://127.0.0.1:${PORT}`);
+app.use((err, _req, res, _next) => {
+  console.error(err);
+  res.status(500).send('Error del servidor');
 });
 
-module.exports = app;
+function startServer() {
+  return new Promise((resolve, reject) => {
+    const server = app.listen(PORT, '127.0.0.1', () => {
+      console.log(`Servidor en http://127.0.0.1:${PORT}`);
+      resolve(server);
+    });
+    server.on('error', reject);
+  });
+}
+
+if (require.main === module) {
+  startServer().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
+module.exports = { app, startServer, PORT };
