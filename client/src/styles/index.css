@@ -390,6 +390,37 @@ label {
   gap: 1rem;
 }
 
+.password-input-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.password-input-wrap input {
+  flex: 1;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.password-toggle {
+  flex-shrink: 0;
+  padding: 0 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.password-toggle:hover {
+  color: var(--text);
+  background: var(--bg-panel);
+}
+
 .auth-card h2 {
   font-size: 1.1rem;
   margin-bottom: 0.25rem;
