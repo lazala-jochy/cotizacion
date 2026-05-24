@@ -43,7 +43,7 @@ export default function Settings() {
     try {
       const saved = await api.emisor.update(form);
       setForm(saved);
-      setSuccess('Datos del emisor guardados.');
+      setSuccess('Datos de la empresa guardados.');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -82,9 +82,9 @@ export default function Settings() {
     <div className="page">
       <header className="page-header">
         <div>
-          <h1>Datos del emisor</h1>
+          <h1>Datos de la empresa</h1>
           <p>
-            Información de tu empresa que aparece en las cotizaciones (nombre, RNC, dirección, etc.)
+            Información de tu empresa que aparece en las cotizaciones (razón social, RNC, dirección, etc.)
           </p>
         </div>
       </header>
@@ -94,7 +94,7 @@ export default function Settings() {
 
       <section className="panel">
         <p className="panel-hint">
-          Cada cuenta configura su propio emisor. Los datos de ejemplo (ALTITUDE CONSULTING) son solo
+          Cada cuenta configura los datos de su empresa. Los datos de ejemplo (ALTITUDE CONSULTING) son solo
           una referencia del formato esperado — puedes cargarlos y editarlos.
         </p>
         <button type="button" className="btn-ghost btn-sm example-btn" onClick={loadExample}>
@@ -169,7 +169,7 @@ export default function Settings() {
           </label>
           <div className="form-actions span-2">
             <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? 'Guardando…' : 'Guardar emisor'}
+              {saving ? 'Guardando…' : 'Guardar empresa'}
             </button>
           </div>
         </form>

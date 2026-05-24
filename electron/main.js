@@ -34,10 +34,8 @@ function formatUpdateError(err) {
 }
 
 function showBootError(message) {
-  dialog.showErrorBox(
-    'Cotizaciones — error al iniciar',
-    `${message}\n\nSi desarrollas en local: npm run rebuild:dev`
-  );
+  const devHint = isDev ? '\n\nSi desarrollas en local: npm run rebuild:dev' : '';
+  dialog.showErrorBox('Cotizaciones — error al iniciar', `${message}${devHint}`);
 }
 
 function createWindow() {
@@ -137,7 +135,7 @@ app.whenReady().then(async () => {
       console.error(err);
       const msg =
         err.message?.includes('NODE_MODULE_VERSION') ?
-          'Base de datos incompatible. Reinstala desde el último release.'
+          'Base de datos incompatible con esta versión. Descarga e instala de nuevo el .dmg más reciente desde GitHub Releases.'
         : err.message || 'No se pudo iniciar el servidor interno';
       showBootError(msg);
       app.quit();

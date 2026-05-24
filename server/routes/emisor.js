@@ -30,7 +30,7 @@ router.get('/', (req, res) => {
 router.put('/', (req, res) => {
   const { nombre, rnc, direccion, telefono, email, logo } = req.body;
   if (!nombre?.trim()) {
-    return res.status(400).json({ error: 'El nombre del emisor es requerido' });
+    return res.status(400).json({ error: 'El nombre de la empresa es requerido' });
   }
   if (logo && logo.length > 3_000_000) {
     return res.status(400).json({ error: 'El logo es demasiado grande (máx. ~2 MB)' });

@@ -1,6 +1,6 @@
 {
   "name": "cotizaciones-app",
-  "version": "1.6.7",
+  "version": "1.6.9",
   "description": "App desktop para generar y administrar cotizaciones",
   "main": "electron/main.js",
   "author": "",
@@ -21,13 +21,14 @@
     "dev:client": "vite",
     "build": "vite build",
     "start": "electron .",
-    "predist": "node scripts/prepare-update-token.js && npm run rebuild:electron && npm run rebuild:dev",
-    "predist:publish": "node scripts/prepare-update-token.js --require && npm run rebuild:electron && npm run rebuild:dev",
-    "dist": "npm run build && electron-builder",
-    "dist:publish": "npm run build && electron-builder --publish always",
+    "predist": "node scripts/prepare-update-token.js && npm run rebuild:electron && node scripts/verify-electron-native.js",
+    "predist:publish": "node scripts/prepare-update-token.js --require && npm run rebuild:electron && node scripts/verify-electron-native.js",
+    "dist": "npm run build && electron-builder --mac --win --x64",
+    "dist:publish": "npm run build && electron-builder --mac --win --x64 --publish always",
+    "dist:win": "npm run build && electron-builder --win --x64",
     "rebuild:dev": "npm rebuild better-sqlite3",
     "rebuild:electron": "electron-rebuild -f -w better-sqlite3",
-    "postinstall": "npm rebuild better-sqlite3"
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -67,6 +68,7 @@
     "asarUnpack": [
       "**/node_modules/better-sqlite3/**"
     ],
+    "npmRebuild": true,
     "mac": {
       "category": "public.app-category.business",
       "target": [

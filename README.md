@@ -183,8 +183,8 @@ chmod +x "Cotizaciones-"*.AppImage
 
 | Sistema | Comando | Instalador generado |
 |---------|---------|---------------------|
-| macOS | `npm run dist` | `.dmg`, `.zip` |
-| Windows | `npm run dist` | `Setup.exe` (NSIS) |
+| macOS | `npm run dist` | `.dmg`, `.zip` (junto con Windows si compilas en Mac) |
+| Windows | `npm run dist` o `npm run dist:win` | `Setup.exe` (NSIS) |
 | Linux | `npm run dist` | `.AppImage` (con target `linux` configurado) |
 
 ---
@@ -364,9 +364,11 @@ npm run dist:publish
 **Qué hace `npm run dist:publish`:**
 
 1. `vite build` → genera `dist/`
-2. `electron-builder --publish always` → crea `.dmg` y sube a GitHub Releases
+2. `electron-builder --mac --win --x64 --publish always` → crea instaladores **macOS** (`.dmg`, `.zip`) y **Windows** (`.exe` NSIS) y los sube al mismo Release en GitHub
 3. Crea tag `v1.0.1` (según `version` en `package.json`)
-4. Sube `latest-mac.yml` (necesario para que la app detecte updates)
+4. Sube `latest-mac.yml` y `latest.yml` (necesarios para auto-actualización)
+
+> En Mac, el instalador Windows puede requerir Wine: `brew install --cask wine-stable`
 
 ---
 
@@ -389,7 +391,7 @@ Los usuarios **no** necesitan el token ni ejecutar comandos.
 export GH_TOKEN=ghp_pega_aqui_tu_token
 
 npm run build && npx electron-builder --mac --publish always
-npm run build && npx electron-builder --win --publish always
+npm run build && npx electron-builder --win --x64 --publish always
 npm run build && npx electron-builder --linux --publish always
 ```
 

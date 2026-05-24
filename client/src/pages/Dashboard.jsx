@@ -51,14 +51,14 @@ export default function Dashboard() {
       {!emisorConfigured && (
         <div className="alert alert-warn">
           Configura los datos de tu empresa en{' '}
-          <Link to="/configuracion">Emisor</Link> para que aparezcan en las cotizaciones.
+          <Link to="/configuracion">Empresa</Link> para que aparezcan en las cotizaciones.
         </div>
       )}
 
       {emisorConfigured && (
         <section className="panel emisor-panel">
           <div className="panel-header-row">
-            <h2>Emisor</h2>
+            <h2>Mi empresa</h2>
             <Link to="/configuracion" className="btn-ghost btn-sm">
               Editar
             </Link>

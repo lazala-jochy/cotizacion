@@ -52,7 +52,7 @@ export default function QuoteView() {
 
       {!emisorListo && (
         <div className="alert alert-warn no-print">
-          Configura el emisor en <Link to="/configuracion">Emisor</Link> para mostrar tu empresa en la
+          Configura los datos de tu empresa en <Link to="/configuracion">Empresa</Link> para mostrarlos en la
           cotización impresa.
         </div>
       )}
