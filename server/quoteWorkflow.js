@@ -80,9 +80,9 @@ function syncEstadoFromPayments(estado, financials) {
   const e = normalizeEstado(estado);
   if (e === 'cancelada') return e;
   if (financials.pagada_completa) return 'pagada';
-  if (financials.tiene_pagos && ['completada', 'pago_parcial', 'aprobada', 'en_proceso'].includes(e)) {
-    return 'pago_parcial';
-  }
+  if (financials.tiene_pagos) return 'pago_parcial';
+  // Mantener "pago parcial" aunque aún no haya pagos (el usuario registrará después)
+  if (e === 'pago_parcial') return e;
   return e;
 }
 

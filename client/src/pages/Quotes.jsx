@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { downloadInvoicePdf } from '../utils/downloadInvoicePdf';
 import { QuoteCard, QuoteTableRow } from '../components/QuoteListItem';
-import { QUOTE_ESTADOS, normalizeEstado } from '../constants/quoteEstados';
+import QuotePaymentModal from '../components/QuotePaymentModal';
+import { QUOTE_ESTADOS, normalizeEstado, shouldPromptPayment } from '../constants/quoteEstados';
 
 const PAGE_SIZE_DEFAULT = 5;
 
@@ -30,6 +31,7 @@ export default function Quotes() {
   const [error, setError] = useState('');
   const [downloadingId, setDownloadingId] = useState(null);
   const [savingEstadoId, setSavingEstadoId] = useState(null);
+  const [paymentModalQuote, setPaymentModalQuote] = useState(null);
 
   const [search, setSearch] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
@@ -95,11 +97,19 @@ export default function Quotes() {
       setQuotes((prev) =>
         prev.map((q) => (q.id === quoteId ? { ...q, ...updated } : q))
       );
+      if (shouldPromptPayment(updated.estado, updated.balance_pendiente)) {
+        setPaymentModalQuote(updated);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
       setSavingEstadoId(null);
     }
+  };
+
+  const handlePaymentUpdated = (updated) => {
+    setQuotes((prev) => prev.map((q) => (q.id === updated.id ? { ...q, ...updated } : q)));
+    setPaymentModalQuote(null);
   };
 
   const handleDelete = async (id) => {
@@ -132,6 +142,14 @@ export default function Quotes() {
       </header>
 
       {error && <div className="alert alert-error">{error}</div>}
+
+      {paymentModalQuote && (
+        <QuotePaymentModal
+          quote={paymentModalQuote}
+          onClose={() => setPaymentModalQuote(null)}
+          onUpdated={handlePaymentUpdated}
+        />
+      )}
 
       <section className="panel quotes-panel">
         <div className="quotes-toolbar">
@@ -218,6 +236,7 @@ export default function Quotes() {
                       onEstadoChange={handleEstadoChange}
                       onDownloadPdf={handleDownloadPdf}
                       onDelete={handleDelete}
+                      onRegisterPayment={setPaymentModalQuote}
                     />
                   ))}
                 </tbody>
@@ -236,6 +255,7 @@ export default function Quotes() {
                   onEstadoChange={handleEstadoChange}
                   onDownloadPdf={handleDownloadPdf}
                   onDelete={handleDelete}
+                  onRegisterPayment={setPaymentModalQuote}
                 />
               ))}
             </div>

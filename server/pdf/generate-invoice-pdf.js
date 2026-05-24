@@ -11,6 +11,10 @@ function formatQty(n) {
   return Number.isInteger(v) ? String(v) : v.toFixed(2);
 }
 
+function roundMoney(n) {
+  return Math.round((Number(n) || 0) * 100) / 100;
+}
+
 function itbisPercent(quote) {
   if (quote.itbis_rate != null) return Number(quote.itbis_rate);
   if (quote.subtotal > 0 && quote.itbis > 0) {
@@ -63,17 +67,15 @@ function generateInvoicePdf({ quote, emisor }) {
       hy += 12;
     }
     if (emisor?.direccion) {
-      doc.text(emisor.direccion, textX, hy, { width: 280 });
+      doc.text(`Dirección: ${emisor.direccion}`, textX, hy, { width: 280 });
       hy += 12;
     }
-    const contact = [
-      emisor?.telefono ? `Tel: ${emisor.telefono}` : null,
-      emisor?.email ? `Email: ${emisor.email}` : null,
-    ]
-      .filter(Boolean)
-      .join('  ');
-    if (contact) {
-      doc.text(contact, textX, hy, { width: 300 });
+    if (emisor?.telefono) {
+      doc.text(`Tel.: ${emisor.telefono}`, textX, hy);
+      hy += 12;
+    }
+    if (emisor?.email) {
+      doc.text(`Email: ${emisor.email}`, textX, hy);
       hy += 12;
     }
     doc.text('Régimen: Régimen general', textX, hy);
@@ -90,6 +92,9 @@ function generateInvoicePdf({ quote, emisor }) {
       width: boxW,
       align: 'right',
     });
+    const estadoLabel = ESTADO_LABELS[normalizeEstado(quote.estado)] || quote.estado;
+    doc.font('Helvetica').fontSize(9);
+    doc.text(`Estado: ${estadoLabel}`, boxX, y + 48, { width: boxW, align: 'right' });
 
     y = Math.max(hy + 20, y + 70);
     drawLine(doc, y);
@@ -100,12 +105,23 @@ function generateInvoicePdf({ quote, emisor }) {
     doc.font('Helvetica-Bold').fontSize(10).text(quote.client_nombre || '—', 50, y);
     y += 12;
     doc.font('Helvetica').fontSize(9);
-    doc.text(`RNC/Cédula: ${quote.client_rnc || '—'}`, 50, y);
-    y += 11;
-    doc.text(`Tel: ${quote.client_telefono || '—'}`, 50, y);
-    y += 11;
-    doc.text(`Email: ${quote.client_email || '—'}`, 50, y);
-    y += 18;
+    if (quote.client_rnc) {
+      doc.text(`RNC: ${quote.client_rnc}`, 50, y);
+      y += 11;
+    }
+    if (quote.client_direccion) {
+      doc.text(`Dirección: ${quote.client_direccion}`, 50, y, { width: pageW });
+      y += 11;
+    }
+    if (quote.client_telefono) {
+      doc.text(`Tel.: ${quote.client_telefono}`, 50, y);
+      y += 11;
+    }
+    if (quote.client_email) {
+      doc.text(`Email: ${quote.client_email}`, 50, y);
+      y += 11;
+    }
+    y += 7;
 
     const colConcept = 50;
     const colCant = 380;
@@ -159,22 +175,41 @@ function generateInvoicePdf({ quote, emisor }) {
     row('Subtotal Gravado:', formatRD(gravado));
     row(`ITBIS${quote.itbis > 0 ? ` (${itbisPercent(quote)}%)` : ''}:`, formatRD(quote.itbis));
     y += 2;
-    row('Total:', formatRD(quote.total), true);
+    row('Total cotización:', formatRD(quote.total), true);
+
+    const montoPagado = roundMoney(quote.monto_pagado || 0);
+    const balancePendiente = roundMoney(
+      quote.balance_pendiente != null ? quote.balance_pendiente : quote.total - montoPagado
+    );
     y += 4;
-    row('Estado:', ESTADO_LABELS[normalizeEstado(quote.estado)] || quote.estado);
-    row('Monto pagado:', formatRD(quote.monto_pagado || 0));
-    row('Balance pendiente:', formatRD(quote.balance_pendiente ?? quote.total), true);
+    row('Estado:', estadoLabel);
+    row('Monto pagado:', formatRD(montoPagado));
+    row('Balance pendiente:', formatRD(balancePendiente), true);
 
     const payments = quote.payments || [];
     if (payments.length > 0) {
-      y += 12;
-      doc.font('Helvetica-Bold').fontSize(9).text('Historial de pagos', 50, y);
       y += 14;
+      doc.font('Helvetica-Bold').fontSize(9).text('Historial de pagos', 50, y);
+      y += 12;
+      const payColFecha = 50;
+      const payColMet = 120;
+      const payColRef = 220;
+      const payColMonto = 460;
+      doc.font('Helvetica-Bold').fontSize(8);
+      doc.text('Fecha', payColFecha, y);
+      doc.text('Método', payColMet, y);
+      doc.text('Referencia', payColRef, y);
+      doc.text('Monto', payColMonto, y, { width: 100, align: 'right' });
+      y += 12;
+      drawLine(doc, y);
+      y += 6;
       doc.font('Helvetica').fontSize(8);
       for (const p of payments) {
-        const line = `${p.fecha} · ${p.metodo || '—'} · ${p.referencia || '—'} · ${formatRD(p.monto)}`;
-        doc.text(line, 50, y, { width: pageW });
-        y += 12;
+        doc.text(p.fecha || '—', payColFecha, y);
+        doc.text(p.metodo || '—', payColMet, y, { width: 90 });
+        doc.text(p.referencia || '—', payColRef, y, { width: 230 });
+        doc.text(formatRD(p.monto), payColMonto, y, { width: 100, align: 'right' });
+        y += 14;
         if (y > 680) {
           doc.addPage();
           y = 50;

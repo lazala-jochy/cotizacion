@@ -1605,6 +1605,117 @@ a.cell-ellipsis:hover {
   margin-bottom: 0;
 }
 
+.payment-phase-alert {
+  margin-bottom: 1rem;
+}
+
+.payment-form-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem;
+  background: var(--bg-panel);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.payment-form-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.payment-form-summary .muted {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.text-paid {
+  color: #86efac;
+}
+
+.text-pending {
+  color: #fde047;
+}
+
+.payment-monto-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.payment-monto-row input {
+  flex: 1;
+  min-width: 120px;
+}
+
+.payment-form-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.payment-form-hint {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.btn-icon-pay {
+  color: #fde047;
+  border-color: rgba(234, 179, 8, 0.45);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.btn-icon-pay:hover {
+  background: rgba(234, 179, 8, 0.15);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.modal-panel {
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.modal-header h2 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.modal-footer {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
 .quote-balance-row {
   border-top: 1px solid #e2e8f0;
   padding-top: 0.5rem;
@@ -1906,6 +2017,42 @@ a.cell-ellipsis:hover {
   margin-bottom: 0.35rem;
 }
 
+.quote-party-info {
+  color: #1a1a1a;
+}
+
+.quote-party-name {
+  font-weight: 700;
+  font-size: 1rem;
+  margin: 0 0 0.35rem;
+  line-height: 1.35;
+}
+
+.quote-emisor-info .quote-party-name {
+  font-size: 1.35rem;
+  color: #1e40af;
+}
+
+.quote-party-line {
+  margin: 0.2rem 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #1a1a1a;
+}
+
+.quote-party-label {
+  font-weight: 600;
+  color: #334155;
+}
+
+.quote-document .badge {
+  display: none;
+}
+
+.quote-doc-meta p {
+  color: #334155;
+}
+
 .quote-items-doc {
   width: 100%;
   border-collapse: collapse;
@@ -1962,7 +2109,7 @@ a.cell-ellipsis:hover {
 }
 
 .quote-emisor-info > div,
-.quote-client-block p {
+.quote-party-info {
   overflow-wrap: anywhere;
   word-break: break-word;
   min-width: 0;

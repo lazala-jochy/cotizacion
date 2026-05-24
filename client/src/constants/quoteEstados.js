@@ -70,7 +70,17 @@ export function canEditQuoteContent(estado) {
   return normalizeEstado(estado) === 'creada';
 }
 
+const PAYMENT_PHASE_ESTADOS = ['aprobada', 'en_proceso', 'completada', 'pago_parcial'];
+
+export function isPaymentPhase(estado) {
+  return PAYMENT_PHASE_ESTADOS.includes(normalizeEstado(estado));
+}
+
 export function canRegisterPayments(estado) {
   const e = normalizeEstado(estado);
-  return !['creada', 'enviada', 'cancelada', 'pagada'].includes(e);
+  return !['creada', 'enviada', 'cancelada'].includes(e);
+}
+
+export function shouldPromptPayment(estado, balancePendiente) {
+  return isPaymentPhase(estado) && (Number(balancePendiente) || 0) > 0.009;
 }

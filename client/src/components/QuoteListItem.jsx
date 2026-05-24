@@ -4,6 +4,7 @@ import {
   QUOTE_ESTADO_OPTIONS,
   quoteEstadoHint,
   canEditQuoteContent,
+  canRegisterPayments,
   normalizeEstado,
 } from '../constants/quoteEstados';
 
@@ -16,7 +17,11 @@ export function QuoteTableRow({
   onEstadoChange,
   onDownloadPdf,
   onDelete,
+  onRegisterPayment,
 }) {
+  const balance = Number(q.balance_pendiente) || 0;
+  const showPayBtn = canRegisterPayments(q.estado) && balance > 0.009 && onRegisterPayment;
+
   return (
     <tr>
       <td className="q-col-num">
@@ -66,7 +71,12 @@ export function QuoteTableRow({
         </button>
       </td>
       <td className="q-col-actions">
-        <QuoteRowActions q={q} onDelete={onDelete} />
+        <QuoteRowActions
+          q={q}
+          onDelete={onDelete}
+          showPayBtn={showPayBtn}
+          onRegisterPayment={() => onRegisterPayment(q)}
+        />
       </td>
     </tr>
   );
@@ -81,7 +91,11 @@ export function QuoteCard({
   onEstadoChange,
   onDownloadPdf,
   onDelete,
+  onRegisterPayment,
 }) {
+  const balance = Number(q.balance_pendiente) || 0;
+  const showPayBtn = canRegisterPayments(q.estado) && balance > 0.009 && onRegisterPayment;
+
   return (
     <article className="quote-card">
       <header className="quote-card-header">
@@ -127,15 +141,35 @@ export function QuoteCard({
         >
           {downloadingId === q.id ? 'Generando…' : 'Descargar PDF'}
         </button>
-        <QuoteRowActions q={q} onDelete={onDelete} />
+        {showPayBtn && (
+          <button
+            type="button"
+            className="btn-primary btn-sm"
+            onClick={() => onRegisterPayment(q)}
+          >
+            + Pago
+          </button>
+        )}
+        <QuoteRowActions q={q} onDelete={onDelete} showPayBtn={false} />
       </footer>
     </article>
   );
 }
 
-function QuoteRowActions({ q, onDelete }) {
+function QuoteRowActions({ q, onDelete, showPayBtn, onRegisterPayment }) {
   return (
     <div className="row-actions">
+      {showPayBtn && (
+        <button
+          type="button"
+          className="btn-icon btn-icon-pay"
+          onClick={onRegisterPayment}
+          title="Registrar pago"
+          aria-label="Registrar pago"
+        >
+          $
+        </button>
+      )}
       <Link
         to={`/cotizaciones/${q.id}`}
         className="btn-icon"

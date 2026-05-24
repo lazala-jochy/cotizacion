@@ -5,6 +5,7 @@ import { downloadInvoicePdf } from '../utils/downloadInvoicePdf';
 import { quoteEstadoLabel, canEditQuoteContent } from '../constants/quoteEstados';
 import { formatMoney } from '../utils/quoteFinancial';
 import QuoteWorkflow from '../components/QuoteWorkflow';
+import QuotePartyInfo from '../components/QuotePartyInfo';
 
 export default function QuoteView() {
   const { id } = useParams();
@@ -93,16 +94,13 @@ export default function QuoteView() {
           <div className="quote-emisor-info">
             {emisor.logo && <img src={emisor.logo} alt="" className="quote-emisor-logo" />}
             <div>
-              <h1>{emisor.nombre || '— Sin configurar —'}</h1>
-              {emisor.rnc && <p>RNC {emisor.rnc}</p>}
-              {emisor.direccion && <p>{emisor.direccion}</p>}
-              {(emisor.telefono || emisor.email) && (
-                <p>
-                  {emisor.telefono && `Tel. ${emisor.telefono}`}
-                  {emisor.telefono && emisor.email && ' · '}
-                  {emisor.email}
-                </p>
-              )}
+              <QuotePartyInfo
+                nombre={emisor.nombre || '— Sin configurar —'}
+                rnc={emisor.rnc}
+                direccion={emisor.direccion}
+                telefono={emisor.telefono}
+                email={emisor.email}
+              />
             </div>
           </div>
           <div className="quote-doc-meta">
@@ -117,26 +115,20 @@ export default function QuoteView() {
               <strong>Válida por:</strong> {quote.validez_dias} días
             </p>
             <p>
-              <strong>Estado:</strong>{' '}
-              <span className={`badge badge-${quote.estado}`}>{quoteEstadoLabel(quote.estado)}</span>
+              <strong>Estado:</strong> {quoteEstadoLabel(quote.estado)}
             </p>
           </div>
         </header>
 
         <section className="quote-client-block">
           <h3>Cliente</h3>
-          <p>
-            <strong>{quote.client_nombre}</strong>
-          </p>
-          {quote.client_rnc && <p>RNC: {quote.client_rnc}</p>}
-          {quote.client_direccion && <p>{quote.client_direccion}</p>}
-          {(quote.client_telefono || quote.client_email) && (
-            <p>
-              {quote.client_telefono}
-              {quote.client_telefono && quote.client_email && ' · '}
-              {quote.client_email}
-            </p>
-          )}
+          <QuotePartyInfo
+            nombre={quote.client_nombre}
+            rnc={quote.client_rnc}
+            direccion={quote.client_direccion}
+            telefono={quote.client_telefono}
+            email={quote.client_email}
+          />
         </section>
 
         <table className="quote-items-doc">

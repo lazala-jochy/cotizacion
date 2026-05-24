@@ -9,23 +9,18 @@ import {
   canRegisterPayments,
 } from '../constants/quoteEstados';
 import { formatMoney } from '../utils/quoteFinancial';
-
-const METODOS_PAGO = ['Efectivo', 'Transferencia', 'Cheque', 'Tarjeta', 'Otro'];
+import QuotePaymentForm from './QuotePaymentForm';
 
 export default function QuoteWorkflow({ quote, onUpdate }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+  const [paymentBusy, setPaymentBusy] = useState(false);
   const [estadoSel, setEstadoSel] = useState(normalizeEstado(quote.estado));
-  const [paymentForm, setPaymentForm] = useState({
-    monto: '',
-    fecha: new Date().toISOString().slice(0, 10),
-    metodo: 'Transferencia',
-    referencia: '',
-    notas: '',
-  });
 
   const estado = normalizeEstado(quote.estado);
-  const showPayments = canRegisterPayments(estado) || quote.payments?.length > 0;
+  const balance = Number(quote.balance_pendiente) || 0;
+  const canAddPayment = canRegisterPayments(estado) && balance > 0.009;
 
   const handleEstadoChange = async (newEstado) => {
     setBusy(true);
@@ -50,29 +45,17 @@ export default function QuoteWorkflow({ quote, onUpdate }) {
     if (estadoSel !== estado) handleEstadoChange(estadoSel);
   };
 
-  const handleAddPayment = async (e) => {
-    e.preventDefault();
-    const monto = Number(paymentForm.monto);
-    if (!monto || monto <= 0) {
-      setError('Ingresa un monto válido');
-      return;
-    }
-    setBusy(true);
-    setError('');
+  const handleAddPayment = async (payload) => {
+    setPaymentBusy(true);
+    setPaymentError('');
     try {
-      const { quote: updated } = await api.quotes.addPayment(quote.id, {
-        monto,
-        fecha: paymentForm.fecha,
-        metodo: paymentForm.metodo,
-        referencia: paymentForm.referencia,
-        notas: paymentForm.notas,
-      });
+      const { quote: updated } = await api.quotes.addPayment(quote.id, payload);
       onUpdate(updated);
-      setPaymentForm((f) => ({ ...f, monto: '', referencia: '', notas: '' }));
+      setEstadoSel(normalizeEstado(updated.estado));
     } catch (err) {
-      setError(err.message);
+      setPaymentError(err.message);
     } finally {
-      setBusy(false);
+      setPaymentBusy(false);
     }
   };
 
@@ -83,6 +66,7 @@ export default function QuoteWorkflow({ quote, onUpdate }) {
     try {
       const updated = await api.quotes.removePayment(quote.id, paymentId);
       onUpdate(updated);
+      setEstadoSel(normalizeEstado(updated.estado));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -177,7 +161,7 @@ export default function QuoteWorkflow({ quote, onUpdate }) {
           </div>
           <div className="financial-stat financial-stat--pending">
             <span className="financial-stat-label">Pendiente</span>
-            <strong>{formatMoney(quote.balance_pendiente)}</strong>
+            <strong>{formatMoney(balance)}</strong>
           </div>
         </div>
 
@@ -220,65 +204,22 @@ export default function QuoteWorkflow({ quote, onUpdate }) {
           </div>
         )}
 
-        {showPayments && quote.balance_pendiente > 0.009 && (
-          <form className="payment-form form-grid" onSubmit={handleAddPayment}>
-            <h3>Registrar pago</h3>
-            <label>
-              Monto *
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                max={quote.balance_pendiente}
-                value={paymentForm.monto}
-                onChange={(e) => setPaymentForm({ ...paymentForm, monto: e.target.value })}
-                placeholder={`Máx. ${quote.balance_pendiente}`}
-                required
-              />
-            </label>
-            <label>
-              Fecha
-              <input
-                type="date"
-                value={paymentForm.fecha}
-                onChange={(e) => setPaymentForm({ ...paymentForm, fecha: e.target.value })}
-                required
-              />
-            </label>
-            <label>
-              Método
-              <select
-                value={paymentForm.metodo}
-                onChange={(e) => setPaymentForm({ ...paymentForm, metodo: e.target.value })}
-              >
-                {METODOS_PAGO.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Referencia
-              <input
-                value={paymentForm.referencia}
-                onChange={(e) => setPaymentForm({ ...paymentForm, referencia: e.target.value })}
-                placeholder="No. transferencia, cheque…"
-              />
-            </label>
-            <label className="span-2">
-              Notas
-              <input
-                value={paymentForm.notas}
-                onChange={(e) => setPaymentForm({ ...paymentForm, notas: e.target.value })}
-              />
-            </label>
-            <div className="span-2">
-              <button type="submit" className="btn-primary btn-sm" disabled={busy}>
-                {busy ? 'Guardando…' : 'Registrar pago'}
-              </button>
-            </div>
-          </form>
+        {estado === 'pago_parcial' && canAddPayment && (
+          <div className="alert alert-warn payment-phase-alert">
+            Estado <strong>Pago parcial</strong>: registra el monto recibido abajo. El pendiente se
+            actualiza solo.
+          </div>
+        )}
+
+        {canAddPayment && (
+          <QuotePaymentForm
+            quote={quote}
+            onSubmit={handleAddPayment}
+            busy={paymentBusy}
+            error={paymentError}
+            title="Registrar pago"
+            showSummary={false}
+          />
         )}
 
         {estado === 'pagada' && (
