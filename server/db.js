@@ -84,6 +84,11 @@ db.exec(`
   );
 `);
 
+const emisorCols = db.prepare('PRAGMA table_info(emisor_settings)').all();
+if (!emisorCols.some((c) => c.name === 'logo')) {
+  db.exec('ALTER TABLE emisor_settings ADD COLUMN logo TEXT');
+}
+
 const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
 if (userCount === 0) {
   const hash = bcrypt.hashSync('admin123', 10);

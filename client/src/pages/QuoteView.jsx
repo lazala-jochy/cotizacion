@@ -59,7 +59,11 @@ export default function QuoteView() {
 
       <article className="quote-document print-area">
         <header className="quote-doc-header">
-          <div>
+          <div className="quote-emisor-info">
+            {emisor.logo && (
+              <img src={emisor.logo} alt="" className="quote-emisor-logo" />
+            )}
+            <div>
             <h1>{emisor.nombre || '— Sin configurar —'}</h1>
             {emisor.rnc && <p>RNC {emisor.rnc}</p>}
             {emisor.direccion && <p>{emisor.direccion}</p>}
@@ -70,6 +74,7 @@ export default function QuoteView() {
                 {emisor.email}
               </p>
             )}
+            </div>
           </div>
           <div className="quote-doc-meta">
             <h2>COTIZACIÓN</h2>

@@ -183,6 +183,182 @@ label {
   padding: 2rem;
 }
 
+.auth-card--wizard {
+  max-width: 920px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.auth-wizard {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 520px;
+}
+
+.auth-wizard-side {
+  background: linear-gradient(160deg, #1e3a5f 0%, var(--bg-panel) 100%);
+  padding: 2rem 1.75rem;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-wizard-side h1 {
+  font-size: 1.35rem;
+}
+
+.auth-wizard-desc {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.wizard-steps {
+  list-style: none;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.wizard-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.wizard-steps li span {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.wizard-steps li.active {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.wizard-steps li.active span {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.wizard-steps li.done span {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.auth-wizard-main {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.wizard-form h2 {
+  font-size: 1.1rem;
+  margin-bottom: 1.25rem;
+}
+
+.wizard-fields-three {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.wizard-fields-three .logo-upload-label {
+  grid-column: span 2;
+}
+
+.wizard-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.wizard-fields-grid .span-2 {
+  grid-column: span 2;
+}
+
+.wizard-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.logo-upload-box {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+  position: relative;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.logo-upload-box input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.logo-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-preview-wrap img {
+  max-height: 80px;
+  max-width: 200px;
+  object-fit: contain;
+}
+
+.logo-hint {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 720px) {
+  .auth-wizard {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-wizard-side {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .wizard-fields-three,
+  .wizard-fields-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wizard-fields-three .logo-upload-label,
+  .wizard-fields-grid .span-2 {
+    grid-column: span 1;
+  }
+}
+
 .auth-brand {
   text-align: center;
   margin-bottom: 1.5rem;
@@ -617,6 +793,18 @@ label {
   border-bottom: 2px solid #1e40af;
   padding-bottom: 1.25rem;
   margin-bottom: 1.5rem;
+}
+
+.quote-emisor-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.quote-emisor-logo {
+  max-height: 64px;
+  max-width: 140px;
+  object-fit: contain;
 }
 
 .quote-doc-header h1 {

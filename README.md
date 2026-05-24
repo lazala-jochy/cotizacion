@@ -62,12 +62,14 @@ También puedes crear una cuenta nueva desde **Crear cuenta**.
 
 Presiona `Ctrl + C` en la terminal donde corre `npm run dev`.
 
-Si el puerto queda ocupado:
+Si el puerto queda ocupado (`EADDRINUSE`):
 
 ```bash
-lsof -ti :3847 | xargs kill -9
-lsof -ti :5173 | xargs kill -9
+npm run free-ports
+npm run dev
 ```
+
+(`npm run dev` ya libera los puertos automáticamente antes de iniciar.)
 
 ### Otros comandos útiles
 
@@ -485,9 +487,10 @@ Todo lo listado en [`.gitignore`](.gitignore), en especial:
 | Problema | Solución |
 |----------|----------|
 | `nm: error: run` | Usar `npm run dev`, no `nm run dev` |
-| `EADDRINUSE` puerto 3847 | Cerrar instancia anterior o `lsof -ti :3847 \| xargs kill -9` |
+| `EADDRINUSE` puerto 3847 | `npm run free-ports` o cierra la app instalada / otra terminal con el servidor |
 | Pantalla en blanco en dev | Verificar que API y Vite estén arriba antes de abrir Electron |
 | `better-sqlite3` no compila | `xcode-select --install` (Mac) o instalar build tools en Linux |
+| `NODE_MODULE_VERSION` / `ERR_DLOPEN_FAILED` tras `npm run dist` | `npm rebuild better-sqlite3` y luego `npm run dev` |
 
 ---
 

@@ -7,7 +7,10 @@ const emptyEmisor = {
   direccion: '',
   telefono: '',
   email: '',
+  logo: null,
 };
+
+const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
 const ejemploEmisor = {
   nombre: 'ALTITUDE CONSULTING',
@@ -49,9 +52,28 @@ export default function Settings() {
   };
 
   const loadExample = () => {
-    setForm(ejemploEmisor);
+    setForm({ ...ejemploEmisor, logo: form.logo });
     setSuccess('');
     setError('');
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('El logo debe ser una imagen');
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      setError('El logo no puede superar 2 MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((f) => ({ ...f, logo: reader.result }));
+      setError('');
+    };
+    reader.readAsDataURL(file);
   };
 
   if (loading) return <div className="page"><p className="muted">Cargando…</p></div>;
@@ -96,6 +118,29 @@ export default function Settings() {
               onChange={(e) => setForm({ ...form, rnc: e.target.value })}
               placeholder="Ej: 04900920846"
             />
+          </label>
+          <label className="span-2 logo-upload-label">
+            Logo
+            <div className="logo-upload-box">
+              {form.logo && (
+                <div className="logo-preview-wrap">
+                  <img src={form.logo} alt="Logo" />
+                  <button
+                    type="button"
+                    className="btn-ghost btn-sm"
+                    onClick={() => setForm({ ...form, logo: null })}
+                  >
+                    Quitar logo
+                  </button>
+                </div>
+              )}
+              {!form.logo && <p className="logo-hint">PNG o JPG, máx. 2 MB</p>}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                onChange={handleLogoChange}
+              />
+            </div>
           </label>
           <label className="span-2">
             Dirección

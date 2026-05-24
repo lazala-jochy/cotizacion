@@ -14,13 +14,17 @@
     "url": "https://github.com/lazala-jochy/cotizacion/issues"
   },
   "scripts": {
+    "predev": "sh scripts/free-ports.sh",
     "dev": "concurrently -k \"npm run dev:server\" \"npm run dev:client\" \"wait-on http://localhost:5173 http://localhost:3847/api/health && electron .\"",
+    "free-ports": "sh scripts/free-ports.sh",
     "dev:server": "node server/index.js",
     "dev:client": "vite",
     "build": "vite build",
     "start": "electron .",
     "dist": "npm run build && electron-builder",
-    "dist:publish": "npm run build && electron-builder --publish always"
+    "dist:publish": "npm run build && electron-builder --publish always",
+    "rebuild:native": "npm rebuild better-sqlite3",
+    "postinstall": "npm rebuild better-sqlite3"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

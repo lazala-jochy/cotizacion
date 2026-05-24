@@ -30,7 +30,7 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <span className="brand-mark lg">A</span>
+          <span className="brand-mark lg">C</span>
           <h1>Cotizaciones</h1>
           <p>Genera y administra cotizaciones para tu negocio</p>
         </div>
