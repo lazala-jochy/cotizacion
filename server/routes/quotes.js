@@ -2,6 +2,9 @@ const express = require('express');
 const db = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 const { generateInvoicePdf } = require('../pdf/generate-invoice-pdf');
+const { getSmtpCredentials } = require('../emisorSmtp');
+const { sendQuoteEmail } = require('../services/sendQuoteEmail');
+const { buildQuoteEmail, getDefaultEmailContent } = require('../email/quoteEmailTemplate');
 const {
   normalizeEstado,
   canEditQuote,
@@ -136,6 +139,83 @@ router.get('/:id/pdf', async (req, res) => {
   } catch (err) {
     console.error('PDF error:', err);
     res.status(500).json({ error: 'No se pudo generar el PDF' });
+  }
+});
+
+router.get('/:id/email-defaults', (req, res) => {
+  const quote = getQuoteFull(req.params.id, req.user.id);
+  if (!quote) return res.status(404).json({ error: 'Cotización no encontrada' });
+  const emisor = getEmisorForUser(req.user.id);
+  res.json(getDefaultEmailContent({ quote, emisor }));
+});
+
+router.post('/:id/send-email', async (req, res) => {
+  const quote = getQuoteFull(req.params.id, req.user.id);
+  if (!quote) return res.status(404).json({ error: 'Cotización no encontrada' });
+
+  const smtp = getSmtpCredentials(req.user.id);
+  if (!smtp) {
+    return res.status(400).json({
+      error: 'Configura el correo Gmail y la contraseña en Empresa antes de enviar cotizaciones.',
+    });
+  }
+
+  const to = (req.body.to || quote.client_email || '').trim();
+  if (!to) {
+    return res.status(400).json({ error: 'Indica el correo del destinatario o agrega email al cliente.' });
+  }
+
+  const emisor = getEmisorForUser(req.user.id);
+  const empresa = emisor.nombre?.trim() || 'Cotizaciones';
+  const customSubject = (req.body.subject || '').trim();
+  const customMessage = (req.body.message || '').trim();
+  const { subject, text, html, inlineAttachments } = buildQuoteEmail({
+    quote,
+    emisor,
+    customSubject: customSubject || undefined,
+    customMessage: customMessage || undefined,
+  });
+
+  try {
+    const buffer = await generateInvoicePdf({ quote, emisor });
+    const safeName = String(quote.numero).replace(/[^\w.-]+/g, '_');
+    const filename = `Pre-factura-${safeName}.pdf`;
+
+    await sendQuoteEmail(smtp, {
+      fromName: empresa,
+      to,
+      subject,
+      text,
+      html,
+      inlineAttachments: inlineAttachments || [],
+      attachments: [
+        {
+          filename,
+          content: buffer,
+          contentType: 'application/pdf',
+        },
+      ],
+    });
+
+    const estadoActual = normalizeEstado(quote.estado);
+    if (!['pagada', 'cancelada'].includes(estadoActual)) {
+      db.prepare(
+        `UPDATE quotes SET estado = 'enviada', updated_at = datetime('now') WHERE id = ? AND user_id = ?`
+      ).run(req.params.id, req.user.id);
+    }
+
+    const updated = getQuoteFull(req.params.id, req.user.id);
+    res.json({ ok: true, message: `Cotización enviada a ${to}`, quote: updated });
+  } catch (err) {
+    console.error('Email error:', err);
+    const msg = err?.message || String(err);
+    if (err?.code === 'EAUTH' || /invalid login|username and password|authentication/i.test(msg)) {
+      return res.status(400).json({
+        error:
+          'No se pudo autenticar en Gmail. Usa tu correo completo y una contraseña de aplicación (no la contraseña normal si tienes verificación en dos pasos).',
+      });
+    }
+    res.status(500).json({ error: 'No se pudo enviar el correo. Revisa la configuración en Empresa.' });
   }
 });
 

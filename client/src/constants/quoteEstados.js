@@ -84,3 +84,8 @@ export function canRegisterPayments(estado) {
 export function shouldPromptPayment(estado, balancePendiente) {
   return isPaymentPhase(estado) && (Number(balancePendiente) || 0) > 0.009;
 }
+
+/** Al pasar a Enviada, ofrecer envío por correo antes de guardar el estado. */
+export function shouldPromptSendOnEnviada(nuevoEstado, estadoActual) {
+  return normalizeEstado(nuevoEstado) === 'enviada' && normalizeEstado(estadoActual) !== 'enviada';
+}

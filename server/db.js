@@ -88,6 +88,29 @@ const emisorCols = db.prepare('PRAGMA table_info(emisor_settings)').all();
 if (!emisorCols.some((c) => c.name === 'logo')) {
   db.exec('ALTER TABLE emisor_settings ADD COLUMN logo TEXT');
 }
+if (!emisorCols.some((c) => c.name === 'smtp_user')) {
+  db.exec('ALTER TABLE emisor_settings ADD COLUMN smtp_user TEXT');
+}
+if (!emisorCols.some((c) => c.name === 'smtp_password_enc')) {
+  db.exec('ALTER TABLE emisor_settings ADD COLUMN smtp_password_enc TEXT');
+}
+if (!emisorCols.some((c) => c.name === 'smtp_password')) {
+  db.exec('ALTER TABLE emisor_settings ADD COLUMN smtp_password TEXT');
+}
+
+const { decrypt } = require('./utils/credentials');
+const emisorSmtpMigrate = db
+  .prepare(
+    `SELECT user_id, smtp_password_enc, smtp_password FROM emisor_settings
+     WHERE smtp_password_enc IS NOT NULL AND (smtp_password IS NULL OR smtp_password = '')`
+  )
+  .all();
+for (const row of emisorSmtpMigrate) {
+  const plain = decrypt(row.smtp_password_enc);
+  if (plain) {
+    db.prepare('UPDATE emisor_settings SET smtp_password = ? WHERE user_id = ?').run(plain, row.user_id);
+  }
+}
 
 const quoteCols = db.prepare('PRAGMA table_info(quotes)').all();
 if (!quoteCols.some((c) => c.name === 'itbis_rate')) {

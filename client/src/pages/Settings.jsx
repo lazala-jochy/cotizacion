@@ -8,6 +8,9 @@ const emptyEmisor = {
   telefono: '',
   email: '',
   logo: null,
+  smtp_user: '',
+  smtp_password: '',
+  smtp_configured: false,
 };
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
@@ -18,11 +21,12 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showSmtpPassword, setShowSmtpPassword] = useState(false);
 
   useEffect(() => {
     api.emisor
       .get()
-      .then(setForm)
+      .then((data) => setForm({ ...emptyEmisor, ...data }))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -33,8 +37,13 @@ export default function Settings() {
     setSuccess('');
     setSaving(true);
     try {
-      const saved = await api.emisor.update(form);
-      setForm(saved);
+      const payload = { ...form };
+      delete payload.smtp_configured;
+      if (payload.smtp_password !== undefined) {
+        payload.smtp_password = String(payload.smtp_password);
+      }
+      const saved = await api.emisor.update(payload);
+      setForm({ ...emptyEmisor, ...saved });
       setSuccess('Datos de la empresa guardados.');
     } catch (err) {
       setError(err.message);
@@ -145,6 +154,52 @@ export default function Settings() {
               placeholder="Ej: contacto@miempresa.com"
             />
           </label>
+
+          <div className="form-section-title span-2">
+            <h2>Envío por Gmail</h2>
+            <p className="muted">
+              Cuenta de Gmail para enviar cotizaciones por correo. Si tienes verificación en dos pasos, crea una{' '}
+              <a
+                href="https://myaccount.google.com/apppasswords"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                contraseña de aplicación
+              </a>{' '}
+              y úsala aquí (no tu contraseña habitual).
+            </p>
+          </div>
+          <label>
+            Usuario (correo Gmail) *
+            <input
+              type="email"
+              value={form.smtp_user}
+              onChange={(e) => setForm({ ...form, smtp_user: e.target.value })}
+              placeholder="tuempresa@gmail.com"
+              autoComplete="username"
+            />
+          </label>
+          <label>
+            Contraseña
+            <div className="password-field-wrap">
+              <input
+                type={showSmtpPassword ? 'text' : 'password'}
+                value={form.smtp_password}
+                onChange={(e) => setForm({ ...form, smtp_password: e.target.value })}
+                placeholder="Contraseña de aplicación de Gmail"
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                className="btn-ghost btn-sm btn-password-toggle"
+                onClick={() => setShowSmtpPassword((v) => !v)}
+                aria-label={showSmtpPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                {showSmtpPassword ? 'Ocultar' : 'Mostrar'}
+              </button>
+            </div>
+          </label>
+
           <div className="form-actions span-2">
             <button type="submit" className="btn-primary" disabled={saving}>
               {saving ? 'Guardando…' : 'Guardar empresa'}

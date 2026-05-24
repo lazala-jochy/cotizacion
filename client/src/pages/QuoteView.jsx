@@ -6,6 +6,7 @@ import { quoteEstadoLabel, canEditQuoteContent } from '../constants/quoteEstados
 import { formatMoney } from '../utils/quoteFinancial';
 import QuoteWorkflow from '../components/QuoteWorkflow';
 import QuotePartyInfo from '../components/QuotePartyInfo';
+import QuoteSendEmailModal from '../components/QuoteSendEmailModal';
 
 export default function QuoteView() {
   const { id } = useParams();
@@ -13,6 +14,8 @@ export default function QuoteView() {
   const [emisor, setEmisor] = useState(null);
   const [error, setError] = useState('');
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailSuccess, setEmailSuccess] = useState('');
 
   const load = () =>
     Promise.all([api.quotes.get(id), api.emisor.get()])
@@ -69,6 +72,17 @@ export default function QuoteView() {
           </button>
           <button
             type="button"
+            className="btn-ghost"
+            onClick={() => {
+              setEmailSuccess('');
+              setError('');
+              setEmailModalOpen(true);
+            }}
+          >
+            Enviar por correo
+          </button>
+          <button
+            type="button"
             className="btn-primary"
             onClick={handleDownloadPdf}
             disabled={pdfLoading}
@@ -78,7 +92,19 @@ export default function QuoteView() {
         </div>
       </div>
 
+      {emailSuccess && <div className="alert alert-success no-print">{emailSuccess}</div>}
       {error && <div className="alert alert-error no-print">{error}</div>}
+
+      {emailModalOpen && (
+        <QuoteSendEmailModal
+          quote={quote}
+          onClose={() => setEmailModalOpen(false)}
+          onSent={(updated) => {
+            setQuote(updated);
+            setEmailSuccess(`Cotización enviada correctamente.`);
+          }}
+        />
+      )}
 
       {!emisorListo && (
         <div className="alert alert-warn no-print">

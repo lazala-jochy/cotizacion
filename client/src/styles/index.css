@@ -163,6 +163,72 @@ label {
   margin-bottom: 1.25rem;
 }
 
+.form-section-title {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.form-section-title h2 {
+  font-size: 1rem;
+  margin: 0 0 0.35rem;
+}
+
+.form-section-title p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.form-section-title a {
+  color: var(--accent);
+}
+
+.password-field-wrap {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.password-field-wrap input {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-password-toggle {
+  flex-shrink: 0;
+  align-self: center;
+  white-space: nowrap;
+}
+
+.modal-subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+}
+
+.enviada-modal-text {
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.enviada-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.enviada-modal-hint {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+}
+
+.field-hint {
+  display: block;
+  margin: 0.25rem 0 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
 .emisor-form {
   margin-top: 0.5rem;
 }

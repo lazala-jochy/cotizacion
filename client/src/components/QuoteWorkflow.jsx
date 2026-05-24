@@ -7,9 +7,11 @@ import {
   quoteEstadoLabel,
   normalizeEstado,
   canRegisterPayments,
+  shouldPromptSendOnEnviada,
 } from '../constants/quoteEstados';
 import { formatMoney } from '../utils/quoteFinancial';
 import QuotePaymentForm from './QuotePaymentForm';
+import QuoteEnviadaModal from './QuoteEnviadaModal';
 
 export default function QuoteWorkflow({ quote, onUpdate }) {
   const [error, setError] = useState('');
@@ -17,12 +19,13 @@ export default function QuoteWorkflow({ quote, onUpdate }) {
   const [paymentError, setPaymentError] = useState('');
   const [paymentBusy, setPaymentBusy] = useState(false);
   const [estadoSel, setEstadoSel] = useState(normalizeEstado(quote.estado));
+  const [enviadaModalOpen, setEnviadaModalOpen] = useState(false);
 
   const estado = normalizeEstado(quote.estado);
   const balance = Number(quote.balance_pendiente) || 0;
   const canAddPayment = canRegisterPayments(estado) && balance > 0.009;
 
-  const handleEstadoChange = async (newEstado) => {
+  const applyEstadoChange = async (newEstado) => {
     setBusy(true);
     setError('');
     try {
@@ -36,6 +39,14 @@ export default function QuoteWorkflow({ quote, onUpdate }) {
     }
   };
 
+  const handleEstadoChange = (newEstado) => {
+    if (shouldPromptSendOnEnviada(newEstado, estado)) {
+      setEnviadaModalOpen(true);
+      return;
+    }
+    applyEstadoChange(newEstado);
+  };
+
   const handleAdvance = () => {
     if (quote.siguiente_estado) handleEstadoChange(quote.siguiente_estado);
   };
@@ -43,6 +54,17 @@ export default function QuoteWorkflow({ quote, onUpdate }) {
   const handleApplyEstado = (e) => {
     e.preventDefault();
     if (estadoSel !== estado) handleEstadoChange(estadoSel);
+  };
+
+  const handleEnviadaModalClose = () => {
+    setEnviadaModalOpen(false);
+    setEstadoSel(estado);
+  };
+
+  const handleEnviadaUpdated = (updated) => {
+    onUpdate(updated);
+    setEstadoSel(normalizeEstado(updated.estado));
+    setEnviadaModalOpen(false);
   };
 
   const handleAddPayment = async (payload) => {
@@ -76,6 +98,13 @@ export default function QuoteWorkflow({ quote, onUpdate }) {
 
   return (
     <div className="quote-workflow no-print">
+      {enviadaModalOpen && (
+        <QuoteEnviadaModal
+          quote={quote}
+          onClose={handleEnviadaModalClose}
+          onUpdated={handleEnviadaUpdated}
+        />
+      )}
       {error && <div className="alert alert-error">{error}</div>}
 
       <section className="panel workflow-panel">

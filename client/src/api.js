@@ -51,5 +51,8 @@ export const api = {
       request(`/api/quotes/${id}/payments`, { method: 'POST', body: JSON.stringify(body) }),
     removePayment: (id, paymentId) =>
       request(`/api/quotes/${id}/payments/${paymentId}`, { method: 'DELETE' }),
+    getEmailDefaults: (id) => request(`/api/quotes/${id}/email-defaults`),
+    sendEmail: (id, body) =>
+      request(`/api/quotes/${id}/send-email`, { method: 'POST', body: JSON.stringify(body) }),
   },
 };

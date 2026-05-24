@@ -4,7 +4,13 @@ import { api } from '../api';
 import { downloadInvoicePdf } from '../utils/downloadInvoicePdf';
 import { QuoteCard, QuoteTableRow } from '../components/QuoteListItem';
 import QuotePaymentModal from '../components/QuotePaymentModal';
-import { QUOTE_ESTADOS, normalizeEstado, shouldPromptPayment } from '../constants/quoteEstados';
+import QuoteEnviadaModal from '../components/QuoteEnviadaModal';
+import {
+  QUOTE_ESTADOS,
+  normalizeEstado,
+  shouldPromptPayment,
+  shouldPromptSendOnEnviada,
+} from '../constants/quoteEstados';
 
 const PAGE_SIZE_DEFAULT = 5;
 
@@ -32,6 +38,7 @@ export default function Quotes() {
   const [downloadingId, setDownloadingId] = useState(null);
   const [savingEstadoId, setSavingEstadoId] = useState(null);
   const [paymentModalQuote, setPaymentModalQuote] = useState(null);
+  const [enviadaModalQuote, setEnviadaModalQuote] = useState(null);
 
   const [search, setSearch] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
@@ -89,7 +96,7 @@ export default function Quotes() {
     }
   };
 
-  const handleEstadoChange = async (quoteId, nuevoEstado) => {
+  const applyEstadoChange = async (quoteId, nuevoEstado) => {
     setSavingEstadoId(quoteId);
     setError('');
     try {
@@ -104,6 +111,23 @@ export default function Quotes() {
       setError(err.message);
     } finally {
       setSavingEstadoId(null);
+    }
+  };
+
+  const handleEstadoChange = (quoteId, nuevoEstado) => {
+    const q = quotes.find((item) => item.id === quoteId);
+    if (q && shouldPromptSendOnEnviada(nuevoEstado, q.estado)) {
+      setEnviadaModalQuote(q);
+      return;
+    }
+    applyEstadoChange(quoteId, nuevoEstado);
+  };
+
+  const handleEnviadaUpdated = (updated) => {
+    setQuotes((prev) => prev.map((q) => (q.id === updated.id ? { ...q, ...updated } : q)));
+    setEnviadaModalQuote(null);
+    if (shouldPromptPayment(updated.estado, updated.balance_pendiente)) {
+      setPaymentModalQuote(updated);
     }
   };
 
@@ -148,6 +172,14 @@ export default function Quotes() {
           quote={paymentModalQuote}
           onClose={() => setPaymentModalQuote(null)}
           onUpdated={handlePaymentUpdated}
+        />
+      )}
+
+      {enviadaModalQuote && (
+        <QuoteEnviadaModal
+          quote={enviadaModalQuote}
+          onClose={() => setEnviadaModalQuote(null)}
+          onUpdated={handleEnviadaUpdated}
         />
       )}
 
