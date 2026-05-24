@@ -6,6 +6,19 @@
 const fs = require('fs');
 const path = require('path');
 
+// Cargar .env local si existe (no commitear .env)
+try {
+  const envPath = path.join(__dirname, '..', '.env');
+  if (fs.existsSync(envPath)) {
+    for (const line of fs.readFileSync(envPath, 'utf8').split('\n')) {
+      const m = line.match(/^\s*GH_TOKEN\s*=\s*(.+)\s*$/);
+      if (m && !process.env.GH_TOKEN) process.env.GH_TOKEN = m[1].trim().replace(/^["']|["']$/g, '');
+    }
+  }
+} catch {
+  /* ignore */
+}
+
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
 const outPath = path.join(__dirname, '..', 'electron', 'update-token.json');
 const requireToken = process.argv.includes('--require');

@@ -46,8 +46,9 @@ function configureGithubUpdater(autoUpdater) {
   }
 
   if (token) {
+    // Fine-grained y classic: Bearer funciona en ambos
     autoUpdater.requestHeaders = {
-      Authorization: `token ${token}`,
+      Authorization: `Bearer ${token}`,
     };
   }
 

@@ -62,7 +62,7 @@ export default function Login() {
           </button>
         </form>
         <p className="auth-footer">
-          ¿No tienes cuenta? <Link to="/register">Crear cuenta</Link>
+          ¿No tienes cuenta? test release<Link to="/register">Crear cuenta</Link>
         </p>
       </div>
     </div>

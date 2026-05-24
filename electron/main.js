@@ -20,9 +20,16 @@ function formatUpdateError(err) {
   }
 
   if (msg.includes('404') || msg.includes('releases.atom')) {
+    if (publish.private) {
+      return (
+        'No se pudo acceder al repo privado. ' +
+        'Instala Cotizaciones-1.3.0.dmg desde Releases. ' +
+        'Si ya tienes 1.3.0, recompila con GH_TOKEN válido en .env y vuelve a publicar.'
+      );
+    }
     return (
       'No se encontraron releases en GitHub. ' +
-      'Publica con: npm run dist:publish (y comprueba lazala-jochy/cotizacion/releases).'
+      'Comprueba https://github.com/lazala-jochy/cotizacion/releases'
     );
   }
   if (msg.toLowerCase().includes('authentication token')) {
