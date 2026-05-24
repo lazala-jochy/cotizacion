@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import { downloadInvoicePdf } from '../utils/downloadInvoicePdf';
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(n || 0);
@@ -10,6 +11,7 @@ export default function Quotes() {
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
     api.quotes
@@ -18,6 +20,18 @@ export default function Quotes() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleDownloadPdf = async (q) => {
+    setDownloadingId(q.id);
+    setError('');
+    try {
+      await downloadInvoicePdf(q.id, q.numero);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar esta cotización?')) return;
@@ -79,6 +93,15 @@ export default function Quotes() {
                     <Link to={`/cotizaciones/${q.id}/editar`} className="btn-ghost btn-sm">
                       Editar
                     </Link>
+                    <button
+                      type="button"
+                      className="btn-ghost btn-sm"
+                      onClick={() => handleDownloadPdf(q)}
+                      disabled={downloadingId === q.id}
+                      title="Descargar factura PDF"
+                    >
+                      {downloadingId === q.id ? 'PDF…' : 'Factura PDF'}
+                    </button>
                     <button
                       type="button"
                       className="btn-ghost btn-sm danger"

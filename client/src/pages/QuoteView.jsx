@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';
+import { downloadInvoicePdf } from '../utils/downloadInvoicePdf';
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(n || 0);
@@ -11,6 +12,7 @@ export default function QuoteView() {
   const [quote, setQuote] = useState(null);
   const [emisor, setEmisor] = useState(null);
   const [error, setError] = useState('');
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([api.quotes.get(id), api.emisor.get()])
@@ -29,6 +31,18 @@ export default function QuoteView() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    setPdfLoading(true);
+    setError('');
+    try {
+      await downloadInvoicePdf(id, quote?.numero);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   if (error) return <div className="page"><div className="alert alert-error">{error}</div></div>;
   if (!quote || emisor === null) return <div className="page"><p className="muted">Cargando…</p></div>;
 
@@ -44,8 +58,16 @@ export default function QuoteView() {
           <Link to={`/cotizaciones/${id}/editar`} className="btn-ghost">
             Editar
           </Link>
-          <button type="button" className="btn-primary" onClick={handlePrint}>
-            Imprimir / PDF
+          <button type="button" className="btn-ghost" onClick={handlePrint}>
+            Imprimir
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleDownloadPdf}
+            disabled={pdfLoading}
+          >
+            {pdfLoading ? 'Generando PDF…' : 'Descargar factura PDF'}
           </button>
         </div>
       </div>

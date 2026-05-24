@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { authMiddleware } = require('../middleware/auth');
+const { generateInvoicePdf } = require('../pdf/generate-invoice-pdf');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -64,6 +65,40 @@ router.get('/', (req, res) => {
 
 router.get('/next-number', (req, res) => {
   res.json({ numero: nextQuoteNumber(req.user.id) });
+});
+
+function getEmisorForUser(userId) {
+  let row = db.prepare('SELECT * FROM emisor_settings WHERE user_id = ?').get(userId);
+  if (!row) {
+    db.prepare('INSERT INTO emisor_settings (user_id, nombre) VALUES (?, ?)').run(userId, '');
+    row = db.prepare('SELECT * FROM emisor_settings WHERE user_id = ?').get(userId);
+  }
+  return {
+    nombre: row.nombre || '',
+    rnc: row.rnc || '',
+    direccion: row.direccion || '',
+    telefono: row.telefono || '',
+    email: row.email || '',
+    logo: row.logo || null,
+  };
+}
+
+router.get('/:id/pdf', async (req, res) => {
+  const quote = getQuoteWithItems(req.params.id, req.user.id);
+  if (!quote) return res.status(404).json({ error: 'Cotización no encontrada' });
+
+  try {
+    const emisor = getEmisorForUser(req.user.id);
+    const buffer = await generateInvoicePdf({ quote, emisor });
+    const safeName = String(quote.numero).replace(/[^\w.-]+/g, '_');
+    const filename = `Pre-factura-${safeName}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err) {
+    console.error('PDF error:', err);
+    res.status(500).json({ error: 'No se pudo generar el PDF' });
+  }
 });
 
 router.get('/:id', (req, res) => {

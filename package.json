@@ -1,6 +1,6 @@
 {
   "name": "cotizaciones-app",
-  "version": "1.6.15",
+  "version": "1.6.16",
   "description": "App desktop para generar y administrar cotizaciones",
   "main": "electron/main.js",
   "author": "",
@@ -42,14 +42,15 @@
     "electron-updater": "^6.3.9",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
+    "pdfkit": "^0.18.0",
     "uuid": "^11.0.3"
   },
   "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.2",
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8",
-    "@electron/rebuild": "^3.7.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.1.1",
@@ -71,7 +72,8 @@
     ],
     "extraResources": [],
     "asarUnpack": [
-      "**/node_modules/better-sqlite3/**"
+      "**/node_modules/better-sqlite3/**",
+      "**/node_modules/pdfkit/**"
     ],
     "npmRebuild": true,
     "mac": {

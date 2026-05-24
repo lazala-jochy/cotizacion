@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 
@@ -8,8 +8,14 @@ const idleUpdate = { status: 'idle', message: '' };
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [updateStatus, setUpdateStatus] = useState(idleUpdate);
   const [appVersion, setAppVersion] = useState('');
+  const [emisor, setEmisor] = useState(null);
+
+  useEffect(() => {
+    api.emisor.get().then(setEmisor).catch(() => setEmisor(null));
+  }, [location.pathname]);
 
   useEffect(() => {
     const loadVersion = async () => {
@@ -99,14 +105,28 @@ export default function Layout() {
     updateStatus.status === 'error' ||
     (updateStatus.status === 'downloading' && percent === 0);
 
+  const companyName = emisor?.nombre?.trim() || 'Mi empresa';
+  const brandInitial = companyName.charAt(0).toUpperCase() || 'E';
+  const brandSubtitle = emisor?.email?.trim() || emisor?.rnc?.trim() || 'Cotizaciones';
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark">C</span>
-          <div>
-            <strong>Cotizaciones</strong>
-            <small>Desktop</small>
+          {emisor?.logo ? (
+            <img src={emisor.logo} alt="" className="brand-logo" />
+          ) : (
+            <span className="brand-mark" aria-hidden="true">
+              {brandInitial}
+            </span>
+          )}
+          <div className="brand-text">
+            <strong className="brand-name" title={companyName}>
+              {companyName}
+            </strong>
+            <small className="brand-meta" title={brandSubtitle}>
+              {brandSubtitle}
+            </small>
             {appVersion && <small className="brand-version">v{appVersion}</small>}
           </div>
         </div>
