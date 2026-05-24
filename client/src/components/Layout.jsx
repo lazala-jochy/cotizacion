@@ -60,11 +60,7 @@ export default function Layout() {
 
   const checkUpdates = async () => {
     if (!window.electronAPI?.checkForUpdates) {
-      applyUpdateStatus({
-        status: 'none',
-        message: 'Solo en la app instalada.',
-        canRetry: false,
-      });
+      applyUpdateStatus(idleUpdate);
       return;
     }
     applyUpdateStatus({ status: 'checking', message: 'Buscando…', percent: 0, canRetry: false });
@@ -167,7 +163,7 @@ export default function Layout() {
           )}
 
           {canRetry && !canInstall && (
-            <button type="button" className="btn-ghost btn-sm" onClick={checkUpdates}>
+            <button type="button" className="btn-ghost btn-sm" onClick={retryUpdate}>
               Reintentar descarga
             </button>
           )}

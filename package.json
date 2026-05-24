@@ -1,6 +1,6 @@
 {
   "name": "cotizaciones-app",
-  "version": "1.6.1",
+  "version": "1.6.7",
   "description": "App desktop para generar y administrar cotizaciones",
   "main": "electron/main.js",
   "author": "",
@@ -14,15 +14,15 @@
     "url": "https://github.com/lazala-jochy/cotizacion/issues"
   },
   "scripts": {
-    "predev": "sh scripts/free-ports.sh",
-    "dev": "concurrently -k \"npm run dev:server\" \"npm run dev:client\" \"wait-on http://localhost:5173 http://localhost:3847/api/health && electron .\"",
+    "predev": "sh scripts/free-ports.sh && node scripts/ensure-dev-native.js || npm run rebuild:dev",
+    "dev": "concurrently -k -n server,client,electron -c blue,green,magenta \"npm run dev:server\" \"npm run dev:client\" \"wait-on -t 60000 http://localhost:5173 http://localhost:3847/api/health && electron .\"",
     "free-ports": "sh scripts/free-ports.sh",
     "dev:server": "node server/index.js",
     "dev:client": "vite",
     "build": "vite build",
     "start": "electron .",
-    "predist": "node scripts/prepare-update-token.js && npm run rebuild:electron",
-    "predist:publish": "node scripts/prepare-update-token.js --require && npm run rebuild:electron",
+    "predist": "node scripts/prepare-update-token.js && npm run rebuild:electron && npm run rebuild:dev",
+    "predist:publish": "node scripts/prepare-update-token.js --require && npm run rebuild:electron && npm run rebuild:dev",
     "dist": "npm run build && electron-builder",
     "dist:publish": "npm run build && electron-builder --publish always",
     "rebuild:dev": "npm rebuild better-sqlite3",
@@ -74,7 +74,6 @@
         "zip"
       ]
     },
-    "updaterCacheDirName": "cotizaciones-app-updater",
     "win": {
       "target": [
         "nsis"

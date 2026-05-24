@@ -96,13 +96,13 @@ function initUpdater() {
 }
 
 ipcMain.handle('get-update-state', () => {
-  if (isDev) return { status: 'dev', message: 'Solo en app instalada' };
+  if (isDev) return { status: 'idle', message: '' };
   return updaterService?.getState() || { status: 'idle', message: '' };
 });
 
 ipcMain.handle('check-for-updates', async () => {
   if (isDev) {
-    return { status: 'dev', message: 'Actualizaciones solo en la app instalada', canRetry: false };
+    return { status: 'idle', message: '', canRetry: false };
   }
   if (!updaterService) {
     return { status: 'error', message: 'Actualizador no disponible', canRetry: false };

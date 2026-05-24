@@ -10,21 +10,32 @@ function getAppBundlePath() {
 }
 
 function findZipInCache(homeDir) {
-  const pending = path.join(homeDir, 'Library', 'Caches', CACHE_DIR_NAME, 'pending');
-  if (!fs.existsSync(pending)) return null;
+  const root = path.join(homeDir, 'Library', 'Caches', CACHE_DIR_NAME);
+  if (!fs.existsSync(root)) return null;
 
-  const entries = fs.readdirSync(pending, { withFileTypes: true });
-  for (const entry of entries) {
-    const full = path.join(pending, entry.name);
-    if (entry.isFile() && entry.name.endsWith('.zip')) return full;
-    if (entry.isDirectory()) {
-      const zip = path.join(full, 'update.zip');
-      if (fs.existsSync(zip)) return zip;
-      const nested = fs.readdirSync(full).find((n) => n.endsWith('.zip'));
-      if (nested) return path.join(full, nested);
+  let bestPath = null;
+  let bestMtime = 0;
+
+  const walk = (dir) => {
+    for (const name of fs.readdirSync(dir)) {
+      const full = path.join(dir, name);
+      let stat;
+      try {
+        stat = fs.statSync(full);
+      } catch {
+        continue;
+      }
+      if (stat.isDirectory()) {
+        walk(full);
+      } else if (name.endsWith('.zip') && stat.mtimeMs > bestMtime) {
+        bestPath = full;
+        bestMtime = stat.mtimeMs;
+      }
     }
-  }
-  return null;
+  };
+
+  walk(root);
+  return bestPath;
 }
 
 function getUpdateZipPath(autoUpdater, homeDir) {
@@ -54,7 +65,7 @@ function installMacUpdate({ autoUpdater, app }) {
   }
 
   const appBundle = getAppBundlePath();
-  const scriptPath = path.join(app.getPath('temp'), `cotizaciones-install-${Date.now()}.sh');
+  const scriptPath = path.join(app.getPath('temp'), `cotizaciones-install-${Date.now()}.sh`);
   const logPath = path.join(app.getPath('userData'), 'update-install.log');
 
   const script = `#!/bin/bash
