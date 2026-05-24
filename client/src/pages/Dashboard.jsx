@@ -66,23 +66,25 @@ export default function Dashboard() {
           <dl className="emisor-dl">
             <div>
               <dt>Empresa</dt>
-              <dd>{emisor.nombre}</dd>
+              <dd className="text-break">{emisor.nombre}</dd>
             </div>
             <div>
               <dt>RNC</dt>
-              <dd>{emisor.rnc}</dd>
+              <dd className="text-break">{emisor.rnc}</dd>
             </div>
             <div>
               <dt>Dirección</dt>
-              <dd>{emisor.direccion}</dd>
+              <dd className="text-break">{emisor.direccion}</dd>
             </div>
             <div>
               <dt>Tel.</dt>
-              <dd>{emisor.telefono}</dd>
+              <dd className="text-break">{emisor.telefono}</dd>
             </div>
-            <div>
+            <div className="emisor-dl-email">
               <dt>Email</dt>
-              <dd>{emisor.email}</dd>
+              <dd className="text-break">
+                <a href={`mailto:${emisor.email}`}>{emisor.email}</a>
+              </dd>
             </div>
           </dl>
         </section>
