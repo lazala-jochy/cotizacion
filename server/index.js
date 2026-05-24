@@ -39,13 +39,29 @@ app.use((err, _req, res, _next) => {
   res.status(500).send('Error del servidor');
 });
 
+let activeServer = null;
+
 function startServer() {
   return new Promise((resolve, reject) => {
     const server = app.listen(PORT, '127.0.0.1', () => {
       console.log(`Servidor en http://127.0.0.1:${PORT}`);
+      activeServer = server;
       resolve(server);
     });
     server.on('error', reject);
+  });
+}
+
+function stopServer() {
+  return new Promise((resolve) => {
+    if (!activeServer) {
+      resolve();
+      return;
+    }
+    activeServer.close(() => {
+      activeServer = null;
+      resolve();
+    });
   });
 }
 
@@ -56,4 +72,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, startServer, PORT };
+module.exports = { app, startServer, stopServer, PORT };

@@ -3,11 +3,13 @@ const path = require('path');
 const { autoUpdater } = require('electron-updater');
 const { configureGithubUpdater, getPublishConfig } = require('./updater-auth');
 const { createAutoUpdaterService } = require('./auto-updater-service');
+const { shutdownForUpdate } = require('./shutdown-for-update');
 
 const isDev = !app.isPackaged;
 const PORT = 3847;
 let mainWindow = null;
 let updaterService = null;
+let httpServer = null;
 
 function sendUpdateStatus(payload) {
   mainWindow?.webContents.send('update-status', payload);
@@ -29,6 +31,9 @@ function formatUpdateError(err) {
   }
   if (msg.includes('ENOENT') || msg.includes('zip')) {
     return 'Error al aplicar la actualización. Pulsa «Reiniciar e instalar» o Reintentar.';
+  }
+  if (/uninstall|desinstal/i.test(msg)) {
+    return 'No se pudo reemplazar la versión anterior. Cierra Cotizaciones (y el Administrador de tareas) e inténtalo de nuevo.';
   }
   return msg.length > 200 ? `${msg.slice(0, 200)}…` : msg;
 }
@@ -89,6 +94,7 @@ function initUpdater() {
     sendUpdateStatus,
     formatUpdateError,
     configureGithubUpdater,
+    shutdownForUpdate,
   });
   updaterService.setup();
 }
@@ -130,7 +136,7 @@ app.whenReady().then(async () => {
   if (!isDev) {
     try {
       const { startServer } = require(path.join(__dirname, '..', 'server', 'index.js'));
-      await startServer();
+      httpServer = await startServer();
     } catch (err) {
       console.error(err);
       const msg =
@@ -145,6 +151,15 @@ app.whenReady().then(async () => {
 
   createWindow();
   initUpdater();
+});
+
+app.on('before-quit-for-update', () => {
+  try {
+    if (httpServer) httpServer.close();
+    require(path.join(__dirname, '..', 'server', 'db')).close();
+  } catch {
+    /* ignore */
+  }
 });
 
 app.on('window-all-closed', () => {

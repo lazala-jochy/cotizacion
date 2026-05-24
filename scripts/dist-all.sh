@@ -15,6 +15,7 @@ npm run build
 
 echo ""
 echo "=== Windows (x64) ==="
+node scripts/patch-nsis-crc.js
 node scripts/rebuild-sqlite.js win32 x64
 node scripts/verify-win-native.js
 npx electron-builder --win --x64 $EB_ARGS

@@ -56,6 +56,6 @@ jobs:
 
       - name: Publicar Windows
         if: matrix.platform == 'win'
-        run: npx electron-builder --win --x64 --publish always
+        run: node scripts/patch-nsis-crc.js && npx electron-builder --win --x64 --publish always
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}

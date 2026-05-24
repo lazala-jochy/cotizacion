@@ -3,6 +3,14 @@ const path = require('path');
 const { app, BrowserWindow } = require('electron');
 const { installMacUpdate, CACHE_DIR_NAME } = require('./install-mac-update');
 
+function getUpdaterCacheRoot(app) {
+  if (process.platform === 'win32') {
+    const local = process.env.LOCALAPPDATA || app.getPath('localAppData');
+    return path.join(local, CACHE_DIR_NAME);
+  }
+  return path.join(app.getPath('home'), 'Library', 'Caches', CACHE_DIR_NAME);
+}
+
 function createAutoUpdaterService({
   autoUpdater,
   dialog,
@@ -10,6 +18,7 @@ function createAutoUpdaterService({
   sendUpdateStatus,
   formatUpdateError,
   configureGithubUpdater,
+  shutdownForUpdate,
 }) {
   let updaterReady = false;
   let updateDownloaded = false;
@@ -73,15 +82,30 @@ function createAutoUpdaterService({
     }
   }
 
+  async function prepareQuitForInstall() {
+    app.removeAllListeners('window-all-closed');
+    BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) win.destroy();
+    });
+    if (shutdownForUpdate) {
+      await shutdownForUpdate();
+    }
+    await new Promise((r) => setTimeout(r, process.platform === 'win32' ? 1200 : 300));
+  }
+
   function quitAndInstall() {
     if (!updateDownloaded) return false;
-    setStatus({ status: 'installing', message: 'Reiniciando para instalar…', percent: 100 });
+    setStatus({
+      status: 'installing',
+      message:
+        process.platform === 'win32' ?
+          'Cerrando e instalando… (no cierres la ventana del instalador)'
+        : 'Reiniciando para instalar…',
+      percent: 100,
+    });
 
-    setImmediate(() => {
-      app.removeAllListeners('window-all-closed');
-      BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) win.destroy();
-      });
+    setImmediate(async () => {
+      await prepareQuitForInstall();
 
       if (process.platform === 'darwin') {
         if (installMacUpdate({ autoUpdater, app })) return;
@@ -95,8 +119,8 @@ function createAutoUpdaterService({
         return;
       }
 
-      autoUpdater.quitAndInstall(true, true);
-      setTimeout(() => app.exit(0), 800);
+      autoUpdater.quitAndInstall(false, true);
+      setTimeout(() => app.exit(0), process.platform === 'win32' ? 2000 : 800);
     });
     return true;
   }
@@ -110,7 +134,7 @@ function createAutoUpdaterService({
     } catch {
       /* ignore */
     }
-    const cacheRoot = path.join(app.getPath('home'), 'Library', 'Caches', CACHE_DIR_NAME);
+    const cacheRoot = getUpdaterCacheRoot(app);
     if (fs.existsSync(cacheRoot)) {
       fs.rmSync(cacheRoot, { recursive: true, force: true });
     }

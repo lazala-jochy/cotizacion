@@ -497,6 +497,18 @@ Todo lo listado en [`.gitignore`](.gitignore), en especial:
 | `better-sqlite3` no compila | `xcode-select --install` (Mac) o instalar build tools en Linux |
 | `NODE_MODULE_VERSION` / `ERR_DLOPEN_FAILED` | En dev: `npm run rebuild:dev`. En Mac: `npm run dist:publish`. En Windows: compilar en PC o con GitHub Actions |
 | `better_sqlite3.node is not a valid win32 application` | Release antiguo sin `prebuild-install`. Ejecuta `npm run dist:publish` de nuevo desde Mac (script `dist-all.sh`) |
+| Windows: *fallo al desinstalar archivos antiguos* (código 2) | La app no cerró a tiempo. Instala **v1.6.12+**. Cierra Cotizaciones en el Administrador de tareas e instala el `.exe` manualmente |
+| Windows: *Installer integrity check has failed* (NSIS) | Instalador generado en Mac sin parche CRC. Usa **v1.6.13+** o el `.exe` del workflow de GitHub (Windows). Si ya está roto, desinstala a mano (ver abajo) |
+
+**Desinstalar manualmente en Windows** (si el desinstalador NSIS falla):
+
+```powershell
+taskkill /F /IM Cotizaciones.exe 2>$null
+Remove-Item -Recurse -Force "$env:LOCALAPPDATA\Programs\Cotizaciones" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force "$env:ProgramFiles\Cotizaciones" -ErrorAction SilentlyContinue
+```
+
+Luego instala el `.exe` nuevo del release **v1.6.13**. Tus datos siguen en `%USERPROFILE%\.cotizaciones-app\`.
 | App instalada pantalla en blanco | Servidor no arrancó (SQLite mal compilado). Reinstala el instalador del último release |
 
 ---

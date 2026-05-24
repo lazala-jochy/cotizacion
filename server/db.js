@@ -98,4 +98,13 @@ if (userCount === 0) {
   db.prepare('INSERT INTO emisor_settings (user_id, nombre) VALUES (?, ?)').run(1, '');
 }
 
+function closeDb() {
+  try {
+    db.close();
+  } catch {
+    /* ya cerrada */
+  }
+}
+
 module.exports = db;
+module.exports.close = closeDb;
