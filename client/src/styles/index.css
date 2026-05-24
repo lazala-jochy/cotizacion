@@ -892,6 +892,41 @@ label {
   width: auto;
 }
 
+.itbis-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.radio-label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.radio-label input[type='radio'] {
+  width: auto;
+}
+
+.itbis-manual-row {
+  flex-wrap: wrap;
+}
+
+.itbis-rate-input {
+  width: 4.75rem;
+  padding: 0.35rem 0.5rem;
+  margin: 0 0.15rem;
+}
+
+.itbis-rate-input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* Quote document */
 .quote-view-page .toolbar {
   display: flex;

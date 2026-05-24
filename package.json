@@ -1,6 +1,6 @@
 {
   "name": "cotizaciones-app",
-  "version": "1.6.14",
+  "version": "1.6.15",
   "description": "App desktop para generar y administrar cotizaciones",
   "main": "electron/main.js",
   "author": "",

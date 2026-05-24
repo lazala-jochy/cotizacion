@@ -89,6 +89,14 @@ if (!emisorCols.some((c) => c.name === 'logo')) {
   db.exec('ALTER TABLE emisor_settings ADD COLUMN logo TEXT');
 }
 
+const quoteCols = db.prepare('PRAGMA table_info(quotes)').all();
+if (!quoteCols.some((c) => c.name === 'itbis_rate')) {
+  db.exec('ALTER TABLE quotes ADD COLUMN itbis_rate REAL DEFAULT 18');
+}
+if (!quoteCols.some((c) => c.name === 'itbis_manual')) {
+  db.exec('ALTER TABLE quotes ADD COLUMN itbis_manual INTEGER DEFAULT 0');
+}
+
 const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
 if (userCount === 0) {
   const hash = bcrypt.hashSync('admin123', 10);

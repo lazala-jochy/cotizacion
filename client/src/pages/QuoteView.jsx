@@ -137,7 +137,15 @@ export default function QuoteView() {
           </div>
           {quote.itbis > 0 && (
             <div>
-              <span>ITBIS (18%)</span>
+              <span>
+                ITBIS (
+                {quote.itbis_rate != null ?
+                  `${Number(quote.itbis_rate)}%`
+                : quote.subtotal > 0 ?
+                  `${Math.round((quote.itbis / quote.subtotal) * 10000) / 100}%`
+                : '18%'}
+                )
+              </span>
               <span>{formatMoney(quote.itbis)}</span>
             </div>
           )}

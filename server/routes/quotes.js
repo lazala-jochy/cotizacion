@@ -5,7 +5,24 @@ const { authMiddleware } = require('../middleware/auth');
 const router = express.Router();
 router.use(authMiddleware);
 
-const ITBIS_RATE = 0.18;
+const ITBIS_RATE_DEFAULT_PERCENT = 18;
+
+function resolveItbisRate(applyItbis, itbisManual, itbisRate) {
+  if (!applyItbis) return 0;
+  if (itbisManual) {
+    const pct = Number(itbisRate);
+    if (Number.isNaN(pct) || pct < 0 || pct > 100) return ITBIS_RATE_DEFAULT_PERCENT;
+    return pct;
+  }
+  return ITBIS_RATE_DEFAULT_PERCENT;
+}
+
+function calcTotals(items, applyItbis = true, itbisManual = false, itbisRate = ITBIS_RATE_DEFAULT_PERCENT) {
+  const subtotal = items.reduce((s, i) => s + Number(i.cantidad) * Number(i.precio_unitario), 0);
+  const pct = resolveItbisRate(applyItbis, itbisManual, itbisRate);
+  const itbis = applyItbis ? subtotal * (pct / 100) : 0;
+  return { subtotal, itbis, total: subtotal + itbis, itbis_rate: pct, itbis_manual: itbisManual ? 1 : 0 };
+}
 
 function nextQuoteNumber(userId) {
   const year = new Date().getFullYear();
@@ -21,12 +38,6 @@ function nextQuoteNumber(userId) {
     if (!Number.isNaN(part)) seq = part + 1;
   }
   return `${prefix}${String(seq).padStart(4, '0')}`;
-}
-
-function calcTotals(items, applyItbis = true) {
-  const subtotal = items.reduce((s, i) => s + Number(i.cantidad) * Number(i.precio_unitario), 0);
-  const itbis = applyItbis ? subtotal * ITBIS_RATE : 0;
-  return { subtotal, itbis, total: subtotal + itbis };
 }
 
 function getQuoteWithItems(id, userId) {
@@ -76,6 +87,8 @@ router.post('/', (req, res) => {
     client_telefono,
     client_email,
     apply_itbis = true,
+    itbis_manual = false,
+    itbis_rate = ITBIS_RATE_DEFAULT_PERCENT,
   } = req.body;
 
   if (!items.length) {
@@ -119,7 +132,7 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: 'Cada ítem necesita descripción y cantidad mayor a 0' });
   }
 
-  const totals = calcTotals(normalizedItems, apply_itbis);
+  const totals = calcTotals(normalizedItems, apply_itbis, itbis_manual, itbis_rate);
   const quoteNumero = numero?.trim() || nextQuoteNumber(req.user.id);
   const quoteFecha = fecha || new Date().toISOString().slice(0, 10);
 
@@ -128,8 +141,9 @@ router.post('/', (req, res) => {
       .prepare(
         `INSERT INTO quotes (
           user_id, client_id, numero, fecha, validez_dias, notas, subtotal, itbis, total, estado,
-          client_nombre, client_rnc, client_direccion, client_telefono, client_email
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          client_nombre, client_rnc, client_direccion, client_telefono, client_email,
+          itbis_rate, itbis_manual
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         req.user.id,
@@ -146,7 +160,9 @@ router.post('/', (req, res) => {
         clientSnapshot.client_rnc,
         clientSnapshot.client_direccion,
         clientSnapshot.client_telefono,
-        clientSnapshot.client_email
+        clientSnapshot.client_email,
+        totals.itbis_rate,
+        totals.itbis_manual
       );
 
     const quoteId = result.lastInsertRowid;
@@ -184,6 +200,8 @@ router.put('/:id', (req, res) => {
     client_telefono,
     client_email,
     apply_itbis = true,
+    itbis_manual = false,
+    itbis_rate = ITBIS_RATE_DEFAULT_PERCENT,
   } = req.body;
 
   if (!items.length) {
@@ -201,14 +219,14 @@ router.put('/:id', (req, res) => {
     return res.status(400).json({ error: 'Cada ítem necesita descripción y cantidad mayor a 0' });
   }
 
-  const totals = calcTotals(normalizedItems, apply_itbis);
+  const totals = calcTotals(normalizedItems, apply_itbis, itbis_manual, itbis_rate);
 
   const updateAll = db.transaction(() => {
     db.prepare(
       `UPDATE quotes SET
         client_id=?, fecha=?, validez_dias=?, notas=?, subtotal=?, itbis=?, total=?, estado=?,
         client_nombre=?, client_rnc=?, client_direccion=?, client_telefono=?, client_email=?,
-        updated_at=datetime('now')
+        itbis_rate=?, itbis_manual=?, updated_at=datetime('now')
        WHERE id=? AND user_id=?`
     ).run(
       client_id || null,
@@ -224,6 +242,8 @@ router.put('/:id', (req, res) => {
       client_direccion?.trim() || null,
       client_telefono?.trim() || null,
       client_email?.trim() || null,
+      totals.itbis_rate,
+      totals.itbis_manual,
       req.params.id,
       req.user.id
     );

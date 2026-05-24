@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 
 const emptyItem = { descripcion: '', cantidad: 1, precio_unitario: 0 };
-const ITBIS_RATE = 0.18;
+const ITBIS_RATE_DEFAULT = 18;
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(n || 0);
@@ -29,6 +29,8 @@ export default function QuoteForm() {
   const [notas, setNotas] = useState('');
   const [estado, setEstado] = useState('borrador');
   const [applyItbis, setApplyItbis] = useState(true);
+  const [itbisManual, setItbisManual] = useState(false);
+  const [itbisRate, setItbisRate] = useState(ITBIS_RATE_DEFAULT);
   const [items, setItems] = useState([{ ...emptyItem }]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(isEdit);
@@ -58,7 +60,15 @@ export default function QuoteForm() {
         setValidezDias(q.validez_dias);
         setNotas(q.notas || '');
         setEstado(q.estado);
-        setApplyItbis(q.itbis > 0);
+        const hasItbis = q.itbis > 0;
+        setApplyItbis(hasItbis);
+        const manual = q.itbis_manual === 1 || q.itbis_manual === true;
+        let rate = q.itbis_rate != null ? Number(q.itbis_rate) : ITBIS_RATE_DEFAULT;
+        if (hasItbis && q.subtotal > 0 && q.itbis_rate == null) {
+          rate = Math.round((q.itbis / q.subtotal) * 10000) / 100;
+        }
+        setItbisManual(manual || (hasItbis && Math.abs(rate - ITBIS_RATE_DEFAULT) > 0.01));
+        setItbisRate(rate);
         setItems(
           q.items.length
             ? q.items.map((i) => ({
@@ -78,9 +88,10 @@ export default function QuoteForm() {
       (s, i) => s + (Number(i.cantidad) || 0) * (Number(i.precio_unitario) || 0),
       0
     );
-    const itbis = applyItbis ? subtotal * ITBIS_RATE : 0;
-    return { subtotal, itbis, total: subtotal + itbis };
-  }, [items, applyItbis]);
+    const pct = applyItbis ? (itbisManual ? Number(itbisRate) || 0 : ITBIS_RATE_DEFAULT) : 0;
+    const itbis = applyItbis ? subtotal * (pct / 100) : 0;
+    return { subtotal, itbis, total: subtotal + itbis, itbisPercent: pct };
+  }, [items, applyItbis, itbisManual, itbisRate]);
 
   const onClientSelect = (value) => {
     setClientId(value);
@@ -115,6 +126,8 @@ export default function QuoteForm() {
       notas,
       estado,
       apply_itbis: applyItbis,
+      itbis_manual: applyItbis && itbisManual,
+      itbis_rate: applyItbis ? (itbisManual ? Number(itbisRate) : ITBIS_RATE_DEFAULT) : 0,
       items,
       ...clientManual,
     };
@@ -312,8 +325,42 @@ export default function QuoteForm() {
                 checked={applyItbis}
                 onChange={(e) => setApplyItbis(e.target.checked)}
               />
-              Aplicar ITBIS (18%)
+              Aplicar ITBIS
             </label>
+            {applyItbis && (
+              <div className="itbis-mode">
+                <label className="radio-label">
+                  <input
+                    type="radio"
+                    name="itbisMode"
+                    checked={!itbisManual}
+                    onChange={() => setItbisManual(false)}
+                  />
+                  Automático ({ITBIS_RATE_DEFAULT}%)
+                </label>
+                <label className="radio-label itbis-manual-row">
+                  <input
+                    type="radio"
+                    name="itbisMode"
+                    checked={itbisManual}
+                    onChange={() => setItbisManual(true)}
+                  />
+                  Manual
+                  <input
+                    type="number"
+                    className="itbis-rate-input"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    disabled={!itbisManual}
+                    value={itbisRate}
+                    onChange={(e) => setItbisRate(e.target.value)}
+                    aria-label="Porcentaje de ITBIS"
+                  />
+                  <span>%</span>
+                </label>
+              </div>
+            )}
             <div className="totals-rows">
               <div>
                 <span>Subtotal</span>
@@ -321,7 +368,7 @@ export default function QuoteForm() {
               </div>
               {applyItbis && (
                 <div>
-                  <span>ITBIS 18%</span>
+                  <span>ITBIS ({totals.itbisPercent}%)</span>
                   <strong>{formatMoney(totals.itbis)}</strong>
                 </div>
               )}
