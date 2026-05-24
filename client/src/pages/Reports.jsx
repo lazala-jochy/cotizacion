@@ -130,11 +130,16 @@ export default function Reports() {
               <span className="report-kpi-hint">por cotización</span>
             </article>
             <article className="report-kpi report-kpi--success">
-              <span className="report-kpi-label">Aceptadas</span>
-              <strong className="report-kpi-value">{formatMoney(kpis.aceptadasMonto)}</strong>
+              <span className="report-kpi-label">Cobrado</span>
+              <strong className="report-kpi-value">{formatMoney(kpis.pagadasMonto)}</strong>
               <span className="report-kpi-hint">
-                {kpis.aceptadasCount} cotiz. · {kpis.tasaCierre}% cierre
+                {kpis.pagadasCount} pagadas · {kpis.tasaCierre}% del total
               </span>
+            </article>
+            <article className="report-kpi report-kpi--primary">
+              <span className="report-kpi-label">Por cobrar</span>
+              <strong className="report-kpi-value">{formatMoney(kpis.pendienteCobro)}</strong>
+              <span className="report-kpi-hint">balance pendiente</span>
             </article>
             <article className="report-kpi">
               <span className="report-kpi-label">Clientes activos</span>

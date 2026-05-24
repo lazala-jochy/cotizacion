@@ -1,9 +1,4 @@
-const ESTADO_LABELS = {
-  borrador: 'Borrador',
-  enviada: 'Enviada',
-  aceptada: 'Aceptada',
-  rechazada: 'Rechazada',
-};
+import { QUOTE_ESTADO_LABELS } from '../constants/quoteEstados';
 
 const MONTH_NAMES = [
   'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
@@ -42,19 +37,22 @@ export function filterQuotesByMonths(quotes, months) {
 export function computeKpis(quotes) {
   const count = quotes.length;
   const totalMonto = quotes.reduce((s, q) => s + (Number(q.total) || 0), 0);
-  const aceptadas = quotes.filter((q) => q.estado === 'aceptada');
-  const aceptadasMonto = aceptadas.reduce((s, q) => s + (Number(q.total) || 0), 0);
-  const enviadas = quotes.filter((q) => q.estado === 'enviada' || q.estado === 'aceptada');
-  const tasaCierre =
-    enviadas.length > 0 ? Math.round((aceptadas.length / enviadas.length) * 100) : 0;
+  const aprobadas = quotes.filter((q) => ['aprobada', 'en_proceso', 'completada', 'pago_parcial', 'pagada'].includes(q.estado));
+  const aprobadasMonto = aprobadas.reduce((s, q) => s + (Number(q.total) || 0), 0);
+  const pagadas = quotes.filter((q) => q.estado === 'pagada');
+  const pagadasMonto = pagadas.reduce((s, q) => s + (Number(q.total) || 0), 0);
+  const pendienteCobro = quotes.reduce((s, q) => s + (Number(q.balance_pendiente) || 0), 0);
 
   return {
     count,
     totalMonto,
     promedio: count > 0 ? totalMonto / count : 0,
-    aceptadasCount: aceptadas.length,
-    aceptadasMonto,
-    tasaCierre,
+    aceptadasCount: aprobadas.length,
+    aceptadasMonto: aprobadasMonto,
+    pagadasCount: pagadas.length,
+    pagadasMonto,
+    pendienteCobro,
+    tasaCierre: count > 0 ? Math.round((pagadas.length / count) * 100) : 0,
     clientesUnicos: new Set(
       quotes.map((q) => q.client_nombre?.trim() || `id-${q.client_id || q.id}`).filter(Boolean)
     ).size,
@@ -81,7 +79,7 @@ export function groupByEstado(quotes) {
     const estado = q.estado || 'borrador';
     const row = map.get(estado) || {
       estado,
-      label: ESTADO_LABELS[estado] || estado,
+      label: QUOTE_ESTADO_LABELS[estado] || estado,
       value: 0,
       monto: 0,
     };
@@ -89,7 +87,7 @@ export function groupByEstado(quotes) {
     row.monto += Number(q.total) || 0;
     map.set(estado, row);
   }
-  const order = ['aceptada', 'enviada', 'borrador', 'rechazada'];
+  const order = ['pagada', 'pago_parcial', 'completada', 'en_proceso', 'aprobada', 'enviada', 'creada', 'cancelada'];
   return [...map.values()].sort(
     (a, b) => order.indexOf(a.estado) - order.indexOf(b.estado) || b.value - a.value
   );
@@ -122,7 +120,9 @@ export const CHART_COLORS = {
   muted: '#64748b',
   grid: 'rgba(148, 163, 184, 0.12)',
   estado: {
-    aceptada: '#22c55e',
+    pagada: '#22c55e',
+    pendiente: '#eab308',
+    aceptada: '#4ade80',
     enviada: '#3b82f6',
     borrador: '#94a3b8',
     rechazada: '#ef4444',

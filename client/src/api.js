@@ -45,5 +45,11 @@ export const api = {
     update: (id, body) =>
       request(`/api/quotes/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     remove: (id) => request(`/api/quotes/${id}`, { method: 'DELETE' }),
+    setEstado: (id, estado) =>
+      request(`/api/quotes/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ estado }) }),
+    addPayment: (id, body) =>
+      request(`/api/quotes/${id}/payments`, { method: 'POST', body: JSON.stringify(body) }),
+    removePayment: (id, paymentId) =>
+      request(`/api/quotes/${id}/payments/${paymentId}`, { method: 'DELETE' }),
   },
 };

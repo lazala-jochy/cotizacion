@@ -2,6 +2,14 @@ const express = require('express');
 const db = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 const { generateInvoicePdf } = require('../pdf/generate-invoice-pdf');
+const {
+  normalizeEstado,
+  canEditQuote,
+  enrichQuote,
+  validateEstado,
+  computeFinancials,
+  syncEstadoFromPayments,
+} = require('../quoteWorkflow');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -41,6 +49,12 @@ function nextQuoteNumber(userId) {
   return `${prefix}${String(seq).padStart(4, '0')}`;
 }
 
+function getPayments(quoteId) {
+  return db
+    .prepare('SELECT * FROM quote_payments WHERE quote_id = ? ORDER BY fecha DESC, id DESC')
+    .all(quoteId);
+}
+
 function getQuoteWithItems(id, userId) {
   const quote = db.prepare('SELECT * FROM quotes WHERE id = ? AND user_id = ?').get(id, userId);
   if (!quote) return null;
@@ -48,6 +62,30 @@ function getQuoteWithItems(id, userId) {
     .prepare('SELECT * FROM quote_items WHERE quote_id = ? ORDER BY orden, id')
     .all(id);
   return { ...quote, items };
+}
+
+function getQuoteFull(id, userId) {
+  const quote = getQuoteWithItems(id, userId);
+  if (!quote) return null;
+  const payments = getPayments(id);
+  return enrichQuote(quote, payments);
+}
+
+function recalcQuoteAfterPayments(quoteId, userId) {
+  const quote = db.prepare('SELECT * FROM quotes WHERE id = ? AND user_id = ?').get(quoteId, userId);
+  if (!quote) return null;
+  const payments = getPayments(quoteId);
+  const fin = computeFinancials(quote, payments);
+  const newEstado = syncEstadoFromPayments(quote.estado, fin);
+  db.prepare(
+    `UPDATE quotes SET monto_pagado = ?, estado = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?`
+  ).run(fin.monto_pagado, newEstado, quoteId, userId);
+  return getQuoteFull(quoteId, userId);
+}
+
+function enrichQuoteListRow(q) {
+  const payments = getPayments(q.id);
+  return enrichQuote(q, payments);
 }
 
 router.get('/', (req, res) => {
@@ -60,7 +98,7 @@ router.get('/', (req, res) => {
        ORDER BY q.created_at DESC`
     )
     .all(req.user.id);
-  res.json(quotes);
+  res.json(quotes.map((q) => enrichQuoteListRow(q)));
 });
 
 router.get('/next-number', (req, res) => {
@@ -84,7 +122,7 @@ function getEmisorForUser(userId) {
 }
 
 router.get('/:id/pdf', async (req, res) => {
-  const quote = getQuoteWithItems(req.params.id, req.user.id);
+  const quote = getQuoteFull(req.params.id, req.user.id);
   if (!quote) return res.status(404).json({ error: 'Cotización no encontrada' });
 
   try {
@@ -102,9 +140,95 @@ router.get('/:id/pdf', async (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-  const quote = getQuoteWithItems(req.params.id, req.user.id);
+  const quote = getQuoteFull(req.params.id, req.user.id);
   if (!quote) return res.status(404).json({ error: 'Cotización no encontrada' });
   res.json(quote);
+});
+
+router.patch('/:id/estado', (req, res) => {
+  const quote = db
+    .prepare('SELECT * FROM quotes WHERE id = ? AND user_id = ?')
+    .get(req.params.id, req.user.id);
+  if (!quote) return res.status(404).json({ error: 'Cotización no encontrada' });
+
+  const check = validateEstado(req.body.estado);
+  if (!check.ok) return res.status(400).json({ error: check.error });
+
+  const current = normalizeEstado(quote.estado);
+  if (current === 'pagada' && check.estado !== 'pagada' && check.estado !== 'cancelada') {
+    return res.status(400).json({ error: 'La cotización ya está pagada. Elimina pagos para cambiar el estado.' });
+  }
+
+  db.prepare(
+    `UPDATE quotes SET estado = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?`
+  ).run(check.estado, req.params.id, req.user.id);
+
+  const updated = recalcQuoteAfterPayments(req.params.id, req.user.id);
+  res.json(updated);
+});
+
+router.post('/:id/payments', (req, res) => {
+  const quote = db
+    .prepare('SELECT * FROM quotes WHERE id = ? AND user_id = ?')
+    .get(req.params.id, req.user.id);
+  if (!quote) return res.status(404).json({ error: 'Cotización no encontrada' });
+
+  const estado = normalizeEstado(quote.estado);
+  if (estado === 'cancelada') {
+    return res.status(400).json({ error: 'No se pueden registrar pagos en una cotización cancelada' });
+  }
+  if (estado === 'creada' || estado === 'enviada') {
+    return res.status(400).json({
+      error: 'Aprueba la cotización antes de registrar pagos (estado: aprobada o posterior)',
+    });
+  }
+
+  const monto = Number(req.body.monto);
+  if (!monto || monto <= 0) {
+    return res.status(400).json({ error: 'El monto del pago debe ser mayor a 0' });
+  }
+
+  const fecha = req.body.fecha || new Date().toISOString().slice(0, 10);
+  const payments = getPayments(quote.id);
+  const fin = computeFinancials(quote, [...payments, { monto }]);
+  if (fin.monto_pagado > fin.total + 0.01) {
+    return res.status(400).json({
+      error: `El pago excede el balance pendiente (${fin.balance_pendiente.toFixed(2)} disponible)`,
+    });
+  }
+
+  const result = db
+    .prepare(
+      `INSERT INTO quote_payments (quote_id, monto, fecha, metodo, referencia, notas)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    )
+    .run(
+      quote.id,
+      monto,
+      fecha,
+      req.body.metodo?.trim() || null,
+      req.body.referencia?.trim() || null,
+      req.body.notas?.trim() || null
+    );
+
+  const updated = recalcQuoteAfterPayments(quote.id, req.user.id);
+  const payment = updated.payments.find((p) => p.id === result.lastInsertRowid);
+  res.status(201).json({ quote: updated, payment });
+});
+
+router.delete('/:id/payments/:paymentId', (req, res) => {
+  const quote = db
+    .prepare('SELECT id FROM quotes WHERE id = ? AND user_id = ?')
+    .get(req.params.id, req.user.id);
+  if (!quote) return res.status(404).json({ error: 'Cotización no encontrada' });
+
+  const result = db
+    .prepare('DELETE FROM quote_payments WHERE id = ? AND quote_id = ?')
+    .run(req.params.paymentId, req.params.id);
+  if (result.changes === 0) return res.status(404).json({ error: 'Pago no encontrado' });
+
+  const updated = recalcQuoteAfterPayments(req.params.id, req.user.id);
+  res.json(updated);
 });
 
 router.post('/', (req, res) => {
@@ -170,6 +294,10 @@ router.post('/', (req, res) => {
   const totals = calcTotals(normalizedItems, apply_itbis, itbis_manual, itbis_rate);
   const quoteNumero = numero?.trim() || nextQuoteNumber(req.user.id);
   const quoteFecha = fecha || new Date().toISOString().slice(0, 10);
+  const estadoInicial = validateEstado(estado || 'creada').estado || 'creada';
+  if (estadoInicial !== 'creada') {
+    return res.status(400).json({ error: 'Las cotizaciones nuevas deben crearse en estado Creada' });
+  }
 
   const insertQuote = db.transaction(() => {
     const result = db
@@ -177,8 +305,8 @@ router.post('/', (req, res) => {
         `INSERT INTO quotes (
           user_id, client_id, numero, fecha, validez_dias, notas, subtotal, itbis, total, estado,
           client_nombre, client_rnc, client_direccion, client_telefono, client_email,
-          itbis_rate, itbis_manual
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          itbis_rate, itbis_manual, monto_pagado
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`
       )
       .run(
         req.user.id,
@@ -190,7 +318,7 @@ router.post('/', (req, res) => {
         totals.subtotal,
         totals.itbis,
         totals.total,
-        estado || 'borrador',
+        estadoInicial,
         clientSnapshot.client_nombre,
         clientSnapshot.client_rnc,
         clientSnapshot.client_direccion,
@@ -213,21 +341,27 @@ router.post('/', (req, res) => {
   });
 
   const id = insertQuote();
-  res.status(201).json(getQuoteWithItems(id, req.user.id));
+  res.status(201).json(getQuoteFull(id, req.user.id));
 });
 
 router.put('/:id', (req, res) => {
   const existing = db
-    .prepare('SELECT id FROM quotes WHERE id = ? AND user_id = ?')
+    .prepare('SELECT * FROM quotes WHERE id = ? AND user_id = ?')
     .get(req.params.id, req.user.id);
   if (!existing) return res.status(404).json({ error: 'Cotización no encontrada' });
+
+  if (!canEditQuote(existing.estado)) {
+    return res.status(400).json({
+      error:
+        'Solo se puede editar el contenido en estado Creada. Usa la vista de detalle para cambiar el estado o registrar pagos.',
+    });
+  }
 
   const {
     client_id,
     fecha,
     validez_dias,
     notas,
-    estado,
     items = [],
     client_nombre,
     client_rnc,
@@ -259,7 +393,7 @@ router.put('/:id', (req, res) => {
   const updateAll = db.transaction(() => {
     db.prepare(
       `UPDATE quotes SET
-        client_id=?, fecha=?, validez_dias=?, notas=?, subtotal=?, itbis=?, total=?, estado=?,
+        client_id=?, fecha=?, validez_dias=?, notas=?, subtotal=?, itbis=?, total=?, estado='creada',
         client_nombre=?, client_rnc=?, client_direccion=?, client_telefono=?, client_email=?,
         itbis_rate=?, itbis_manual=?, updated_at=datetime('now')
        WHERE id=? AND user_id=?`
@@ -271,7 +405,6 @@ router.put('/:id', (req, res) => {
       totals.subtotal,
       totals.itbis,
       totals.total,
-      estado || 'borrador',
       client_nombre?.trim(),
       client_rnc?.trim() || null,
       client_direccion?.trim() || null,
@@ -301,7 +434,7 @@ router.put('/:id', (req, res) => {
   });
 
   updateAll();
-  res.json(getQuoteWithItems(req.params.id, req.user.id));
+  res.json(recalcQuoteAfterPayments(req.params.id, req.user.id));
 });
 
 router.delete('/:id', (req, res) => {

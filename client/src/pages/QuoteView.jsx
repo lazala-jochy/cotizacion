@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { downloadInvoicePdf } from '../utils/downloadInvoicePdf';
-
-function formatMoney(n) {
-  return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(n || 0);
-}
+import { quoteEstadoLabel, canEditQuoteContent } from '../constants/quoteEstados';
+import { formatMoney } from '../utils/quoteFinancial';
+import QuoteWorkflow from '../components/QuoteWorkflow';
 
 export default function QuoteView() {
   const { id } = useParams();
@@ -14,13 +13,16 @@ export default function QuoteView() {
   const [error, setError] = useState('');
   const [pdfLoading, setPdfLoading] = useState(false);
 
-  useEffect(() => {
+  const load = () =>
     Promise.all([api.quotes.get(id), api.emisor.get()])
       .then(([q, e]) => {
         setQuote(q);
         setEmisor(e);
       })
       .catch((e) => setError(e.message));
+
+  useEffect(() => {
+    load();
   }, [id]);
 
   const handlePrint = () => {
@@ -43,10 +45,11 @@ export default function QuoteView() {
     }
   };
 
-  if (error) return <div className="page"><div className="alert alert-error">{error}</div></div>;
+  if (error && !quote) return <div className="page"><div className="alert alert-error">{error}</div></div>;
   if (!quote || emisor === null) return <div className="page"><p className="muted">Cargando…</p></div>;
 
   const emisorListo = emisor?.nombre?.trim();
+  const editable = canEditQuoteContent(quote.estado);
 
   return (
     <div className="page quote-view-page">
@@ -55,9 +58,11 @@ export default function QuoteView() {
           ← Volver
         </Link>
         <div className="toolbar-actions">
-          <Link to={`/cotizaciones/${id}/editar`} className="btn-ghost">
-            Editar
-          </Link>
+          {editable && (
+            <Link to={`/cotizaciones/${id}/editar`} className="btn-ghost">
+              Editar
+            </Link>
+          )}
           <button type="button" className="btn-ghost" onClick={handlePrint}>
             Imprimir
           </button>
@@ -72,6 +77,8 @@ export default function QuoteView() {
         </div>
       </div>
 
+      {error && <div className="alert alert-error no-print">{error}</div>}
+
       {!emisorListo && (
         <div className="alert alert-warn no-print">
           Configura los datos de tu empresa en <Link to="/configuracion">Empresa</Link> para mostrarlos en la
@@ -79,23 +86,23 @@ export default function QuoteView() {
         </div>
       )}
 
+      <QuoteWorkflow quote={quote} onUpdate={setQuote} />
+
       <article className="quote-document print-area">
         <header className="quote-doc-header">
           <div className="quote-emisor-info">
-            {emisor.logo && (
-              <img src={emisor.logo} alt="" className="quote-emisor-logo" />
-            )}
+            {emisor.logo && <img src={emisor.logo} alt="" className="quote-emisor-logo" />}
             <div>
-            <h1>{emisor.nombre || '— Sin configurar —'}</h1>
-            {emisor.rnc && <p>RNC {emisor.rnc}</p>}
-            {emisor.direccion && <p>{emisor.direccion}</p>}
-            {(emisor.telefono || emisor.email) && (
-              <p>
-                {emisor.telefono && `Tel. ${emisor.telefono}`}
-                {emisor.telefono && emisor.email && ' · '}
-                {emisor.email}
-              </p>
-            )}
+              <h1>{emisor.nombre || '— Sin configurar —'}</h1>
+              {emisor.rnc && <p>RNC {emisor.rnc}</p>}
+              {emisor.direccion && <p>{emisor.direccion}</p>}
+              {(emisor.telefono || emisor.email) && (
+                <p>
+                  {emisor.telefono && `Tel. ${emisor.telefono}`}
+                  {emisor.telefono && emisor.email && ' · '}
+                  {emisor.email}
+                </p>
+              )}
             </div>
           </div>
           <div className="quote-doc-meta">
@@ -109,7 +116,10 @@ export default function QuoteView() {
             <p>
               <strong>Válida por:</strong> {quote.validez_dias} días
             </p>
-            <span className={`badge badge-${quote.estado}`}>{quote.estado}</span>
+            <p>
+              <strong>Estado:</strong>{' '}
+              <span className={`badge badge-${quote.estado}`}>{quoteEstadoLabel(quote.estado)}</span>
+            </p>
           </div>
         </header>
 
@@ -183,10 +193,44 @@ export default function QuoteView() {
             </div>
           )}
           <div className="grand-total">
-            <span>Total</span>
+            <span>Total cotización</span>
             <span>{formatMoney(quote.total)}</span>
           </div>
+          <div>
+            <span>Monto pagado</span>
+            <span>{formatMoney(quote.monto_pagado)}</span>
+          </div>
+          <div className="quote-balance-row">
+            <span>Balance pendiente</span>
+            <strong>{formatMoney(quote.balance_pendiente)}</strong>
+          </div>
         </div>
+
+        {quote.payments?.length > 0 && (
+          <section className="quote-payments-doc">
+            <h3>Historial de pagos</h3>
+            <table className="quote-items-doc">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Método</th>
+                  <th>Referencia</th>
+                  <th>Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {quote.payments.map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.fecha}</td>
+                    <td>{p.metodo || '—'}</td>
+                    <td>{p.referencia || '—'}</td>
+                    <td>{formatMoney(p.monto)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
 
         {quote.notas && (
           <section className="quote-notes">

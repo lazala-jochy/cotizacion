@@ -3,15 +3,15 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { downloadInvoicePdf } from '../utils/downloadInvoicePdf';
 import { IconEye, IconEdit, IconTrash } from '../components/Icons';
+import {
+  QUOTE_ESTADOS,
+  QUOTE_ESTADO_OPTIONS,
+  quoteEstadoHint,
+  canEditQuoteContent,
+  normalizeEstado,
+} from '../constants/quoteEstados';
 
 const PAGE_SIZE_DEFAULT = 5;
-const ESTADOS = [
-  { value: '', label: 'Todos los estados' },
-  { value: 'borrador', label: 'Borrador' },
-  { value: 'enviada', label: 'Enviada' },
-  { value: 'aceptada', label: 'Aceptada' },
-  { value: 'rechazada', label: 'Rechazada' },
-];
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(n || 0);
@@ -35,6 +35,7 @@ export default function Quotes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [downloadingId, setDownloadingId] = useState(null);
+  const [savingEstadoId, setSavingEstadoId] = useState(null);
 
   const [search, setSearch] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
@@ -52,7 +53,7 @@ export default function Quotes() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return quotes.filter((item) => {
-      if (estadoFilter && item.estado !== estadoFilter) return false;
+      if (estadoFilter && normalizeEstado(item.estado) !== estadoFilter) return false;
       if (!q) return true;
       const haystack = [item.numero, item.client_nombre, item.client_rnc, item.fecha]
         .filter(Boolean)
@@ -89,6 +90,21 @@ export default function Quotes() {
       setError(err.message);
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const handleEstadoChange = async (quoteId, nuevoEstado) => {
+    setSavingEstadoId(quoteId);
+    setError('');
+    try {
+      const updated = await api.quotes.setEstado(quoteId, nuevoEstado);
+      setQuotes((prev) =>
+        prev.map((q) => (q.id === quoteId ? { ...q, ...updated } : q))
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingEstadoId(null);
     }
   };
 
@@ -141,7 +157,7 @@ export default function Quotes() {
               onChange={(e) => setEstadoFilter(e.target.value)}
               aria-label="Filtrar por estado"
             >
-              {ESTADOS.map((o) => (
+              {QUOTE_ESTADOS.map((o) => (
                 <option key={o.value || 'all'} value={o.value}>
                   {o.label}
                 </option>
@@ -189,6 +205,7 @@ export default function Quotes() {
                   <col className="col-w-client" />
                   <col className="col-w-date" />
                   <col className="col-w-total" />
+                  <col className="col-w-paid" />
                   <col className="col-w-estado" />
                   <col className="col-w-download" />
                   <col className="col-w-actions" />
@@ -199,7 +216,8 @@ export default function Quotes() {
                     <th>Cliente</th>
                     <th className="col-hide-sm">Fecha</th>
                     <th className="col-num">Total</th>
-                    <th className="col-hide-xs">Estado</th>
+                    <th className="col-num col-hide-sm">Pendiente</th>
+                    <th className="col-estado">Estado</th>
                     <th className="col-download">PDF</th>
                     <th className="col-actions">Acciones</th>
                   </tr>
@@ -227,8 +245,32 @@ export default function Quotes() {
                       <td className="col-num">
                         <strong>{formatMoney(q.total)}</strong>
                       </td>
-                      <td className="col-hide-xs">
-                        <span className={`badge badge-${q.estado}`}>{q.estado}</span>
+                      <td className="col-num col-hide-sm">
+                        <span
+                          className={
+                            (q.balance_pendiente ?? 0) > 0 ? 'quote-pending-amount' : 'muted'
+                          }
+                        >
+                          {formatMoney(q.balance_pendiente ?? 0)}
+                        </span>
+                      </td>
+                      <td className="col-estado">
+                        <div className="quotes-estado-cell">
+                        <select
+                          className={`quotes-estado-select estado-${normalizeEstado(q.estado)}`}
+                          value={normalizeEstado(q.estado)}
+                          onChange={(e) => handleEstadoChange(q.id, e.target.value)}
+                          disabled={savingEstadoId === q.id}
+                          title={quoteEstadoHint(q.estado)}
+                          aria-label={`Estado de cotización ${q.numero}`}
+                        >
+                          {QUOTE_ESTADO_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>
+                              {o.label}
+                            </option>
+                          ))}
+                        </select>
+                        </div>
                       </td>
                       <td className="col-download">
                         <button
@@ -246,19 +288,21 @@ export default function Quotes() {
                           <Link
                             to={`/cotizaciones/${q.id}`}
                             className="btn-icon"
-                            title="Ver"
+                            title="Ver detalle y pagos"
                             aria-label="Ver cotización"
                           >
                             <IconEye />
                           </Link>
-                          <Link
-                            to={`/cotizaciones/${q.id}/editar`}
-                            className="btn-icon"
-                            title="Editar"
-                            aria-label="Editar cotización"
-                          >
-                            <IconEdit />
-                          </Link>
+                          {canEditQuoteContent(q.estado) && (
+                            <Link
+                              to={`/cotizaciones/${q.id}/editar`}
+                              className="btn-icon"
+                              title="Editar contenido"
+                              aria-label="Editar cotización"
+                            >
+                              <IconEdit />
+                            </Link>
+                          )}
                           <button
                             type="button"
                             className="btn-icon btn-icon-danger"

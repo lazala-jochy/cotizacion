@@ -470,7 +470,22 @@ Los datos del emisor **no están fijos** en el código. Cada usuario los configu
 | Teléfono | 849-405-8727 |
 | Email | jochylazala@gmail.com |
 
-Puedes usar **Cargar datos de ejemplo** en esa pantalla para ver el formato y editarlos con la información de tu negocio.
+---
+
+## Flujo de cotización
+
+| Estado | Descripción |
+|--------|-------------|
+| Creada | Recién creada, editable. No enviada al cliente. |
+| Enviada | Enviada al cliente para revisión. |
+| Aprobada | El cliente aceptó. Trabajo confirmado. |
+| En proceso | El trabajo está activo. |
+| Completada | Trabajo terminado; puede faltar cobro. |
+| Pago parcial | Hay pagos registrados; falta saldo. |
+| Pagada | Cobrada por completo. |
+| Cancelada | Cancelada; no continúa el flujo. |
+
+**Pagos:** desde el detalle de la cotización (estado aprobada o posterior) puedes registrar pagos parciales o totales. El PDF incluye estado, pagado, pendiente e historial.
 
 ---
 

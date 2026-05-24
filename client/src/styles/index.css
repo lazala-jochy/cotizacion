@@ -1020,32 +1020,40 @@ a.cell-ellipsis:hover {
   width: 14%;
 }
 
+.quotes-table-quotes {
+  min-width: 920px;
+}
+
 .quotes-table-quotes .col-w-num {
-  width: 11%;
+  width: 9%;
 }
 
 .quotes-table-quotes .col-w-client {
-  width: 24%;
+  width: 17%;
 }
 
 .quotes-table-quotes .col-w-date {
-  width: 13%;
+  width: 9%;
 }
 
 .quotes-table-quotes .col-w-total {
-  width: 14%;
-}
-
-.quotes-table-quotes .col-w-estado {
-  width: 12%;
-}
-
-.quotes-table-quotes .col-w-download {
   width: 10%;
 }
 
+.quotes-table-quotes .col-w-paid {
+  width: 9%;
+}
+
+.quotes-table-quotes .col-w-estado {
+  width: 19%;
+}
+
+.quotes-table-quotes .col-w-download {
+  width: 7%;
+}
+
 .quotes-table-quotes .col-w-actions {
-  width: 16%;
+  width: 12%;
 }
 
 .quotes-table thead {
@@ -1080,9 +1088,106 @@ a.cell-ellipsis:hover {
 
 .quotes-table td.col-num,
 .quotes-table td.col-download,
-.quotes-table td.actions {
+.quotes-table td.actions,
+.quotes-table td.col-estado {
   max-width: none;
   overflow: visible;
+}
+
+.quotes-table-quotes th.col-estado,
+.quotes-table-quotes td.col-estado {
+  padding-right: 1.25rem;
+  min-width: 10.5rem;
+}
+
+.quotes-table-quotes th.col-download,
+.quotes-table-quotes td.col-download {
+  padding-left: 0.75rem;
+  padding-right: 1rem;
+  min-width: 3.75rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.quotes-table-quotes th.col-actions,
+.quotes-table-quotes td.actions {
+  padding-left: 0.5rem;
+  min-width: 6.5rem;
+}
+
+.quotes-estado-select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 10.5rem;
+  box-sizing: border-box;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b9cb3' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.4rem center;
+  padding-right: 1.35rem;
+}
+
+.quotes-estado-select:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.quotes-estado-select.estado-creada,
+.quotes-estado-select.estado-borrador {
+  background-color: rgba(139, 156, 179, 0.2);
+  color: var(--text-muted);
+}
+
+.quotes-estado-select.estado-enviada {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.quotes-estado-select.estado-aprobada,
+.quotes-estado-select.estado-aceptada {
+  background-color: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+}
+
+.quotes-estado-select.estado-en_proceso {
+  background-color: rgba(14, 165, 233, 0.2);
+  color: #7dd3fc;
+}
+
+.quotes-estado-select.estado-completada {
+  background-color: rgba(168, 85, 247, 0.2);
+  color: #d8b4fe;
+}
+
+.quotes-estado-select.estado-pago_parcial,
+.quotes-estado-select.estado-pendiente {
+  background-color: rgba(234, 179, 8, 0.2);
+  color: #fde047;
+}
+
+.quotes-estado-select.estado-pagada {
+  background-color: rgba(34, 197, 94, 0.25);
+  color: #86efac;
+}
+
+.quotes-estado-select.estado-cancelada,
+.quotes-estado-select.estado-rechazada {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.quotes-estado-cell {
+  display: block;
+  max-width: 10.5rem;
+  margin-right: 0.25rem;
 }
 
 .quote-num-link {
@@ -1124,9 +1229,12 @@ a.cell-ellipsis:hover {
 }
 
 .quotes-table .btn-download-pdf {
-  min-width: 3.25rem;
+  min-width: 2.75rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
   color: var(--accent);
   border-color: rgba(59, 130, 246, 0.35);
+  white-space: nowrap;
 }
 
 .quotes-table .btn-download-pdf:hover:not(:disabled) {
@@ -1212,6 +1320,7 @@ a.cell-ellipsis:hover {
   text-transform: capitalize;
 }
 
+.badge-creada,
 .badge-borrador {
   background: rgba(139, 156, 179, 0.2);
   color: var(--text-muted);
@@ -1222,15 +1331,202 @@ a.cell-ellipsis:hover {
   color: #93c5fd;
 }
 
+.badge-aprobada,
 .badge-aceptada {
-  background: rgba(34, 197, 94, 0.2);
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+}
+
+.badge-en_proceso {
+  background: rgba(14, 165, 233, 0.2);
+  color: #7dd3fc;
+}
+
+.badge-completada {
+  background: rgba(168, 85, 247, 0.2);
+  color: #d8b4fe;
+}
+
+.badge-pago_parcial,
+.badge-pendiente {
+  background: rgba(234, 179, 8, 0.2);
+  color: #fde047;
+}
+
+.badge-pagada {
+  background: rgba(34, 197, 94, 0.25);
   color: #86efac;
 }
 
+.badge-cancelada,
 .badge-rechazada {
   background: rgba(239, 68, 68, 0.2);
   color: #fca5a5;
 }
+
+.quote-pending-amount {
+  color: #fde047;
+  font-weight: 600;
+}
+
+/* Flujo de cotización */
+.quote-workflow {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.workflow-panel h2,
+.financial-panel h2 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.workflow-current {
+  margin-bottom: 1rem;
+}
+
+.workflow-hint {
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.workflow-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.workflow-step {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  opacity: 0.55;
+}
+
+.workflow-step.done,
+.workflow-step.active {
+  opacity: 1;
+}
+
+.workflow-step.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.workflow-step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.workflow-step.done .workflow-step-dot {
+  background: var(--success);
+}
+
+.workflow-step.active .workflow-step-dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.workflow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.workflow-estado-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.workflow-estado-form label {
+  flex: 1;
+  min-width: 200px;
+}
+
+.financial-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.financial-stat {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.financial-stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.financial-stat--paid strong {
+  color: #86efac;
+}
+
+.financial-stat--pending strong {
+  color: #fde047;
+}
+
+.payments-history h3,
+.payment-form h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.payments-table {
+  margin-bottom: 1.25rem;
+}
+
+.payment-form {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.workflow-paid-msg {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.quote-balance-row {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.5rem;
+  margin-top: 0.35rem;
+  font-weight: 700;
+}
+
+.quote-payments-doc {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.quote-payments-doc h3 {
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
 
 .items-table-wrap {
   overflow-x: auto;
@@ -1767,14 +2063,6 @@ a.cell-ellipsis:hover {
 
   .emisor-dl {
     grid-template-columns: 1fr;
-  }
-
-  .col-hide-xs {
-    display: none;
-  }
-
-  .quotes-table-quotes .col-w-estado {
-    width: 0;
   }
 
   .quotes-table thead th.col-download,

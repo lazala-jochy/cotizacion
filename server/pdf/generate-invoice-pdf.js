@@ -1,4 +1,5 @@
 const PDFDocument = require('pdfkit');
+const { ESTADO_LABELS, normalizeEstado } = require('../quoteWorkflow');
 
 function formatRD(amount) {
   const n = Number(amount) || 0;
@@ -159,6 +160,27 @@ function generateInvoicePdf({ quote, emisor }) {
     row(`ITBIS${quote.itbis > 0 ? ` (${itbisPercent(quote)}%)` : ''}:`, formatRD(quote.itbis));
     y += 2;
     row('Total:', formatRD(quote.total), true);
+    y += 4;
+    row('Estado:', ESTADO_LABELS[normalizeEstado(quote.estado)] || quote.estado);
+    row('Monto pagado:', formatRD(quote.monto_pagado || 0));
+    row('Balance pendiente:', formatRD(quote.balance_pendiente ?? quote.total), true);
+
+    const payments = quote.payments || [];
+    if (payments.length > 0) {
+      y += 12;
+      doc.font('Helvetica-Bold').fontSize(9).text('Historial de pagos', 50, y);
+      y += 14;
+      doc.font('Helvetica').fontSize(8);
+      for (const p of payments) {
+        const line = `${p.fecha} · ${p.metodo || '—'} · ${p.referencia || '—'} · ${formatRD(p.monto)}`;
+        doc.text(line, 50, y, { width: pageW });
+        y += 12;
+        if (y > 680) {
+          doc.addPage();
+          y = 50;
+        }
+      }
+    }
 
     y += 16;
     doc.font('Helvetica').fontSize(9);

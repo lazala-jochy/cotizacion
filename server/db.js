@@ -96,6 +96,34 @@ if (!quoteCols.some((c) => c.name === 'itbis_rate')) {
 if (!quoteCols.some((c) => c.name === 'itbis_manual')) {
   db.exec('ALTER TABLE quotes ADD COLUMN itbis_manual INTEGER DEFAULT 0');
 }
+if (!quoteCols.some((c) => c.name === 'monto_pagado')) {
+  db.exec('ALTER TABLE quotes ADD COLUMN monto_pagado REAL DEFAULT 0');
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS quote_payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    quote_id INTEGER NOT NULL,
+    monto REAL NOT NULL,
+    fecha TEXT NOT NULL,
+    metodo TEXT,
+    referencia TEXT,
+    notas TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (quote_id) REFERENCES quotes(id) ON DELETE CASCADE
+  );
+`);
+
+const { migrateLegacyEstados } = require('./quoteWorkflow');
+migrateLegacyEstados(db);
+
+// Recalcular monto_pagado desde historial
+const paySum = db.prepare(`
+  UPDATE quotes SET monto_pagado = COALESCE(
+    (SELECT SUM(monto) FROM quote_payments WHERE quote_payments.quote_id = quotes.id), 0
+  )
+`);
+paySum.run();
 
 const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
 if (userCount === 0) {

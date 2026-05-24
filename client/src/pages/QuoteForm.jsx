@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
+import { canEditQuoteContent } from '../constants/quoteEstados';
 
 const emptyItem = { descripcion: '', cantidad: 1, precio_unitario: 0 };
 const ITBIS_RATE_DEFAULT = 18;
@@ -32,7 +33,7 @@ export default function QuoteForm() {
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
   const [validezDias, setValidezDias] = useState(30);
   const [notas, setNotas] = useState('');
-  const [estado, setEstado] = useState('borrador');
+  const [locked, setLocked] = useState(false);
   const [taxMode, setTaxMode] = useState('gravado_auto');
   const [itbisRate, setItbisRate] = useState(ITBIS_RATE_DEFAULT);
   const [items, setItems] = useState([{ ...emptyItem }]);
@@ -65,7 +66,7 @@ export default function QuoteForm() {
         setFecha(q.fecha);
         setValidezDias(q.validez_dias);
         setNotas(q.notas || '');
-        setEstado(q.estado);
+        setLocked(!canEditQuoteContent(q.estado));
         const hasItbis = q.itbis > 0;
         const manual = q.itbis_manual === 1 || q.itbis_manual === true;
         let rate = q.itbis_rate != null ? Number(q.itbis_rate) : ITBIS_RATE_DEFAULT;
@@ -194,7 +195,6 @@ export default function QuoteForm() {
         fecha,
         validez_dias: validezDias,
         notas,
-        estado,
         apply_itbis: taxMode !== 'exento',
         itbis_manual: taxMode === 'gravado_manual',
         itbis_rate:
@@ -219,6 +219,25 @@ export default function QuoteForm() {
 
 
   if (loading) return <div className="page"><p className="muted">Cargando…</p></div>;
+
+  if (locked) {
+    return (
+      <div className="page">
+        <header className="page-header">
+          <div>
+            <h1>Cotización {numero}</h1>
+            <p>Esta cotización ya no está en estado Creada y no se puede editar aquí.</p>
+          </div>
+        </header>
+        <div className="alert alert-warn">
+          Usa la vista de detalle para cambiar el estado del proceso o registrar pagos.
+        </div>
+        <Link to={`/cotizaciones/${id}`} className="btn-primary">
+          Ir a detalle de cotización
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="page">
@@ -252,16 +271,10 @@ export default function QuoteForm() {
                 onChange={(e) => setValidezDias(Number(e.target.value))}
               />
             </label>
-            <label>
-              Estado
-              <select value={estado} onChange={(e) => setEstado(e.target.value)}>
-                <option value="borrador">Borrador</option>
-                <option value="enviada">Enviada</option>
-                <option value="aceptada">Aceptada</option>
-                <option value="rechazada">Rechazada</option>
-              </select>
-            </label>
           </div>
+          {!isEdit && (
+            <p className="panel-hint">Se creará en estado <strong>Creada</strong>. Podrás avanzar el flujo desde el detalle.</p>
+          )}
         </section>
 
         <section className="panel">

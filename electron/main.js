@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
 const { configureGithubUpdater, getPublishConfig } = require('./updater-auth');
@@ -7,6 +7,16 @@ const { shutdownForUpdate } = require('./shutdown-for-update');
 
 const isDev = !app.isPackaged;
 const PORT = 3847;
+
+function getAppIconPath() {
+  return path.join(__dirname, '..', 'asset', 'icon.png');
+}
+
+function getAppIcon() {
+  const iconPath = getAppIconPath();
+  const image = nativeImage.createFromPath(iconPath);
+  return image.isEmpty() ? undefined : image;
+}
 let mainWindow = null;
 let updaterService = null;
 let httpServer = null;
@@ -50,6 +60,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     title: 'Cotizaciones',
+    icon: getAppIconPath(),
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -147,6 +158,11 @@ app.whenReady().then(async () => {
       app.quit();
       return;
     }
+  }
+
+  const appIcon = getAppIcon();
+  if (appIcon && process.platform === 'darwin' && app.dock) {
+    app.dock.setIcon(appIcon);
   }
 
   createWindow();

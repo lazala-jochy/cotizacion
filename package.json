@@ -1,6 +1,6 @@
 {
   "name": "cotizaciones-app",
-  "version": "1.2.0",
+  "version": "1.9.0",
   "description": "App desktop para generar y administrar cotizaciones",
   "main": "electron/main.js",
   "author": "",
@@ -61,13 +61,16 @@
   "build": {
     "appId": "com.cotizaciones.desktop",
     "productName": "Cotizaciones",
+    "icon": "asset/icon.png",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "asset"
     },
     "files": [
       "electron/**/*",
       "server/**/*",
       "dist/**/*",
+      "asset/**/*",
       "package.json",
       "node_modules/**/*"
     ],

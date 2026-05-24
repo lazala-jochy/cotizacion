@@ -12,14 +12,6 @@ const emptyEmisor = {
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
-const ejemploEmisor = {
-  nombre: 'ALTITUDE CONSULTING',
-  rnc: '04900920846',
-  direccion: 'av princial, la mata, cotui, rd',
-  telefono: '849-405-8727',
-  email: 'jochylazala@gmail.com',
-};
-
 export default function Settings() {
   const [form, setForm] = useState(emptyEmisor);
   const [loading, setLoading] = useState(true);
@@ -49,12 +41,6 @@ export default function Settings() {
     } finally {
       setSaving(false);
     }
-  };
-
-  const loadExample = () => {
-    setForm({ ...ejemploEmisor, logo: form.logo });
-    setSuccess('');
-    setError('');
   };
 
   const handleLogoChange = (e) => {
@@ -93,10 +79,6 @@ export default function Settings() {
       {success && <div className="alert alert-success">{success}</div>}
 
       <section className="panel">
-        <button type="button" className="btn-ghost btn-sm example-btn" onClick={loadExample}>
-          Cargar datos de ejemplo
-        </button>
-
         <form onSubmit={handleSubmit} className="form-grid emisor-form">
           <label>
             Nombre / razón social *
