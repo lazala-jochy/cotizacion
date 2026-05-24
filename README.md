@@ -420,8 +420,21 @@ npm run build && npx electron-builder --linux --publish always
 
 El repo incluye `.github/workflows/release.yml`: compila **macOS** y **Windows** en paralelo (cada uno en su SO).
 
-1. **Settings → Secrets → Actions** → secret `GH_TOKEN` con tu token de GitHub.
-2. Publicar con tag:
+**Importante:** GitHub Actions **no** lee tu archivo `.env` local (está en `.gitignore`). Son dos lugares distintos:
+
+| Dónde | Para qué |
+|-------|----------|
+| `.env` en tu Mac/PC | `npm run dist:publish` local |
+| Secret `GH_TOKEN` en GitHub | Actions + token embebido para auto-update en repo privado |
+
+1. **Publicar releases (obligatorio):** el workflow usa el token integrado `github.token` — no necesitas secret para que suba el `.dmg` / `.exe`.
+
+2. **Auto-actualización en repo privado (recomendado):** copia el **mismo** valor que tienes en `.env`:
+   - Repo en GitHub → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+   - Nombre: `GH_TOKEN`
+   - Valor: tu `ghp_...` (Contents Read and Write en el repo)
+
+3. Publicar con tag:
 
 ```bash
 npm version patch

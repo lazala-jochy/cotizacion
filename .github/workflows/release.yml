@@ -7,6 +7,10 @@ on:
     tags:
       - 'v*'
 
+# Publicar releases con el token integrado de GitHub (no requiere secret para subir artefactos).
+permissions:
+  contents: write
+
 jobs:
   publish:
     strategy:
@@ -18,6 +22,9 @@ jobs:
           - os: windows-latest
             platform: win
     runs-on: ${{ matrix.os }}
+    env:
+      # Mismo token que en .env local, pero configurado en GitHub → Settings → Secrets → Actions
+      PUBLISH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
     steps:
       - uses: actions/checkout@v4
 
@@ -28,14 +35,25 @@ jobs:
 
       - run: npm ci
 
-      - name: Token de actualizaciones
+      # Solo si existe el secret GH_TOKEN (mismo valor que en tu .env).
+      # Sin él, el release se publica igual; la app instalada no podrá auto-actualizar en repo privado.
+      - name: Token embebido para auto-actualización (repo privado)
+        if: ${{ secrets.GH_TOKEN != '' }}
         run: node scripts/prepare-update-token.js --require
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
+      - name: Aviso — sin secret GH_TOKEN
+        if: ${{ secrets.GH_TOKEN == '' }}
+        run: |
+          echo "::warning::No hay secret GH_TOKEN en el repo."
+          echo "El instalador se publicará, pero sin token embebido para auto-update en repo privado."
+          echo "Copia el valor de tu .env local a: Settings → Secrets and variables → Actions → New secret → GH_TOKEN"
+
       - run: npm run build
 
       - name: Recompilar better-sqlite3 (Electron)
+        shell: bash
         run: |
           if [ "${{ matrix.platform }}" = "win" ]; then
             node scripts/rebuild-sqlite.js win32 x64
@@ -52,10 +70,10 @@ jobs:
         if: matrix.platform == 'mac'
         run: npx electron-builder --mac --publish always
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ env.PUBLISH_TOKEN }}
 
       - name: Publicar Windows
         if: matrix.platform == 'win'
         run: node scripts/patch-nsis-crc.js && npx electron-builder --win --x64 --publish always
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ env.PUBLISH_TOKEN }}

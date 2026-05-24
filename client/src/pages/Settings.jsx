@@ -93,10 +93,6 @@ export default function Settings() {
       {success && <div className="alert alert-success">{success}</div>}
 
       <section className="panel">
-        <p className="panel-hint">
-          Cada cuenta configura los datos de su empresa. Los datos de ejemplo (ALTITUDE CONSULTING) son solo
-          una referencia del formato esperado — puedes cargarlos y editarlos.
-        </p>
         <button type="button" className="btn-ghost btn-sm example-btn" onClick={loadExample}>
           Cargar datos de ejemplo
         </button>

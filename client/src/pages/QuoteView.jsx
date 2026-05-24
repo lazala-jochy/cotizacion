@@ -157,18 +157,29 @@ export default function QuoteView() {
             <span>Subtotal</span>
             <span>{formatMoney(quote.subtotal)}</span>
           </div>
-          {quote.itbis > 0 && (
+          {quote.itbis > 0 ? (
+            <>
+              <div>
+                <span>Subtotal gravado</span>
+                <span>{formatMoney(quote.subtotal)}</span>
+              </div>
+              <div>
+                <span>
+                  ITBIS (
+                  {quote.itbis_rate != null ?
+                    `${Number(quote.itbis_rate)}%`
+                  : quote.subtotal > 0 ?
+                    `${Math.round((quote.itbis / quote.subtotal) * 10000) / 100}%`
+                  : '18%'}
+                  )
+                </span>
+                <span>{formatMoney(quote.itbis)}</span>
+              </div>
+            </>
+          ) : (
             <div>
-              <span>
-                ITBIS (
-                {quote.itbis_rate != null ?
-                  `${Number(quote.itbis_rate)}%`
-                : quote.subtotal > 0 ?
-                  `${Math.round((quote.itbis / quote.subtotal) * 10000) / 100}%`
-                : '18%'}
-                )
-              </span>
-              <span>{formatMoney(quote.itbis)}</span>
+              <span>Subtotal exento</span>
+              <span>{formatMoney(quote.subtotal)}</span>
             </div>
           )}
           <div className="grand-total">

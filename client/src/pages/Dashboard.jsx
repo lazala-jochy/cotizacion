@@ -46,6 +46,10 @@ export default function Dashboard() {
           <h3>Ver clientes</h3>
           <p>Administra tu cartera de clientes guardados.</p>
         </Link>
+        <Link to="/reportes" className="action-card">
+          <h3>Reportes</h3>
+          <p>Gráficos de ventas, estados y clientes principales.</p>
+        </Link>
       </div>
 
       {!emisorConfigured && (

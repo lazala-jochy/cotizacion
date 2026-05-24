@@ -33,8 +33,7 @@ export default function QuoteForm() {
   const [validezDias, setValidezDias] = useState(30);
   const [notas, setNotas] = useState('');
   const [estado, setEstado] = useState('borrador');
-  const [applyItbis, setApplyItbis] = useState(true);
-  const [itbisManual, setItbisManual] = useState(false);
+  const [taxMode, setTaxMode] = useState('gravado_auto');
   const [itbisRate, setItbisRate] = useState(ITBIS_RATE_DEFAULT);
   const [items, setItems] = useState([{ ...emptyItem }]);
   const [error, setError] = useState('');
@@ -68,13 +67,18 @@ export default function QuoteForm() {
         setNotas(q.notas || '');
         setEstado(q.estado);
         const hasItbis = q.itbis > 0;
-        setApplyItbis(hasItbis);
         const manual = q.itbis_manual === 1 || q.itbis_manual === true;
         let rate = q.itbis_rate != null ? Number(q.itbis_rate) : ITBIS_RATE_DEFAULT;
         if (hasItbis && q.subtotal > 0 && q.itbis_rate == null) {
           rate = Math.round((q.itbis / q.subtotal) * 10000) / 100;
         }
-        setItbisManual(manual || (hasItbis && Math.abs(rate - ITBIS_RATE_DEFAULT) > 0.01));
+        if (!hasItbis) {
+          setTaxMode('exento');
+        } else if (manual || Math.abs(rate - ITBIS_RATE_DEFAULT) > 0.01) {
+          setTaxMode('gravado_manual');
+        } else {
+          setTaxMode('gravado_auto');
+        }
         setItbisRate(rate);
         setItems(
           q.items.length
@@ -95,10 +99,21 @@ export default function QuoteForm() {
       (s, i) => s + (Number(i.cantidad) || 0) * (Number(i.precio_unitario) || 0),
       0
     );
+    const isExento = taxMode === 'exento';
+    const itbisManual = taxMode === 'gravado_manual';
+    const applyItbis = !isExento;
     const pct = applyItbis ? (itbisManual ? Number(itbisRate) || 0 : ITBIS_RATE_DEFAULT) : 0;
     const itbis = applyItbis ? subtotal * (pct / 100) : 0;
-    return { subtotal, itbis, total: subtotal + itbis, itbisPercent: pct };
-  }, [items, applyItbis, itbisManual, itbisRate]);
+    return {
+      subtotal,
+      itbis,
+      total: subtotal + itbis,
+      itbisPercent: pct,
+      isExento,
+      subtotalExento: isExento ? subtotal : 0,
+      subtotalGravado: applyItbis ? subtotal : 0,
+    };
+  }, [items, taxMode, itbisRate]);
 
   const filteredClients = useMemo(() => {
     const q = clientSearch.trim().toLowerCase();
@@ -180,9 +195,12 @@ export default function QuoteForm() {
         validez_dias: validezDias,
         notas,
         estado,
-        apply_itbis: applyItbis,
-        itbis_manual: applyItbis && itbisManual,
-        itbis_rate: applyItbis ? (itbisManual ? Number(itbisRate) : ITBIS_RATE_DEFAULT) : 0,
+        apply_itbis: taxMode !== 'exento',
+        itbis_manual: taxMode === 'gravado_manual',
+        itbis_rate:
+          taxMode === 'gravado_manual' ? Number(itbisRate) || 0
+          : taxMode === 'gravado_auto' ? ITBIS_RATE_DEFAULT
+          : 0,
         items,
         ...clientManual,
       };
@@ -416,58 +434,74 @@ export default function QuoteForm() {
           </div>
 
           <div className="totals-box">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={applyItbis}
-                onChange={(e) => setApplyItbis(e.target.checked)}
-              />
-              Aplicar ITBIS
-            </label>
-            {applyItbis && (
-              <div className="itbis-mode">
+            <div className="tax-options">
+              <p className="tax-options-title">Impuestos</p>
+              <div className="tax-mode">
                 <label className="radio-label">
                   <input
                     type="radio"
-                    name="itbisMode"
-                    checked={!itbisManual}
-                    onChange={() => setItbisManual(false)}
+                    name="taxMode"
+                    value="gravado_auto"
+                    checked={taxMode === 'gravado_auto'}
+                    onChange={() => setTaxMode('gravado_auto')}
                   />
-                  Automático ({ITBIS_RATE_DEFAULT}%)
+                  ITBIS {ITBIS_RATE_DEFAULT}% (automático)
                 </label>
                 <label className="radio-label itbis-manual-row">
                   <input
                     type="radio"
-                    name="itbisMode"
-                    checked={itbisManual}
-                    onChange={() => setItbisManual(true)}
+                    name="taxMode"
+                    value="gravado_manual"
+                    checked={taxMode === 'gravado_manual'}
+                    onChange={() => setTaxMode('gravado_manual')}
                   />
-                  Manual
+                  ITBIS manual
                   <input
                     type="number"
                     className="itbis-rate-input"
                     min="0"
                     max="100"
                     step="0.01"
-                    disabled={!itbisManual}
+                    disabled={taxMode !== 'gravado_manual'}
                     value={itbisRate}
                     onChange={(e) => setItbisRate(e.target.value)}
                     aria-label="Porcentaje de ITBIS"
                   />
                   <span>%</span>
                 </label>
+                <label className="radio-label tax-exempt-label">
+                  <input
+                    type="radio"
+                    name="taxMode"
+                    value="exento"
+                    checked={taxMode === 'exento'}
+                    onChange={() => setTaxMode('exento')}
+                  />
+                  Exento de impuestos
+                </label>
               </div>
-            )}
+            </div>
             <div className="totals-rows">
               <div>
                 <span>Subtotal</span>
                 <strong>{formatMoney(totals.subtotal)}</strong>
               </div>
-              {applyItbis && (
+              {totals.isExento ? (
                 <div>
-                  <span>ITBIS ({totals.itbisPercent}%)</span>
-                  <strong>{formatMoney(totals.itbis)}</strong>
+                  <span>Subtotal exento</span>
+                  <strong>{formatMoney(totals.subtotalExento)}</strong>
                 </div>
+              ) : (
+                <>
+                  <div>
+                    <span>Subtotal gravado</span>
+                    <strong>{formatMoney(totals.subtotalGravado)}</strong>
+                  </div>
+                  <div>
+                    <span>ITBIS ({totals.itbisPercent}%)</span>
+                    <strong>{formatMoney(totals.itbis)}</strong>
+                  </div>
+                </>
               )}
               <div className="total-final">
                 <span>Total</span>

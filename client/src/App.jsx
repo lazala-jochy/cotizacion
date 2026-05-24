@@ -9,6 +9,7 @@ import Quotes from './pages/Quotes';
 import QuoteForm from './pages/QuoteForm';
 import QuoteView from './pages/QuoteView';
 import Settings from './pages/Settings';
+import Reports from './pages/Reports';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -49,6 +50,7 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="clientes" element={<Clients />} />
         <Route path="configuracion" element={<Settings />} />
+        <Route path="reportes" element={<Reports />} />
         <Route path="cotizaciones" element={<Quotes />} />
         <Route path="cotizaciones/nueva" element={<QuoteForm />} />
         <Route path="cotizaciones/:id" element={<QuoteView />} />

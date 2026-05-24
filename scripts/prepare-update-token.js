@@ -25,7 +25,7 @@ const requireToken = process.argv.includes('--require');
 
 if (!token) {
   const msg =
-    'GH_TOKEN no está definido. Para repo privado: export GH_TOKEN=ghp_... antes de npm run dist:publish';
+    'GH_TOKEN no está definido. Local: .env o export GH_TOKEN=ghp_... | CI: secret GH_TOKEN en GitHub → Settings → Secrets → Actions';
   if (requireToken) {
     console.error(msg);
     process.exit(1);

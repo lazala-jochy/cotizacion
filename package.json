@@ -1,6 +1,6 @@
 {
   "name": "cotizaciones-app",
-  "version": "1.7.0",
+  "version": "1.2.0",
   "description": "App desktop para generar y administrar cotizaciones",
   "main": "electron/main.js",
   "author": "",
@@ -54,6 +54,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.1.1",
+    "recharts": "^3.8.1",
     "vite": "^6.0.5",
     "wait-on": "^8.0.1"
   },
