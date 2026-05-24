@@ -21,7 +21,9 @@ router.post('/register', (req, res) => {
   const result = db
     .prepare('INSERT INTO users (nombre, email, password_hash) VALUES (?, ?, ?)')
     .run(nombre.trim(), email.trim().toLowerCase(), hash);
-  const user = { id: result.lastInsertRowid, nombre: nombre.trim(), email: email.trim().toLowerCase() };
+  const userId = result.lastInsertRowid;
+  db.prepare('INSERT INTO emisor_settings (user_id, nombre) VALUES (?, ?)').run(userId, '');
+  const user = { id: userId, nombre: nombre.trim(), email: email.trim().toLowerCase() };
   const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
   res.status(201).json({ user, token });
 });

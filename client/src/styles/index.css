@@ -133,6 +133,33 @@ label {
   color: #fca5a5;
 }
 
+.alert-success {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #86efac;
+}
+
+.alert-warn {
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  color: #fde047;
+  margin-bottom: 1rem;
+}
+
+.panel-hint {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.example-btn {
+  margin-bottom: 1.25rem;
+}
+
+.emisor-form {
+  margin-top: 0.5rem;
+}
+
 .muted {
   color: var(--text-muted);
 }

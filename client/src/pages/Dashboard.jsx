@@ -5,9 +5,10 @@ import { api } from '../api';
 export default function Dashboard() {
   const [emisor, setEmisor] = useState(null);
   const [stats, setStats] = useState({ clients: 0, quotes: 0 });
+  const emisorConfigured = emisor?.nombre?.trim();
 
   useEffect(() => {
-    api.emisor().then(setEmisor).catch(console.error);
+    api.emisor.get().then(setEmisor).catch(console.error);
     Promise.all([api.clients.list(), api.quotes.list()])
       .then(([clients, quotes]) => setStats({ clients: clients.length, quotes: quotes.length }))
       .catch(console.error);
@@ -18,7 +19,7 @@ export default function Dashboard() {
       <header className="page-header">
         <div>
           <h1>Inicio</h1>
-          <p>Gestiona cotizaciones y clientes de ALTITUDE CONSULTING</p>
+          <p>Gestiona cotizaciones y clientes de tu negocio</p>
         </div>
         <Link to="/cotizaciones/nueva" className="btn-primary">
           + Nueva cotización
@@ -47,9 +48,21 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {emisor && (
+      {!emisorConfigured && (
+        <div className="alert alert-warn">
+          Configura los datos de tu empresa en{' '}
+          <Link to="/configuracion">Emisor</Link> para que aparezcan en las cotizaciones.
+        </div>
+      )}
+
+      {emisorConfigured && (
         <section className="panel emisor-panel">
-          <h2>Emisor</h2>
+          <div className="panel-header-row">
+            <h2>Emisor</h2>
+            <Link to="/configuracion" className="btn-ghost btn-sm">
+              Editar
+            </Link>
+          </div>
           <dl className="emisor-dl">
             <div>
               <dt>Empresa</dt>

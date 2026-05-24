@@ -1,13 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { PORT, EMISOR } = require('./config');
+const { PORT } = require('./config');
 
 require('./db');
 
 const authRoutes = require('./routes/auth');
 const clientsRoutes = require('./routes/clients');
 const quotesRoutes = require('./routes/quotes');
+const emisorRoutes = require('./routes/emisor');
 
 const app = express();
 app.use(cors());
@@ -17,11 +18,8 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, version: require('../package.json').version });
 });
 
-app.get('/api/emisor', (_req, res) => {
-  res.json(EMISOR);
-});
-
 app.use('/api/auth', authRoutes);
+app.use('/api/emisor', emisorRoutes);
 app.use('/api/clients', clientsRoutes);
 app.use('/api/quotes', quotesRoutes);
 

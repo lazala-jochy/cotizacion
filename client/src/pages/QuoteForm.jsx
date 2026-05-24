@@ -138,7 +138,7 @@ export default function QuoteForm() {
       <header className="page-header">
         <div>
           <h1>{isEdit ? 'Editar cotización' : 'Nueva cotización'}</h1>
-          <p>ALTITUDE CONSULTING · RNC 04900920846</p>
+          <p>Completa los datos del cliente y los ítems de la cotización</p>
         </div>
       </header>
 

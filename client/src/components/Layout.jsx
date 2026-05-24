@@ -30,10 +30,10 @@ export default function Layout() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark">A</span>
+          <span className="brand-mark">C</span>
           <div>
-            <strong>ALTITUDE</strong>
-            <small>CONSULTING</small>
+            <strong>Cotizaciones</strong>
+            <small>Desktop</small>
           </div>
         </div>
         <nav>
@@ -43,6 +43,7 @@ export default function Layout() {
           <NavLink to="/cotizaciones/nueva">Nueva cotización</NavLink>
           <NavLink to="/cotizaciones">Cotizaciones</NavLink>
           <NavLink to="/clientes">Clientes</NavLink>
+          <NavLink to="/configuracion">Emisor</NavLink>
         </nav>
         <div className="sidebar-footer">
           <p className="user-name">{user?.nombre}</p>

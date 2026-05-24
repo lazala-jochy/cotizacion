@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 function getDbPath() {
   const base =
     process.env.COTIZACION_DATA_DIR ||
-    path.join(process.env.HOME || process.env.USERPROFILE || '.', '.altitude-cotizaciones');
+    path.join(process.env.HOME || process.env.USERPROFILE || '.', '.cotizaciones-app');
   fs.mkdirSync(base, { recursive: true });
   return path.join(base, 'cotizaciones.db');
 }
@@ -71,6 +71,17 @@ db.exec(`
     orden INTEGER DEFAULT 0,
     FOREIGN KEY (quote_id) REFERENCES quotes(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS emisor_settings (
+    user_id INTEGER PRIMARY KEY,
+    nombre TEXT NOT NULL DEFAULT '',
+    rnc TEXT,
+    direccion TEXT,
+    telefono TEXT,
+    email TEXT,
+    updated_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
 `);
 
 const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
@@ -78,7 +89,8 @@ if (userCount === 0) {
   const hash = bcrypt.hashSync('admin123', 10);
   db.prepare(
     'INSERT INTO users (nombre, email, password_hash) VALUES (?, ?, ?)'
-  ).run('Administrador', 'admin@altitude.local', hash);
+  ).run('Administrador', 'admin@demo.local', hash);
+  db.prepare('INSERT INTO emisor_settings (user_id, nombre) VALUES (?, ?)').run(1, '');
 }
 
 module.exports = db;

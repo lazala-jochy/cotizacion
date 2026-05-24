@@ -1,6 +1,6 @@
-# Altitude Cotizaciones
+# Cotizaciones (Desktop)
 
-App desktop para **ALTITUDE CONSULTING** — generar cotizaciones, guardar clientes y gestionar cuentas de usuario.
+App desktop multiusuario para generar cotizaciones, guardar clientes y configurar los datos de **tu empresa** (emisor) por cuenta.
 
 **Stack:** Electron · React · Express · SQLite
 
@@ -53,7 +53,7 @@ Esto levanta en paralelo:
 
 | Campo | Valor (demo) |
 |-------|----------------|
-| Email | `admin@altitude.local` |
+| Email | `admin@demo.local` |
 | Contraseña | `admin123` |
 
 También puedes crear una cuenta nueva desde **Crear cuenta**.
@@ -110,8 +110,8 @@ npm run dist
 
 | Archivo | Uso |
 |---------|-----|
-| `Altitude Cotizaciones-x.x.x.dmg` | Instalador (arrastrar a Aplicaciones) |
-| `Altitude Cotizaciones-x.x.x-mac.zip` | Archivo portable |
+| `Cotizaciones-x.x.x.dmg` | Instalador (arrastrar a Aplicaciones) |
+| `Cotizaciones-x.x.x-mac.zip` | Archivo portable |
 
 **Instalar en otra Mac:** abre el `.dmg`, arrastra la app a **Aplicaciones**.
 
@@ -134,7 +134,7 @@ npm run dist
 
 | Archivo | Uso |
 |---------|-----|
-| `Altitude Cotizaciones Setup x.x.x.exe` | Instalador con asistente |
+| `Cotizaciones Setup x.x.x.exe` | Instalador con asistente |
 
 **Instalar:** ejecuta el `.exe` y sigue el asistente.
 
@@ -166,13 +166,13 @@ Luego, en una máquina Linux:
 npm run dist
 ```
 
-**Salida:** `Altitude Cotizaciones-x.x.x.AppImage`
+**Salida:** `Cotizaciones-x.x.x.AppImage`
 
 **Ejecutar:**
 
 ```bash
-chmod +x "Altitude Cotizaciones-"*.AppImage
-./"Altitude Cotizaciones-"*.AppImage
+chmod +x "Cotizaciones-"*.AppImage
+./"Cotizaciones-"*.AppImage
 ```
 
 ---
@@ -187,182 +187,206 @@ chmod +x "Altitude Cotizaciones-"*.AppImage
 
 ---
 
-## Actualizaciones automáticas al subir cambios
+## Publicar cambios y actualizar la app instalada
 
 La app usa **`electron-updater`** + **GitHub Releases**.
 
-> **Importante:** subir código al repo (`git push`) **no actualiza** las apps ya instaladas.  
-> Solo actualiza quien tenga la app empaquetada (`.dmg`, `.exe`, etc.) cuando publicas una **nueva versión** en GitHub Releases con `npm run dist:publish`.
+| Acción | ¿Actualiza apps ya instaladas? |
+|--------|-------------------------------|
+| `git push` (solo código) | **No** |
+| `npm run dist` (sin publicar) | **No** (solo genera `.dmg` local en `release/`) |
+| `npm run dist:publish` con `version` nueva | **Sí** |
 
-En modo desarrollo (`npm run dev`) las actualizaciones están **desactivadas**.
+> En `npm run dev` las actualizaciones **no funcionan**. Solo en la app instalada desde un Release.
+
+**Repositorio configurado:** [github.com/lazala-jochy/cotizacion](https://github.com/lazala-jochy/cotizacion)
 
 ---
 
-### Configuración inicial (una sola vez)
+### Lo que ya está en `package.json`
 
-#### 1. Repositorio en GitHub
-
-Crea el repo y sube el proyecto:
-
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/TU_USUARIO/altitude-cotizaciones.git
-git push -u origin main
-```
-
-#### 2. `package.json` — datos del repo y versión
-
-Edita estas secciones con **tu usuario y nombre real del repo**:
+Estos campos ya están definidos en el proyecto (no uses placeholders):
 
 ```json
 {
   "version": "1.0.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/TU_USUARIO/altitude-cotizaciones.git"
+    "url": "https://github.com/lazala-jochy/cotizacion.git"
   },
   "build": {
-    "appId": "com.altitude.cotizaciones",
+    "appId": "com.cotizaciones.desktop",
+    "productName": "Cotizaciones",
     "publish": {
       "provider": "github",
-      "owner": "TU_USUARIO",
-      "repo": "altitude-cotizaciones"
+      "owner": "lazala-jochy",
+      "repo": "cotizacion"
     }
   }
 }
 ```
 
-| Campo | Qué es |
-|-------|--------|
-| `version` | Versión de la app; **debes subirla** en cada release (`1.0.1`, `1.1.0`, etc.) |
-| `build.publish.owner` | Tu usuario u organización de GitHub |
-| `build.publish.repo` | Nombre del repositorio |
-| `build.appId` | ID único de la app (no cambiar después del primer release) |
+| Campo | Para qué sirve |
+|-------|----------------|
+| `version` | Versión actual; **súbela en cada release** (`1.0.1`, `1.1.0`…) |
+| `repository.url` | Enlace al repo (electron-builder / metadatos) |
+| `build.publish.owner` | Usuario de GitHub |
+| `build.publish.repo` | Nombre del repo |
+| `build.appId` | ID de la app; **no cambiar** después del primer release público |
 
-#### 3. Token de GitHub (`GH_TOKEN`)
+---
 
-`electron-builder` necesita un token para crear Releases y subir los instaladores.
+### Configuración inicial (una sola vez)
 
-1. Ve a **GitHub → Settings → Developer settings → Personal access tokens**
-2. Crea un token (fine-grained o classic):
-   - **Classic:** marca el scope `repo` (repositorio privado) o `public_repo` (solo público)
-   - **Fine-grained:** permisos **Contents: Read and write** y **Metadata: Read**
-3. Copia el token (solo se muestra una vez)
-
-En tu Mac, exporta el token en la terminal (o agrégalo a `~/.zshrc`):
+#### 1. Subir el proyecto a GitHub
 
 ```bash
-export GH_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
+cd /Users/joserosario/Desktop/cotizacion
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/lazala-jochy/cotizacion.git
+git push -u origin main
 ```
 
-Para comprobar que está definido:
+(Si el remote ya existe, solo `git push origin main`.)
+
+#### 2. Configurar el token `GH_TOKEN`
+
+Necesitas el token de GitHub para que `electron-builder` cree Releases y suba los instaladores.
+
+1. **GitHub → Settings → Developer settings → Personal access tokens**
+2. Crear token:
+   - **Classic:** scope `repo` (repo privado) o `public_repo` (repo público)
+   - **Fine-grained:** permiso **Contents: Read and write** en `lazala-jochy/cotizacion`
+3. Copiar el token (`ghp_...`) — solo se muestra una vez
+
+**En la terminal (sesión actual):**
+
+```bash
+export GH_TOKEN=ghp_pega_aqui_tu_token
+```
+
+**Guardarlo permanente (Mac, zsh):**
+
+```bash
+echo 'export GH_TOKEN=ghp_pega_aqui_tu_token' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**Verificar:**
 
 ```bash
 echo $GH_TOKEN
 ```
 
-> **No subas el token al repo.** Ya está en `.gitignore` (`.env`, etc.).
+> **Nunca** subas el token al repo. No va en `package.json` ni en commits.
 
-#### 4. Repositorio público vs privado
-
-| Tipo de repo | Token necesario |
-|--------------|-----------------|
-| Público | `public_repo` o fine-grained con acceso al repo |
-| Privado | `repo` o fine-grained con acceso al repo |
-
-Los usuarios finales **no** necesitan el token; solo tú al publicar.
-
----
-
-### Flujo cada vez que subes cambios al repo
-
-Sigue estos pasos **después** de hacer `git push` de tu código:
-
-#### Paso 1 — Subir cambios al repositorio
+#### 3. Primera publicación
 
 ```bash
-git add .
-git commit -m "Descripción de los cambios"
-git push origin main
-```
-
-Esto guarda el código en GitHub, pero **aún no** entrega actualización a quien tiene la app instalada.
-
-#### Paso 2 — Incrementar la versión
-
-En `package.json`, sube `version`. Ejemplos:
-
-- Corrección pequeña: `1.0.0` → `1.0.1`
-- Nueva función: `1.0.1` → `1.1.0`
-- Cambio grande: `1.1.0` → `2.0.0`
-
-```json
-"version": "1.0.1"
-```
-
-Opcional con npm:
-
-```bash
-npm version patch   # 1.0.0 → 1.0.1
-npm version minor   # 1.0.0 → 1.1.0
-npm version major   # 1.0.0 → 2.0.0
-```
-
-Haz commit del cambio de versión:
-
-```bash
-git add package.json
-git commit -m "Bump version to 1.0.1"
-git push origin main
-```
-
-#### Paso 3 — Generar instaladores y publicar en GitHub Releases
-
-Con `GH_TOKEN` exportado:
-
-```bash
+cd /Users/joserosario/Desktop/cotizacion
+npm install
+export GH_TOKEN=ghp_pega_aqui_tu_token   # si no está en ~/.zshrc
 npm run dist:publish
 ```
 
-Ese comando:
+Comprueba en: **https://github.com/lazala-jochy/cotizacion/releases**  
+Debe aparecer el tag `v1.0.0` con el `.dmg` y archivos `latest-mac.yml`.
 
-1. Compila el frontend (`vite build`)
-2. Empaqueta la app con `electron-builder`
-3. Crea un **Release** en GitHub con el tag `v1.0.1` (según tu `version`)
-4. Sube los archivos de `release/` (`.dmg`, `.exe`, `latest-mac.yml`, etc.)
+Distribuye el `.dmg` de `release/` para que los usuarios instalen la app por primera vez.
 
-Verifica en GitHub: **Repositorio → Releases** — debe aparecer la versión nueva con los assets adjuntos.
+---
 
-#### Paso 4 — Qué ven los usuarios con la app instalada
+### Publicar nuevos cambios (cada actualización)
 
-- Al abrir la app (unos segundos después): busca actualización automáticamente
-- Menú lateral → **Buscar actualizaciones**
-- Si hay versión nueva: descarga en segundo plano y avisa *"Se instalará al reiniciar la app"*
-- Al cerrar y volver a abrir la app: se aplica la actualización
+Copia y ejecuta este flujo cada vez que quieras que **quien ya tiene la app instalada** reciba la nueva versión:
+
+```bash
+cd /Users/joserosario/Desktop/cotizacion
+
+# 1. Subir código
+git add .
+git commit -m "Descripción de tus cambios"
+git push origin main
+
+# 2. Subir versión (elige una)
+npm version patch    # 1.0.0 → 1.0.1  (correcciones)
+# npm version minor  # 1.0.0 → 1.1.0  (funciones nuevas)
+# npm version major  # 1.0.0 → 2.0.0  (cambios grandes)
+
+git add package.json package-lock.json
+git commit -m "Release $(node -p "require('./package.json').version")"
+git push origin main
+
+# 3. Token activo
+export GH_TOKEN=ghp_pega_aqui_tu_token
+
+# 4. Compilar y publicar Release en GitHub
+npm run dist:publish
+```
+
+**Qué hace `npm run dist:publish`:**
+
+1. `vite build` → genera `dist/`
+2. `electron-builder --publish always` → crea `.dmg` y sube a GitHub Releases
+3. Crea tag `v1.0.1` (según `version` en `package.json`)
+4. Sube `latest-mac.yml` (necesario para que la app detecte updates)
+
+---
+
+### Cómo se actualiza la app instalada (usuarios finales)
+
+Los usuarios **no** necesitan el token ni ejecutar comandos.
+
+1. Instalar una vez desde el `.dmg` del Release en GitHub.
+2. Cuando publiques una versión mayor:
+   - Al **abrir la app** (~5 s): busca actualización sola.
+   - O en el menú lateral: **Buscar actualizaciones**.
+3. Si hay versión nueva: mensaje *"Descargando…"* → *"Se instalará al reiniciar la app"*.
+4. **Cerrar y volver a abrir** la app → queda en la versión nueva.
 
 ---
 
 ### Publicar solo para un sistema operativo
 
 ```bash
-# Solo macOS
+export GH_TOKEN=ghp_pega_aqui_tu_token
+
 npm run build && npx electron-builder --mac --publish always
-
-# Solo Windows
 npm run build && npx electron-builder --win --publish always
-
-# Solo Linux
 npm run build && npx electron-builder --linux --publish always
 ```
 
 ---
 
+### Checklist por release
+
+- [ ] Probado en local: `npm run dev`
+- [ ] `git push` con los cambios
+- [ ] `version` incrementada en `package.json`
+- [ ] `echo $GH_TOKEN` muestra el token
+- [ ] `npm run dist:publish` sin errores
+- [ ] Release en GitHub con `.dmg` y `latest-mac.yml`
+- [ ] Probar en Mac con la versión anterior instalada → **Buscar actualizaciones**
+
+---
+
+### Errores frecuentes
+
+| Error | Solución |
+|-------|----------|
+| `GH_TOKEN` vacío | `export GH_TOKEN=...` antes de `dist:publish` |
+| `404` / `Bad credentials` | Token válido y con acceso a `lazala-jochy/cotizacion` |
+| La app no actualiza | Subiste `version` y hay Release nuevo con número mayor |
+| Falta `latest-mac.yml` | Volver a ejecutar `npm run dist:publish` |
+| Updates en `npm run dev` | Normal: no aplica; usar app instalada del `.dmg` |
+
+---
+
 ### Automatizar con GitHub Actions (opcional)
 
-Puedes publicar al hacer push de un tag, sin compilar en tu Mac.
+En el repo: **Settings → Secrets → Actions** → secret `GH_TOKEN` con tu token.
 
 Crea `.github/workflows/release.yml`:
 
@@ -381,70 +405,23 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - run: npm ci
       - run: npm run dist:publish
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 ```
 
-**Configurar el secret en GitHub:**
-
-1. Repo → **Settings → Secrets and variables → Actions**
-2. **New repository secret** → nombre: `GH_TOKEN`, valor: tu token
-
-**Publicar con tag:**
+Publicar con tag:
 
 ```bash
-# Actualiza version en package.json primero, luego:
-git add package.json
-git commit -m "Release 1.0.1"
-git tag v1.0.1
+npm version patch
 git push origin main
-git push origin v1.0.1
+git tag v$(node -p "require('./package.json').version")
+git push origin --tags
 ```
-
-El workflow compilará y subirá el Release automáticamente.
-
----
-
-### Checklist rápido por release
-
-- [ ] Código probado en local (`npm run dev`)
-- [ ] `git push` con los cambios
-- [ ] `version` incrementada en `package.json`
-- [ ] `build.publish.owner` y `repo` correctos
-- [ ] `GH_TOKEN` exportado (o secret en Actions)
-- [ ] `npm run dist:publish` ejecutado sin errores
-- [ ] Release visible en GitHub con archivos `.dmg` / `.exe` / `latest-*.yml`
-- [ ] Probar en una Mac/PC con la versión anterior instalada
-
----
-
-### Errores frecuentes al publicar
-
-| Error | Causa / solución |
-|-------|------------------|
-| `GH_TOKEN` no definido | `export GH_TOKEN=...` antes de `dist:publish` |
-| `404` al publicar | `owner` o `repo` incorrectos en `package.json` |
-| La app no detecta updates | La versión instalada es igual a la del Release; sube `version` |
-| `Cannot find latest-mac.yml` | El Release no tiene assets; vuelve a ejecutar `dist:publish` |
-| Updates en dev no funcionan | Es normal; solo funciona en app empaquetada (`npm run dist` + instalar) |
-| Repo privado sin permisos | Token con scope `repo` |
-
----
-
-### Resumen
-
-| Acción | ¿Actualiza apps instaladas? |
-|--------|----------------------------|
-| `git push` (solo código) | No |
-| `npm run dist` (sin publish) | No (solo genera instalador local) |
-| `npm run dist:publish` con versión nueva | **Sí** |
 
 ---
 
@@ -454,15 +431,26 @@ La base SQLite **no** va en el repositorio. Se guarda en el equipo del usuario:
 
 | SO | Ruta |
 |----|------|
-| macOS / Linux | `~/.altitude-cotizaciones/cotizaciones.db` |
-| Windows | `%USERPROFILE%\.altitude-cotizaciones\cotizaciones.db` |
+| macOS / Linux | `~/.cotizaciones-app/cotizaciones.db` |
+| Windows | `%USERPROFILE%\.cotizaciones-app\cotizaciones.db` |
 
 ---
 
-## Configuración del emisor
+## Configuración del emisor (tu empresa)
 
-Datos de **ALTITUDE CONSULTING** (nombre, RNC, dirección, teléfono, email):  
-editar `server/config.js`.
+Los datos del emisor **no están fijos** en el código. Cada usuario los configura en la app:
+
+**Menú → Emisor** (o `/configuracion`)
+
+| Campo | Ejemplo (referencia) |
+|-------|----------------------|
+| Nombre / razón social | ALTITUDE CONSULTING |
+| RNC | 04900920846 |
+| Dirección | av princial, la mata, cotui, rd |
+| Teléfono | 849-405-8727 |
+| Email | jochylazala@gmail.com |
+
+Puedes usar **Cargar datos de ejemplo** en esa pantalla para ver el formato y editarlos con la información de tu negocio.
 
 ---
 
@@ -505,4 +493,4 @@ Todo lo listado en [`.gitignore`](.gitignore), en especial:
 
 ## Licencia
 
-MIT — ALTITUDE CONSULTING
+MIT

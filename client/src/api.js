@@ -22,7 +22,10 @@ async function request(path, options = {}) {
 
 export const api = {
   health: () => request('/api/health'),
-  emisor: () => request('/api/emisor'),
+  emisor: {
+    get: () => request('/api/emisor'),
+    update: (body) => request('/api/emisor', { method: 'PUT', body: JSON.stringify(body) }),
+  },
   register: (body) => request('/api/auth/register', { method: 'POST', body: JSON.stringify(body) }),
   login: (body) => request('/api/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   clients: {

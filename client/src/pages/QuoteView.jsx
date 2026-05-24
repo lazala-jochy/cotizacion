@@ -13,7 +13,7 @@ export default function QuoteView() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    Promise.all([api.quotes.get(id), api.emisor()])
+    Promise.all([api.quotes.get(id), api.emisor.get()])
       .then(([q, e]) => {
         setQuote(q);
         setEmisor(e);
@@ -30,7 +30,9 @@ export default function QuoteView() {
   };
 
   if (error) return <div className="page"><div className="alert alert-error">{error}</div></div>;
-  if (!quote || !emisor) return <div className="page"><p className="muted">Cargando…</p></div>;
+  if (!quote || emisor === null) return <div className="page"><p className="muted">Cargando…</p></div>;
+
+  const emisorListo = emisor?.nombre?.trim();
 
   return (
     <div className="page quote-view-page">
@@ -48,15 +50,26 @@ export default function QuoteView() {
         </div>
       </div>
 
+      {!emisorListo && (
+        <div className="alert alert-warn no-print">
+          Configura el emisor en <Link to="/configuracion">Emisor</Link> para mostrar tu empresa en la
+          cotización impresa.
+        </div>
+      )}
+
       <article className="quote-document print-area">
         <header className="quote-doc-header">
           <div>
-            <h1>{emisor.nombre}</h1>
-            <p>RNC {emisor.rnc}</p>
-            <p>{emisor.direccion}</p>
-            <p>
-              Tel. {emisor.telefono} · {emisor.email}
-            </p>
+            <h1>{emisor.nombre || '— Sin configurar —'}</h1>
+            {emisor.rnc && <p>RNC {emisor.rnc}</p>}
+            {emisor.direccion && <p>{emisor.direccion}</p>}
+            {(emisor.telefono || emisor.email) && (
+              <p>
+                {emisor.telefono && `Tel. ${emisor.telefono}`}
+                {emisor.telefono && emisor.email && ' · '}
+                {emisor.email}
+              </p>
+            )}
           </div>
           <div className="quote-doc-meta">
             <h2>COTIZACIÓN</h2>
@@ -136,9 +149,11 @@ export default function QuoteView() {
           </section>
         )}
 
-        <footer className="quote-doc-footer">
-          <p>Gracias por su preferencia — {emisor.nombre}</p>
-        </footer>
+        {emisorListo && (
+          <footer className="quote-doc-footer">
+            <p>Gracias por su preferencia — {emisor.nombre}</p>
+          </footer>
+        )}
       </article>
     </div>
   );

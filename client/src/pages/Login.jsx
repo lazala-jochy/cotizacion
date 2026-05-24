@@ -31,8 +31,8 @@ export default function Login() {
       <div className="auth-card">
         <div className="auth-brand">
           <span className="brand-mark lg">A</span>
-          <h1>Altitude Cotizaciones</h1>
-          <p>ALTITUDE CONSULTING · RNC 04900920846</p>
+          <h1>Cotizaciones</h1>
+          <p>Genera y administra cotizaciones para tu negocio</p>
         </div>
         <form onSubmit={handleSubmit}>
           <h2>Iniciar sesión</h2>
@@ -64,7 +64,7 @@ export default function Login() {
         <p className="auth-footer">
           ¿No tienes cuenta? <Link to="/register">Crear cuenta</Link>
         </p>
-        <p className="auth-hint">Demo: admin@altitude.local / admin123</p>
+        <p className="auth-hint">Demo: admin@demo.local / admin123</p>
       </div>
     </div>
   );

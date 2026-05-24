@@ -32,7 +32,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Base de datos local (los datos de producción viven en ~/.altitude-cotizaciones)
+# Base de datos local (los datos de producción viven en ~/.cotizaciones-app)
 *.db
 *.db-journal
 *.db-shm
