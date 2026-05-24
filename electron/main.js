@@ -7,6 +7,11 @@ const isDev = !app.isPackaged;
 const PORT = 3847;
 let mainWindow = null;
 let updaterReady = false;
+let updateDownloaded = false;
+
+function sendUpdateStatus(payload) {
+  mainWindow?.webContents.send('update-status', payload);
+}
 
 function formatUpdateError(err) {
   const msg = err?.message || String(err);
@@ -23,8 +28,7 @@ function formatUpdateError(err) {
     if (publish.private) {
       return (
         'No se pudo acceder al repo privado. ' +
-        'Instala Cotizaciones-1.3.0.dmg desde Releases. ' +
-        'Si ya tienes 1.3.0, recompila con GH_TOKEN válido en .env y vuelve a publicar.'
+        'Descarga el .dmg desde Releases o recompila con GH_TOKEN válido.'
       );
     }
     return (
@@ -64,6 +68,13 @@ function createWindow() {
 
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow?.show();
+    if (updateDownloaded) {
+      sendUpdateStatus({
+        status: 'downloaded',
+        message: 'Actualización lista. Pulsa «Reiniciar e instalar».',
+        canInstall: true,
+      });
+    }
   });
 
   mainWindow.webContents.on('did-fail-load', (_event, code, description) => {
@@ -95,7 +106,7 @@ function setupAutoUpdater() {
 
   if (!updaterReady && config.isPrivate) {
     mainWindow?.webContents.once('did-finish-load', () => {
-      mainWindow?.webContents.send('update-status', {
+      sendUpdateStatus({
         status: 'error',
         message: formatUpdateError(new Error('no token')),
       });
@@ -103,35 +114,82 @@ function setupAutoUpdater() {
     return;
   }
 
-  autoUpdater.on('update-available', () => {
-    mainWindow?.webContents.send('update-status', {
-      status: 'available',
-      message: 'Hay una actualización disponible. Descargando…',
+  autoUpdater.on('update-available', (info) => {
+    sendUpdateStatus({
+      status: 'downloading',
+      message: `Descargando v${info.version}…`,
+      version: info.version,
     });
   });
 
-  autoUpdater.on('update-downloaded', () => {
-    mainWindow?.webContents.send('update-status', {
+  autoUpdater.on('download-progress', (progress) => {
+    const pct = Math.round(progress.percent || 0);
+    sendUpdateStatus({
+      status: 'downloading',
+      message: `Descargando actualización… ${pct}%`,
+      percent: pct,
+    });
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    updateDownloaded = true;
+    sendUpdateStatus({
       status: 'downloaded',
-      message: 'Actualización lista. Se instalará al reiniciar la app.',
+      message: `v${info.version} lista. Pulsa «Reiniciar e instalar».`,
+      version: info.version,
+      canInstall: true,
     });
   });
 
   autoUpdater.on('error', (err) => {
-    mainWindow?.webContents.send('update-status', {
+    sendUpdateStatus({
       status: 'error',
       message: formatUpdateError(err),
     });
   });
 
   autoUpdater.on('update-not-available', () => {
-    mainWindow?.webContents.send('update-status', {
+    sendUpdateStatus({
       status: 'none',
       message: 'Estás en la última versión.',
     });
   });
 
   setTimeout(() => autoUpdater.checkForUpdatesAndNotify(), 5000);
+}
+
+async function checkDownloadAndReport() {
+  const result = await autoUpdater.checkForUpdates();
+
+  if (!result?.updateInfo) {
+    return { status: 'none', message: 'Estás en la última versión publicada.' };
+  }
+
+  const version = result.updateInfo.version;
+  sendUpdateStatus({
+    status: 'downloading',
+    message: `Descargando v${version}…`,
+    version,
+  });
+
+  if (result.downloadPromise) {
+    await result.downloadPromise;
+  }
+
+  if (updateDownloaded) {
+    return {
+      status: 'downloaded',
+      message: `v${version} descargada. Pulsa «Reiniciar e instalar».`,
+      version,
+      canInstall: true,
+    };
+  }
+
+  return {
+    status: 'available',
+    message: `Actualización v${version} en curso…`,
+    version,
+  };
 }
 
 ipcMain.handle('check-for-updates', async () => {
@@ -141,23 +199,27 @@ ipcMain.handle('check-for-updates', async () => {
     return { status: 'error', message: formatUpdateError(new Error('no token')) };
   }
 
+  if (updateDownloaded) {
+    return {
+      status: 'downloaded',
+      message: 'Actualización lista. Pulsa «Reiniciar e instalar».',
+      canInstall: true,
+    };
+  }
+
   try {
-    const result = await autoUpdater.checkForUpdates();
-    if (result?.updateInfo) {
-      return {
-        status: 'available',
-        message: `Actualización disponible: v${result.updateInfo.version}`,
-        updateInfo: result.updateInfo,
-      };
-    }
-    return { status: 'none', message: 'Estás en la última versión publicada.' };
+    return await checkDownloadAndReport();
   } catch (e) {
     return { status: 'error', message: formatUpdateError(e) };
   }
 });
 
 ipcMain.handle('quit-and-install', () => {
-  if (!isDev) autoUpdater.quitAndInstall();
+  if (isDev || !updateDownloaded) return { ok: false };
+  setImmediate(() => {
+    autoUpdater.quitAndInstall(false, true);
+  });
+  return { ok: true };
 });
 
 ipcMain.handle('print-quote', async () => {

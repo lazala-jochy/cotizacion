@@ -505,6 +505,24 @@ label {
   font-size: 0.85rem;
 }
 
+.update-banner--success {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #86efac;
+}
+
+.update-banner--error {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+.sidebar-footer .btn-primary.btn-sm {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.25rem;
+}
+
 /* Page */
 .page-header {
   display: flex;
