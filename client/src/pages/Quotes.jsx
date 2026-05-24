@@ -2,14 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { downloadInvoicePdf } from '../utils/downloadInvoicePdf';
-import { IconEye, IconEdit, IconTrash } from '../components/Icons';
-import {
-  QUOTE_ESTADOS,
-  QUOTE_ESTADO_OPTIONS,
-  quoteEstadoHint,
-  canEditQuoteContent,
-  normalizeEstado,
-} from '../constants/quoteEstados';
+import { QuoteCard, QuoteTableRow } from '../components/QuoteListItem';
+import { QUOTE_ESTADOS, normalizeEstado } from '../constants/quoteEstados';
 
 const PAGE_SIZE_DEFAULT = 5;
 
@@ -198,126 +192,52 @@ export default function Quotes() {
           </div>
         ) : (
           <>
-            <div className="quotes-table-wrap">
+            <div className="quotes-list-desktop quotes-table-wrap">
               <table className="data-table quotes-table quotes-table-quotes">
-                <colgroup>
-                  <col className="col-w-num" />
-                  <col className="col-w-client" />
-                  <col className="col-w-date" />
-                  <col className="col-w-total" />
-                  <col className="col-w-paid" />
-                  <col className="col-w-estado" />
-                  <col className="col-w-download" />
-                  <col className="col-w-actions" />
-                </colgroup>
                 <thead>
                   <tr>
                     <th>Número</th>
                     <th>Cliente</th>
-                    <th className="col-hide-sm">Fecha</th>
-                    <th className="col-num">Total</th>
-                    <th className="col-num col-hide-sm">Pendiente</th>
-                    <th className="col-estado">Estado</th>
-                    <th className="col-download">PDF</th>
-                    <th className="col-actions">Acciones</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Pendiente</th>
+                    <th>Estado</th>
+                    <th>PDF</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginated.map((q) => (
-                    <tr key={q.id}>
-                      <td>
-                        <Link
-                          to={`/cotizaciones/${q.id}`}
-                          className="quote-num-link cell-ellipsis"
-                          title={q.numero}
-                        >
-                          {q.numero}
-                        </Link>
-                      </td>
-                      <td className="col-client">
-                        <span className="cell-ellipsis" title={q.client_nombre}>
-                          {q.client_nombre}
-                        </span>
-                      </td>
-                      <td className="col-date col-hide-sm">
-                        <span className="cell-ellipsis">{formatDate(q.fecha)}</span>
-                      </td>
-                      <td className="col-num">
-                        <strong>{formatMoney(q.total)}</strong>
-                      </td>
-                      <td className="col-num col-hide-sm">
-                        <span
-                          className={
-                            (q.balance_pendiente ?? 0) > 0 ? 'quote-pending-amount' : 'muted'
-                          }
-                        >
-                          {formatMoney(q.balance_pendiente ?? 0)}
-                        </span>
-                      </td>
-                      <td className="col-estado">
-                        <div className="quotes-estado-cell">
-                        <select
-                          className={`quotes-estado-select estado-${normalizeEstado(q.estado)}`}
-                          value={normalizeEstado(q.estado)}
-                          onChange={(e) => handleEstadoChange(q.id, e.target.value)}
-                          disabled={savingEstadoId === q.id}
-                          title={quoteEstadoHint(q.estado)}
-                          aria-label={`Estado de cotización ${q.numero}`}
-                        >
-                          {QUOTE_ESTADO_OPTIONS.map((o) => (
-                            <option key={o.value} value={o.value}>
-                              {o.label}
-                            </option>
-                          ))}
-                        </select>
-                        </div>
-                      </td>
-                      <td className="col-download">
-                        <button
-                          type="button"
-                          className="btn-ghost btn-sm btn-download-pdf"
-                          onClick={() => handleDownloadPdf(q)}
-                          disabled={downloadingId === q.id}
-                          title="Descargar factura PDF"
-                        >
-                          {downloadingId === q.id ? '…' : 'PDF'}
-                        </button>
-                      </td>
-                      <td className="actions">
-                        <div className="row-actions">
-                          <Link
-                            to={`/cotizaciones/${q.id}`}
-                            className="btn-icon"
-                            title="Ver detalle y pagos"
-                            aria-label="Ver cotización"
-                          >
-                            <IconEye />
-                          </Link>
-                          {canEditQuoteContent(q.estado) && (
-                            <Link
-                              to={`/cotizaciones/${q.id}/editar`}
-                              className="btn-icon"
-                              title="Editar contenido"
-                              aria-label="Editar cotización"
-                            >
-                              <IconEdit />
-                            </Link>
-                          )}
-                          <button
-                            type="button"
-                            className="btn-icon btn-icon-danger"
-                            onClick={() => handleDelete(q.id)}
-                            title="Eliminar"
-                            aria-label="Eliminar cotización"
-                          >
-                            <IconTrash />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                    <QuoteTableRow
+                      key={q.id}
+                      q={q}
+                      formatDate={formatDate}
+                      formatMoney={formatMoney}
+                      savingEstadoId={savingEstadoId}
+                      downloadingId={downloadingId}
+                      onEstadoChange={handleEstadoChange}
+                      onDownloadPdf={handleDownloadPdf}
+                      onDelete={handleDelete}
+                    />
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            <div className="quotes-list-mobile">
+              {paginated.map((q) => (
+                <QuoteCard
+                  key={q.id}
+                  q={q}
+                  formatDate={formatDate}
+                  formatMoney={formatMoney}
+                  savingEstadoId={savingEstadoId}
+                  downloadingId={downloadingId}
+                  onEstadoChange={handleEstadoChange}
+                  onDownloadPdf={handleDownloadPdf}
+                  onDelete={handleDelete}
+                />
+              ))}
             </div>
 
             <footer className="quotes-pagination">
