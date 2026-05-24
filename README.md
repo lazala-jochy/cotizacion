@@ -187,25 +187,264 @@ chmod +x "Altitude Cotizaciones-"*.AppImage
 
 ---
 
-## Publicar actualizaciones automáticas (opcional)
+## Actualizaciones automáticas al subir cambios
 
-La app usa `electron-updater` y GitHub Releases.
+La app usa **`electron-updater`** + **GitHub Releases**.
 
-1. Crea un repositorio en GitHub.
-2. En `package.json`, actualiza `build.publish.owner` y `build.publish.repo`.
-3. Exporta un token con permiso `repo`:
+> **Importante:** subir código al repo (`git push`) **no actualiza** las apps ya instaladas.  
+> Solo actualiza quien tenga la app empaquetada (`.dmg`, `.exe`, etc.) cuando publicas una **nueva versión** en GitHub Releases con `npm run dist:publish`.
+
+En modo desarrollo (`npm run dev`) las actualizaciones están **desactivadas**.
+
+---
+
+### Configuración inicial (una sola vez)
+
+#### 1. Repositorio en GitHub
+
+Crea el repo y sube el proyecto:
 
 ```bash
-export GH_TOKEN=tu_token_de_github
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/TU_USUARIO/altitude-cotizaciones.git
+git push -u origin main
 ```
 
-4. Publica:
+#### 2. `package.json` — datos del repo y versión
+
+Edita estas secciones con **tu usuario y nombre real del repo**:
+
+```json
+{
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TU_USUARIO/altitude-cotizaciones.git"
+  },
+  "build": {
+    "appId": "com.altitude.cotizaciones",
+    "publish": {
+      "provider": "github",
+      "owner": "TU_USUARIO",
+      "repo": "altitude-cotizaciones"
+    }
+  }
+}
+```
+
+| Campo | Qué es |
+|-------|--------|
+| `version` | Versión de la app; **debes subirla** en cada release (`1.0.1`, `1.1.0`, etc.) |
+| `build.publish.owner` | Tu usuario u organización de GitHub |
+| `build.publish.repo` | Nombre del repositorio |
+| `build.appId` | ID único de la app (no cambiar después del primer release) |
+
+#### 3. Token de GitHub (`GH_TOKEN`)
+
+`electron-builder` necesita un token para crear Releases y subir los instaladores.
+
+1. Ve a **GitHub → Settings → Developer settings → Personal access tokens**
+2. Crea un token (fine-grained o classic):
+   - **Classic:** marca el scope `repo` (repositorio privado) o `public_repo` (solo público)
+   - **Fine-grained:** permisos **Contents: Read and write** y **Metadata: Read**
+3. Copia el token (solo se muestra una vez)
+
+En tu Mac, exporta el token en la terminal (o agrégalo a `~/.zshrc`):
+
+```bash
+export GH_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
+```
+
+Para comprobar que está definido:
+
+```bash
+echo $GH_TOKEN
+```
+
+> **No subas el token al repo.** Ya está en `.gitignore` (`.env`, etc.).
+
+#### 4. Repositorio público vs privado
+
+| Tipo de repo | Token necesario |
+|--------------|-----------------|
+| Público | `public_repo` o fine-grained con acceso al repo |
+| Privado | `repo` o fine-grained con acceso al repo |
+
+Los usuarios finales **no** necesitan el token; solo tú al publicar.
+
+---
+
+### Flujo cada vez que subes cambios al repo
+
+Sigue estos pasos **después** de hacer `git push` de tu código:
+
+#### Paso 1 — Subir cambios al repositorio
+
+```bash
+git add .
+git commit -m "Descripción de los cambios"
+git push origin main
+```
+
+Esto guarda el código en GitHub, pero **aún no** entrega actualización a quien tiene la app instalada.
+
+#### Paso 2 — Incrementar la versión
+
+En `package.json`, sube `version`. Ejemplos:
+
+- Corrección pequeña: `1.0.0` → `1.0.1`
+- Nueva función: `1.0.1` → `1.1.0`
+- Cambio grande: `1.1.0` → `2.0.0`
+
+```json
+"version": "1.0.1"
+```
+
+Opcional con npm:
+
+```bash
+npm version patch   # 1.0.0 → 1.0.1
+npm version minor   # 1.0.0 → 1.1.0
+npm version major   # 1.0.0 → 2.0.0
+```
+
+Haz commit del cambio de versión:
+
+```bash
+git add package.json
+git commit -m "Bump version to 1.0.1"
+git push origin main
+```
+
+#### Paso 3 — Generar instaladores y publicar en GitHub Releases
+
+Con `GH_TOKEN` exportado:
 
 ```bash
 npm run dist:publish
 ```
 
-Los usuarios con la app instalada recibirán actualizaciones al iniciar o desde **Buscar actualizaciones** en el menú lateral.
+Ese comando:
+
+1. Compila el frontend (`vite build`)
+2. Empaqueta la app con `electron-builder`
+3. Crea un **Release** en GitHub con el tag `v1.0.1` (según tu `version`)
+4. Sube los archivos de `release/` (`.dmg`, `.exe`, `latest-mac.yml`, etc.)
+
+Verifica en GitHub: **Repositorio → Releases** — debe aparecer la versión nueva con los assets adjuntos.
+
+#### Paso 4 — Qué ven los usuarios con la app instalada
+
+- Al abrir la app (unos segundos después): busca actualización automáticamente
+- Menú lateral → **Buscar actualizaciones**
+- Si hay versión nueva: descarga en segundo plano y avisa *"Se instalará al reiniciar la app"*
+- Al cerrar y volver a abrir la app: se aplica la actualización
+
+---
+
+### Publicar solo para un sistema operativo
+
+```bash
+# Solo macOS
+npm run build && npx electron-builder --mac --publish always
+
+# Solo Windows
+npm run build && npx electron-builder --win --publish always
+
+# Solo Linux
+npm run build && npx electron-builder --linux --publish always
+```
+
+---
+
+### Automatizar con GitHub Actions (opcional)
+
+Puedes publicar al hacer push de un tag, sin compilar en tu Mac.
+
+Crea `.github/workflows/release.yml`:
+
+```yaml
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+      - run: npm run dist:publish
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+```
+
+**Configurar el secret en GitHub:**
+
+1. Repo → **Settings → Secrets and variables → Actions**
+2. **New repository secret** → nombre: `GH_TOKEN`, valor: tu token
+
+**Publicar con tag:**
+
+```bash
+# Actualiza version en package.json primero, luego:
+git add package.json
+git commit -m "Release 1.0.1"
+git tag v1.0.1
+git push origin main
+git push origin v1.0.1
+```
+
+El workflow compilará y subirá el Release automáticamente.
+
+---
+
+### Checklist rápido por release
+
+- [ ] Código probado en local (`npm run dev`)
+- [ ] `git push` con los cambios
+- [ ] `version` incrementada en `package.json`
+- [ ] `build.publish.owner` y `repo` correctos
+- [ ] `GH_TOKEN` exportado (o secret en Actions)
+- [ ] `npm run dist:publish` ejecutado sin errores
+- [ ] Release visible en GitHub con archivos `.dmg` / `.exe` / `latest-*.yml`
+- [ ] Probar en una Mac/PC con la versión anterior instalada
+
+---
+
+### Errores frecuentes al publicar
+
+| Error | Causa / solución |
+|-------|------------------|
+| `GH_TOKEN` no definido | `export GH_TOKEN=...` antes de `dist:publish` |
+| `404` al publicar | `owner` o `repo` incorrectos en `package.json` |
+| La app no detecta updates | La versión instalada es igual a la del Release; sube `version` |
+| `Cannot find latest-mac.yml` | El Release no tiene assets; vuelve a ejecutar `dist:publish` |
+| Updates en dev no funcionan | Es normal; solo funciona en app empaquetada (`npm run dist` + instalar) |
+| Repo privado sin permisos | Token con scope `repo` |
+
+---
+
+### Resumen
+
+| Acción | ¿Actualiza apps instaladas? |
+|--------|----------------------------|
+| `git push` (solo código) | No |
+| `npm run dist` (sin publish) | No (solo genera instalador local) |
+| `npm run dist:publish` con versión nueva | **Sí** |
 
 ---
 
