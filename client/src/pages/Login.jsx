@@ -64,7 +64,6 @@ export default function Login() {
         <p className="auth-footer">
           ¿No tienes cuenta? <Link to="/register">Crear cuenta</Link>
         </p>
-        <p className="auth-hint">Demo: admin@demo.local / admin123</p>
       </div>
     </div>
   );
