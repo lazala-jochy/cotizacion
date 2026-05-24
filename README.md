@@ -140,14 +140,7 @@ npm run dist
 
 **Instalar:** ejecuta el `.exe` y sigue el asistente.
 
-**Compilar desde Mac/Linux hacia Windows (opcional):**
-
-```bash
-npm run build
-npx electron-builder --win --x64
-```
-
-Puede requerir Wine; lo más fiable es GitHub Actions o una máquina Windows.
+**No compilar Windows desde Mac:** el `.exe` llevaría un `better_sqlite3.node` de macOS y fallará con *not a valid win32 application*. Usa GitHub Actions o una PC Windows (`npm run dist:publish:win`).
 
 ---
 
@@ -183,8 +176,8 @@ chmod +x "Cotizaciones-"*.AppImage
 
 | Sistema | Comando | Instalador generado |
 |---------|---------|---------------------|
-| macOS | `npm run dist` | `.dmg`, `.zip` (junto con Windows si compilas en Mac) |
-| Windows | `npm run dist` o `npm run dist:win` | `Setup.exe` (NSIS) |
+| macOS | `npm run dist` | `.dmg`, `.zip` |
+| Windows | `npm run dist:win` (en PC Windows o GitHub Actions) | `Setup.exe` (NSIS) |
 | Linux | `npm run dist` | `.AppImage` (con target `linux` configurado) |
 
 ---
@@ -361,14 +354,19 @@ export GH_TOKEN=ghp_pega_aqui_tu_token
 npm run dist:publish
 ```
 
-**Qué hace `npm run dist:publish`:**
+**Qué hace `npm run dist:publish` (desde Mac):**
 
 1. `vite build` → genera `dist/`
-2. `electron-builder --mac --win --x64 --publish always` → crea instaladores **macOS** (`.dmg`, `.zip`) y **Windows** (`.exe` NSIS) y los sube al mismo Release en GitHub
-3. Crea tag `v1.0.1` (según `version` en `package.json`)
-4. Sube `latest-mac.yml` y `latest.yml` (necesarios para auto-actualización)
+2. Publica solo **macOS** (`.dmg`, `.zip`, `latest-mac.yml`)
 
-> En Mac, el instalador Windows puede requerir Wine: `brew install --cask wine-stable`
+**Windows (.exe):** no compilar desde Mac — el módulo `better-sqlite3` debe generarse en Windows. Usa una de estas opciones:
+
+| Método | Cómo |
+|--------|------|
+| **GitHub Actions** (recomendado) | Sube el tag `v1.6.10` o ejecuta el workflow *Release* en Actions. Compila Mac + Win en paralelo y sube al mismo Release. |
+| **PC Windows** | `npm run dist:publish:win` con `GH_TOKEN` en `.env` |
+
+Configura el secret `GH_TOKEN` en el repo: **Settings → Secrets → Actions**.
 
 ---
 
@@ -423,37 +421,12 @@ npm run build && npx electron-builder --linux --publish always
 
 ---
 
-### Automatizar con GitHub Actions (opcional)
+### Automatizar con GitHub Actions (recomendado para Mac + Windows)
 
-En el repo: **Settings → Secrets → Actions** → secret `GH_TOKEN` con tu token.
+El repo incluye `.github/workflows/release.yml`: compila **macOS** y **Windows** en paralelo (cada uno en su SO).
 
-Crea `.github/workflows/release.yml`:
-
-```yaml
-name: Release
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  release:
-    runs-on: macos-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm ci
-      - run: npm run dist:publish
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-```
-
-Publicar con tag:
+1. **Settings → Secrets → Actions** → secret `GH_TOKEN` con tu token de GitHub.
+2. Publicar con tag:
 
 ```bash
 npm version patch
@@ -527,8 +500,9 @@ Todo lo listado en [`.gitignore`](.gitignore), en especial:
 | `EADDRINUSE` puerto 3847 | `npm run free-ports` o cierra la app instalada / otra terminal con el servidor |
 | Pantalla en blanco en dev | Verificar que API y Vite estén arriba antes de abrir Electron |
 | `better-sqlite3` no compila | `xcode-select --install` (Mac) o instalar build tools en Linux |
-| `NODE_MODULE_VERSION` / `ERR_DLOPEN_FAILED` | En dev: `npm run rebuild:dev`. Tras `npm install`, empaquetar con `npm run dist:publish` (recompila para Electron) |
-| App instalada pantalla en blanco | Servidor no arrancó (SQLite mal compilado). Reinstala build nueva tras `npm run dist:publish` |
+| `NODE_MODULE_VERSION` / `ERR_DLOPEN_FAILED` | En dev: `npm run rebuild:dev`. En Mac: `npm run dist:publish`. En Windows: compilar en PC o con GitHub Actions |
+| `better_sqlite3.node is not a valid win32 application` | El `.exe` se generó en Mac. Publica de nuevo con GitHub Actions o `npm run dist:publish:win` en una PC Windows |
+| App instalada pantalla en blanco | Servidor no arrancó (SQLite mal compilado). Reinstala el instalador del último release |
 
 ---
 

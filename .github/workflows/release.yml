@@ -1,0 +1,55 @@
+# Mac y Windows deben compilarse en su SO nativo (better-sqlite3 no es válido cruzado Mac→Win).
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: windows-latest
+            platform: win
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Token de actualizaciones
+        run: node scripts/prepare-update-token.js --require
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - run: npm run build
+
+      - name: Recompilar better-sqlite3 (Electron)
+        run: npm run rebuild:electron
+
+      - name: Verificar módulo nativo (macOS)
+        if: matrix.platform == 'mac'
+        run: node scripts/verify-electron-native.js
+
+      - name: Publicar macOS
+        if: matrix.platform == 'mac'
+        run: npx electron-builder --mac --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Publicar Windows
+        if: matrix.platform == 'win'
+        run: npx electron-builder --win --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
