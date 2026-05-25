@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const clientsRoutes = require('./routes/clients');
 const quotesRoutes = require('./routes/quotes');
 const emisorRoutes = require('./routes/emisor');
+const publicRoutes = require('./routes/public');
 
 const app = express();
 app.use(cors());
@@ -18,6 +19,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, version: require('../package.json').version });
 });
 
+app.use('/api/public', publicRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/emisor', emisorRoutes);
 app.use('/api/clients', clientsRoutes);

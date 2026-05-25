@@ -63,7 +63,7 @@ function buildBrandHeader(empresa, logoCid) {
 /**
  * Plantilla empresarial HTML + texto plano para envío de cotización.
  */
-function buildQuoteEmail({ quote, emisor, customMessage, customSubject }) {
+function buildQuoteEmail({ quote, emisor, customMessage, customSubject, pdfUrl }) {
   const empresa = emisor?.nombre?.trim() || 'Nuestra empresa';
   const cliente = quote.client_nombre?.trim() || 'estimado cliente';
   const subject = customSubject?.trim() || `Cotización ${quote.numero} — ${empresa}`;
@@ -90,7 +90,9 @@ function buildQuoteEmail({ quote, emisor, customMessage, customSubject }) {
     `  Válida por: ${quote.validez_dias ?? 30} días`,
     `  Total:      ${formatMoney(quote.total)}`,
     '',
-    'Documento adjunto: PDF con el detalle completo de la propuesta.',
+    pdfUrl
+      ? `Documento adjunto: PDF con el detalle completo de la propuesta.\nVer/Descargar: ${pdfUrl}`
+      : 'Documento adjunto: PDF con el detalle completo de la propuesta.',
     '',
     'Quedamos a su disposición para cualquier consulta o ajuste.',
     '',
@@ -196,17 +198,20 @@ function buildQuoteEmail({ quote, emisor, customMessage, customSubject }) {
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:28px;background-color:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;">
                 <tr>
                   <td style="padding:20px 24px;">
-                    <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
                       <tr>
                         <td style="width:44px;vertical-align:top;">
                           <div style="width:40px;height:40px;background-color:#1e40af;border-radius:8px;text-align:center;line-height:40px;font-size:11px;font-weight:800;color:#ffffff;letter-spacing:0.04em;">PDF</div>
                         </td>
-                        <td style="padding-left:14px;vertical-align:top;">
+                        <td style="padding-left:14px;vertical-align:middle;">
                           <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#1e3a8a;">Documento adjunto</p>
                           <p style="margin:0;font-size:13px;color:#3b82f6;line-height:1.5;">
                             Pre-factura <strong>${escapeHtml(quote.numero)}</strong> en formato PDF
                           </p>
                         </td>
+                        ${pdfUrl ? `<td align="right" style="vertical-align:middle;">
+                          <a href="${escapeHtml(pdfUrl)}" target="_blank" style="display:inline-block;background-color:#1e40af;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;padding:10px 20px;border-radius:6px;letter-spacing:0.02em;">Ver / Descargar</a>
+                        </td>` : ''}
                       </tr>
                     </table>
                   </td>

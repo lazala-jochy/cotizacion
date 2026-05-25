@@ -122,6 +122,9 @@ if (!quoteCols.some((c) => c.name === 'itbis_manual')) {
 if (!quoteCols.some((c) => c.name === 'monto_pagado')) {
   db.exec('ALTER TABLE quotes ADD COLUMN monto_pagado REAL DEFAULT 0');
 }
+if (!quoteCols.some((c) => c.name === 'pdf_token')) {
+  db.exec('ALTER TABLE quotes ADD COLUMN pdf_token TEXT');
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS quote_payments (

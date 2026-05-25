@@ -1096,32 +1096,42 @@ a.cell-ellipsis:hover {
 
 .quotes-table-quotes th,
 .quotes-table-quotes td {
-  max-width: none;
   overflow: hidden;
+  text-overflow: ellipsis;
   vertical-align: middle;
 }
 
 .quotes-table-quotes .q-col-num {
-  width: 118px;
+  width: 155px;
   padding-right: 0.75rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .quotes-table-quotes .q-col-client {
   width: 160px;
   max-width: 160px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .quotes-table-quotes .q-col-date {
   width: 108px;
   white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
   font-size: 0.88rem;
   color: var(--text-muted);
 }
 
 .quotes-table-quotes .q-col-money {
-  width: 108px;
+  width: 118px;
   text-align: right;
   white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
   padding-left: 0.5rem;
   padding-right: 0.75rem;
 }

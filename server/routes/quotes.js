@@ -150,6 +150,9 @@ router.get('/:id/email-defaults', (req, res) => {
 });
 
 router.post('/:id/send-email', async (req, res) => {
+  const crypto = require('crypto');
+  const { BASE_URL } = require('../config');
+
   const quote = getQuoteFull(req.params.id, req.user.id);
   if (!quote) return res.status(404).json({ error: 'Cotización no encontrada' });
 
@@ -165,6 +168,12 @@ router.post('/:id/send-email', async (req, res) => {
     return res.status(400).json({ error: 'Indica el correo del destinatario o agrega email al cliente.' });
   }
 
+  const pdfToken = crypto.randomBytes(32).toString('hex');
+  db.prepare('UPDATE quotes SET pdf_token = ? WHERE id = ? AND user_id = ?')
+    .run(pdfToken, req.params.id, req.user.id);
+
+  const pdfUrl = `${BASE_URL}/api/public/pdf/${pdfToken}`;
+
   const emisor = getEmisorForUser(req.user.id);
   const empresa = emisor.nombre?.trim() || 'Cotizaciones';
   const customSubject = (req.body.subject || '').trim();
@@ -174,6 +183,7 @@ router.post('/:id/send-email', async (req, res) => {
     emisor,
     customSubject: customSubject || undefined,
     customMessage: customMessage || undefined,
+    pdfUrl,
   });
 
   try {
