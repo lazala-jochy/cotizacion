@@ -2661,6 +2661,127 @@ a.cell-ellipsis:hover {
   }
 }
 
+.activation-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.activation-card {
+  width: min(760px, 100%);
+  display: grid;
+  gap: 1rem;
+}
+
+.activation-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.activation-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.activation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.activation-label {
+  margin: 0 0 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.activation-machine-id {
+  margin: 0 0 0.65rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+.activation-ok {
+  margin: 0;
+  color: var(--success);
+  font-weight: 700;
+}
+
+.activation-error {
+  margin: 0;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.activation-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.activation-textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 0.75rem 0.85rem;
+  resize: vertical;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem;
+}
+
+.activation-key-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 0.85rem 0.9rem;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.activation-license-summary {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.8rem 0.9rem;
+  background: rgba(148, 163, 184, 0.06);
+}
+
+.activation-license-summary p {
+  margin: 0.2rem 0;
+}
+
+.license-customer-panel {
+  margin-bottom: 1rem;
+}
+
+.license-customer-dl .license-ok {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.license-customer-dl .license-error {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .activation-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media print {
   body {
     background: #fff;

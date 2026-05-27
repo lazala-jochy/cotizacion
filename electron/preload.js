@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
   clearUpdateCache: () => ipcRenderer.invoke('clear-update-cache'),
   printQuote: () => ipcRenderer.invoke('print-quote'),
+  getActivationState: () => ipcRenderer.invoke('license:get-activation-state'),
+  activateProductKey: (productKey) => ipcRenderer.invoke('license:activate-product-key', productKey),
   onUpdateStatus: (callback) => {
     const handler = (_event, data) => callback(data);
     ipcRenderer.on('update-status', handler);

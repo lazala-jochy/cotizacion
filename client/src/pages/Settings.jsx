@@ -15,8 +15,22 @@ const emptyEmisor = {
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
+function formatDate(value) {
+  if (!value) return '—';
+  try {
+    return new Date(`${String(value).slice(0, 10)}T12:00:00`).toLocaleDateString('es-DO', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+  } catch {
+    return value;
+  }
+}
+
 export default function Settings() {
   const [form, setForm] = useState(emptyEmisor);
+  const [licenseState, setLicenseState] = useState({ loading: true, valid: false, license: null });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -29,6 +43,22 @@ export default function Settings() {
       .then((data) => setForm({ ...emptyEmisor, ...data }))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
+
+    if (!window.electronAPI?.getActivationState) {
+      setLicenseState({ loading: false, valid: true, license: null });
+      return;
+    }
+    window.electronAPI
+      .getActivationState()
+      .then((state) => setLicenseState({ loading: false, ...state }))
+      .catch(() =>
+        setLicenseState({
+          loading: false,
+          valid: false,
+          reason: 'No se pudo verificar la licencia',
+          license: null,
+        })
+      );
   }, []);
 
   const handleSubmit = async (e) => {
@@ -86,6 +116,36 @@ export default function Settings() {
 
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
+
+      <section className="panel license-customer-panel">
+        <div className="panel-header-row">
+          <h2>Licencia del sistema</h2>
+        </div>
+        {licenseState.loading ? (
+          <p className="muted">Verificando licencia…</p>
+        ) : (
+          <dl className="emisor-dl license-customer-dl">
+            <div>
+              <dt>Estado</dt>
+              <dd className={licenseState.valid ? 'license-ok' : 'license-error'}>
+                {licenseState.valid ? 'Activa' : 'No activa'}
+              </dd>
+            </div>
+            <div>
+              <dt>Plan</dt>
+              <dd className="text-break">{licenseState.license?.plan || '—'}</dd>
+            </div>
+            <div>
+              <dt>Expira</dt>
+              <dd>{formatDate(licenseState.expiresAt)}</dd>
+            </div>
+            <div>
+              <dt>Licencia</dt>
+              <dd className="text-break">{licenseState.license?.licenseId || '—'}</dd>
+            </div>
+          </dl>
+        )}
+      </section>
 
       <section className="panel">
         <form onSubmit={handleSubmit} className="form-grid emisor-form">
