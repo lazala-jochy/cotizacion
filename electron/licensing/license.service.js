@@ -1,91 +1,82 @@
 const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
-const { sha256, stableStringify } = require('./crypto.service');
-const { resolveEntryByProductKey, validateCatalogSignature, readCatalogRaw } = require('./validation.service');
+const { getMachineIdentity } = require('./machine.service');
+const { validateLicenseFileContent } = require('./validation.service');
 
 const LICENSE_DIR = 'license';
-const ACTIVATION_FILE = 'activation.dat';
+const STORED_LICENSE_FILE = 'license.dat';
 
-function getActivationPath() {
+function getLicenseStoragePath() {
   const dir = path.join(app.getPath('userData'), LICENSE_DIR);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  return path.join(dir, ACTIVATION_FILE);
+  return path.join(dir, STORED_LICENSE_FILE);
 }
 
-function buildRecordHash(record) {
-  return sha256(stableStringify(record));
+function readStoredLicenseRaw() {
+  const p = getLicenseStoragePath();
+  if (!fs.existsSync(p)) return null;
+  return fs.readFileSync(p, 'utf8').trim();
 }
 
-function readActivationRecord() {
-  const activationPath = getActivationPath();
-  if (!fs.existsSync(activationPath)) return null;
-  const raw = fs.readFileSync(activationPath, 'utf8');
-  const data = JSON.parse(raw);
-  const { recordHash, ...record } = data;
-  if (!recordHash || recordHash !== buildRecordHash(record)) {
-    throw new Error('Registro de activación alterado');
-  }
-  return record;
-}
-
-function writeActivationRecord(record) {
-  const activationPath = getActivationPath();
-  const recordHash = buildRecordHash(record);
-  fs.writeFileSync(activationPath, JSON.stringify({ ...record, recordHash }, null, 2), { mode: 0o600 });
-}
-
-function licenseFromEntry(entry) {
+function licensePayloadToSummary(payload) {
   return {
-    licenseId: entry.licenseId,
-    plan: entry.plan,
-    expiresAt: entry.expiresAt,
-    issuedAt: entry.issuedAt,
-    features: entry.features,
+    company: payload.company,
+    plan: payload.plan,
+    features: payload.features,
+    issuedAt: payload.issuedAt,
+    expiresAt: payload.expiresAt,
+    machineId: payload.machineId,
   };
-}
-
-function activateWithProductKey(productKey) {
-  const resolved = resolveEntryByProductKey(productKey);
-  const record = {
-    keyHash: resolved.keyHash,
-    licenseId: resolved.entry.licenseId,
-    activatedAt: new Date().toISOString(),
-    catalogVersion: resolved.payloadMeta.version,
-  };
-  writeActivationRecord(record);
-  return { valid: true, license: licenseFromEntry(resolved.entry) };
 }
 
 function getCurrentLicenseStatus() {
+  const { machineId } = getMachineIdentity();
+  const raw = readStoredLicenseRaw();
+
+  if (!raw) {
+    return { valid: false, machineId, reason: 'No hay licencia instalada' };
+  }
+
   try {
-    const catalog = readCatalogRaw();
-    const payload = validateCatalogSignature(catalog);
-    const record = readActivationRecord();
-
-    if (!record) return { valid: false, reason: 'Software no activado' };
-
-    const entries = Array.isArray(payload.entries) ? payload.entries : [];
-    const entry = entries.find((item) => item.keyHash === record.keyHash);
-    if (!entry) return { valid: false, reason: 'Activación inválida o revocada' };
-
-    const expires = new Date(`${entry.expiresAt}T23:59:59`);
-    if (Number.isNaN(expires.getTime())) return { valid: false, reason: 'Licencia con expiración inválida' };
-    if (expires < new Date()) return { valid: false, reason: 'La licencia está expirada' };
-
+    const payload = validateLicenseFileContent(raw, machineId);
+    let activatedAt = null;
+    try {
+      activatedAt = fs.statSync(getLicenseStoragePath()).mtime.toISOString();
+    } catch {
+      /* ignore */
+    }
     return {
       valid: true,
-      license: licenseFromEntry(entry),
-      activatedAt: record.activatedAt,
-      expiresAt: entry.expiresAt,
+      machineId,
+      license: licensePayloadToSummary(payload),
+      expiresAt: payload.expiresAt,
+      activatedAt,
     };
   } catch (err) {
-    return { valid: false, reason: err.message || 'Licencia inválida' };
+    return { valid: false, machineId, reason: err.message || 'Licencia inválida' };
   }
 }
 
+function installLicenseFromFile(sourcePath) {
+  const { machineId } = getMachineIdentity();
+  const raw = fs.readFileSync(sourcePath, 'utf8').trim();
+  const payload = validateLicenseFileContent(raw, machineId);
+  fs.writeFileSync(getLicenseStoragePath(), raw, { mode: 0o600 });
+  return { valid: true, path: getLicenseStoragePath(), license: licensePayloadToSummary(payload) };
+}
+
+function installLicenseFromText(rawText) {
+  const { machineId } = getMachineIdentity();
+  const raw = String(rawText || '').trim();
+  const payload = validateLicenseFileContent(raw, machineId);
+  fs.writeFileSync(getLicenseStoragePath(), raw, { mode: 0o600 });
+  return { valid: true, path: getLicenseStoragePath(), license: licensePayloadToSummary(payload) };
+}
+
 module.exports = {
+  getLicenseStoragePath,
   getCurrentLicenseStatus,
-  activateWithProductKey,
-  getActivationPath,
+  installLicenseFromFile,
+  installLicenseFromText,
 };

@@ -132,6 +132,10 @@ export default function Settings() {
               </dd>
             </div>
             <div>
+              <dt>Empresa (licencia)</dt>
+              <dd className="text-break">{licenseState.license?.company || '—'}</dd>
+            </div>
+            <div>
               <dt>Plan</dt>
               <dd className="text-break">{licenseState.license?.plan || '—'}</dd>
             </div>
@@ -140,8 +144,8 @@ export default function Settings() {
               <dd>{formatDate(licenseState.expiresAt)}</dd>
             </div>
             <div>
-              <dt>Licencia</dt>
-              <dd className="text-break">{licenseState.license?.licenseId || '—'}</dd>
+              <dt>Machine ID</dt>
+              <dd className="text-break">{licenseState.machineId || '—'}</dd>
             </div>
           </dl>
         )}

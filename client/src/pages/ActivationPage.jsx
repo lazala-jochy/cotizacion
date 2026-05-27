@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 function formatDate(value) {
   if (!value) return '—';
   try {
-    return new Date(`${value}T12:00:00`).toLocaleDateString('es-DO', {
+    const d = String(value).includes('T') ? value : `${String(value).slice(0, 10)}T12:00:00`;
+    return new Date(d).toLocaleDateString('es-DO', {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
@@ -13,46 +14,69 @@ function formatDate(value) {
   }
 }
 
-function maskKeyPreview(value) {
-  const clean = String(value || '').replace(/[^A-Z0-9]/gi, '').toUpperCase();
-  if (!clean) return 'XXXX-XXXX-XXXX-XXXX';
-  return clean.match(/.{1,4}/g)?.join('-') || clean;
-}
-
 export default function ActivationPage({ activation, onRefresh }) {
-  const [productKey, setProductKey] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [pasteText, setPasteText] = useState('');
 
-  const features = useMemo(() => activation?.license?.features || [], [activation]);
+  const copyMachineId = async () => {
+    try {
+      await navigator.clipboard.writeText(activation.machineId || '');
+      setMessage('Machine ID copiado al portapapeles.');
+      setError('');
+    } catch {
+      setError('No se pudo copiar automáticamente. Copia el Machine ID manualmente.');
+    }
+  };
 
-  const handleActivate = async () => {
-    const input = productKey.trim();
-    if (!input) {
-      setError('Ingresa tu Product Key para activar el software.');
+  const importFromFile = async () => {
+    if (!window.electronAPI?.activateLicenseFromFile) {
+      setError('La activación solo está disponible en la aplicación de escritorio.');
       return;
     }
-    if (!window.electronAPI?.activateProductKey) {
-      setError('La activación solo está disponible en la app de escritorio.');
-      return;
-    }
-
     setBusy(true);
     setError('');
     setMessage('');
-
     try {
-      const result = await window.electronAPI.activateProductKey(input);
+      const result = await window.electronAPI.activateLicenseFromFile();
       if (!result.ok) {
-        setError(result.message || 'Product Key inválido');
+        if (!result.canceled) setError(result.message || 'No se pudo importar la licencia');
         return;
       }
-      setProductKey('');
-      setMessage('Activación completada correctamente.');
+      setMessage('Licencia activada correctamente.');
       await onRefresh();
     } catch {
-      setError('No se pudo validar el Product Key.');
+      setError('Error al importar el archivo de licencia.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const activateFromPaste = async () => {
+    const raw = pasteText.trim();
+    if (!raw) {
+      setError('Pega el contenido del archivo .lic o importa el archivo.');
+      return;
+    }
+    if (!window.electronAPI?.activateLicenseFromText) {
+      setError('La activación solo está disponible en la aplicación de escritorio.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    setMessage('');
+    try {
+      const result = await window.electronAPI.activateLicenseFromText(raw);
+      if (!result.ok) {
+        setError(result.message || 'Licencia inválida');
+        return;
+      }
+      setPasteText('');
+      setMessage('Licencia activada correctamente.');
+      await onRefresh();
+    } catch {
+      setError('No se pudo validar la licencia.');
     } finally {
       setBusy(false);
     }
@@ -64,62 +88,67 @@ export default function ActivationPage({ activation, onRefresh }) {
         <div className="activation-header">
           <img src="/icon.png" alt="Cotizaciones" className="activation-logo" />
           <div>
-            <h1>Activar producto</h1>
-            <p className="muted">Ingresa tu Product Key para habilitar esta instalación offline.</p>
+            <h1>Activación offline</h1>
+            <p className="muted">
+              Envía tu Machine ID al proveedor para recibir un archivo de licencia (.lic) e impórtalo aquí.
+            </p>
           </div>
         </div>
 
         <div className="activation-grid">
           <div>
-            <p className="activation-label">Estado de licencia</p>
-            <p className={activation.valid ? 'activation-ok' : 'activation-error'}>
-              {activation.valid ? 'Activada' : 'No activada'}
-            </p>
-            <p className="muted">Expira: {formatDate(activation.expiresAt)}</p>
+            <p className="activation-label">Machine ID de este equipo</p>
+            <div className="activation-machine-id">{activation.machineId || '—'}</div>
+            <button type="button" className="btn-ghost btn-sm" onClick={copyMachineId}>
+              Copiar Machine ID
+            </button>
           </div>
 
           <div>
-            <p className="activation-label">Formato</p>
-            <div className="activation-machine-id">{maskKeyPreview(productKey)}</div>
-            <p className="muted">Ejemplo: LZLA-9F2K-X8P1-QW7M</p>
+            <p className="activation-label">Estado</p>
+            <p className={activation.valid ? 'activation-ok' : 'activation-error'}>
+              {activation.valid ? 'Licencia activa' : 'Sin licencia válida'}
+            </p>
+            <p className="muted">Expira: {formatDate(activation.expiresAt)}</p>
           </div>
         </div>
 
         {!activation.valid && (
           <>
-            <label className="activation-label" htmlFor="productKeyInput">
-              Product Key
-            </label>
-            <input
-              id="productKeyInput"
-              className="activation-key-input"
-              placeholder="XXXX-XXXX-XXXX-XXXX"
-              value={productKey}
-              onChange={(e) => setProductKey(e.target.value.toUpperCase())}
-              autoComplete="off"
-              spellCheck={false}
-            />
             <div className="activation-actions">
-              <button type="button" className="btn-primary" onClick={handleActivate} disabled={busy}>
-                {busy ? 'Validando…' : 'Activar'}
+              <button type="button" className="btn-primary" onClick={importFromFile} disabled={busy}>
+                {busy ? 'Procesando…' : 'Importar archivo .lic'}
               </button>
             </div>
+
+            <label className="activation-label" htmlFor="licPaste">
+              O pega el contenido del archivo .lic
+            </label>
+            <textarea
+              id="licPaste"
+              className="activation-textarea"
+              placeholder='{"v":1,"iv":"...","data":"...","tag":"...","signature":"..."}'
+              value={pasteText}
+              onChange={(e) => setPasteText(e.target.value)}
+              rows={5}
+              spellCheck={false}
+            />
+            <button type="button" className="btn-ghost" onClick={activateFromPaste} disabled={busy}>
+              Activar desde texto
+            </button>
           </>
         )}
 
-        {activation.valid && (
+        {activation.valid && activation.license && (
           <div className="activation-license-summary">
             <p>
-              <strong>Licencia:</strong> {activation.license?.licenseId || '—'}
+              <strong>Empresa licenciada:</strong> {activation.license.company || '—'}
             </p>
             <p>
-              <strong>Plan:</strong> {activation.license?.plan || '—'}
+              <strong>Plan:</strong> {activation.license.plan || '—'}
             </p>
             <p>
-              <strong>Funciones:</strong> {features.length ? features.join(', ') : '—'}
-            </p>
-            <p>
-              <strong>Activada:</strong> {formatDate(activation.activatedAt?.slice?.(0, 10))}
+              <strong>Expira:</strong> {formatDate(activation.expiresAt)}
             </p>
           </div>
         )}

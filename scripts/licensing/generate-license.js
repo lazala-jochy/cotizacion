@@ -1,25 +1,14 @@
 #!/usr/bin/env node
+/**
+ * Genera archivo .lic firmado (RSA) y cifrado (AES-256-GCM ligado al Machine ID del cliente).
+ * Uso: node scripts/licensing/generate-license.js --machineId "XXXX-XXXX-XXXX-XXXX" --company "..." ...
+ */
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const KEY_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-function stableStringify(obj) {
-  if (obj === null || typeof obj !== 'object') return JSON.stringify(obj);
-  if (Array.isArray(obj)) return '[' + obj.map(stableStringify).join(',') + ']';
-  const keys = Object.keys(obj).sort();
-  return '{' + keys.map((k) => JSON.stringify(k) + ':' + stableStringify(obj[k])).join(',') + '}';
-}
-
-function sha256(input) {
-  return crypto.createHash('sha256').update(String(input)).digest('hex');
-}
-
-function base64UrlEncode(value) {
-  const buffer = Buffer.isBuffer(value) ? value : Buffer.from(String(value));
-  return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-}
+const cryptoSvc = path.join(__dirname, '..', '..', 'electron', 'licensing', 'crypto.service.js');
+const { stableStringify, base64UrlEncode, aes256GcmEncrypt } = require(cryptoSvc);
 
 function parseArgs(argv) {
   const args = {};
@@ -31,35 +20,15 @@ function parseArgs(argv) {
   return args;
 }
 
-function randomChars(size) {
-  const bytes = crypto.randomBytes(size * 2);
-  let out = '';
-  for (const b of bytes) {
-    out += KEY_ALPHABET[b % KEY_ALPHABET.length];
-    if (out.length === size) break;
-  }
-  return out;
-}
-
-function computeCheckChar(first15Chars) {
-  const digest = sha256(first15Chars);
-  const idx = parseInt(digest.slice(0, 8), 16) % KEY_ALPHABET.length;
-  return KEY_ALPHABET[idx];
-}
-
-function formatKey(compact16) {
-  return compact16.match(/.{1,4}/g).join('-');
-}
-
-function signPayload(privateKeyPem, payloadCanonical) {
+function signEnvelope(privateKeyPem, signInput) {
   const signer = crypto.createSign('RSA-SHA256');
-  signer.update(payloadCanonical);
+  signer.update(signInput);
   signer.end();
   return base64UrlEncode(signer.sign(privateKeyPem));
 }
 
 const args = parseArgs(process.argv);
-const required = ['plan', 'expiresAt', 'features'];
+const required = ['machineId', 'company', 'expiresAt', 'plan', 'features'];
 for (const field of required) {
   if (!args[field]) {
     console.error(`Falta --${field}`);
@@ -68,7 +37,7 @@ for (const field of required) {
 }
 
 const privateKeyPath = args.privateKey || path.join(__dirname, 'license-private.pem');
-const catalogPath = args.catalog || path.join(__dirname, '..', '..', 'asset', 'licensing', 'product-catalog.json');
+const outPath = args.out || path.join(process.cwd(), 'empresa-demo.lic');
 
 if (!fs.existsSync(privateKeyPath)) {
   console.error(`No existe private key: ${privateKeyPath}`);
@@ -76,46 +45,35 @@ if (!fs.existsSync(privateKeyPath)) {
 }
 
 const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
-let catalog = { payload: { version: 1, issuedAt: new Date().toISOString(), entries: [] }, signature: '' };
-if (fs.existsSync(catalogPath)) {
-  catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
-}
-
-catalog.payload = catalog.payload || { version: 1, issuedAt: new Date().toISOString(), entries: [] };
-catalog.payload.entries = Array.isArray(catalog.payload.entries) ? catalog.payload.entries : [];
-
-let compact = '';
-let keyHash = '';
-do {
-  const first15 = randomChars(15);
-  compact = `${first15}${computeCheckChar(first15)}`;
-  keyHash = sha256(compact);
-} while (catalog.payload.entries.some((x) => x.keyHash === keyHash));
-
-const licenseId = args.licenseId || `LIC-${Date.now().toString(36).toUpperCase()}`;
+const machineId = String(args.machineId).trim();
 const features = args.features.split(',').map((x) => x.trim()).filter(Boolean);
 
-catalog.payload.entries.push({
-  licenseId,
-  keyHash,
-  plan: args.plan,
-  expiresAt: args.expiresAt,
+const innerPayload = {
+  company: args.company,
+  machineId,
   issuedAt: args.issuedAt || new Date().toISOString().slice(0, 10),
+  expiresAt: args.expiresAt,
+  plan: args.plan,
   features,
-  notes: args.notes || '',
-});
+};
 
-catalog.payload.issuedAt = new Date().toISOString();
-const canonical = stableStringify(catalog.payload);
-catalog.signature = signPayload(privateKey, canonical);
+const innerCanonical = stableStringify(innerPayload);
+const { iv, data, tag } = aes256GcmEncrypt(innerCanonical, machineId);
 
-fs.mkdirSync(path.dirname(catalogPath), { recursive: true });
-fs.writeFileSync(catalogPath, JSON.stringify(catalog, null, 2));
+const envelope = {
+  v: 1,
+  iv,
+  data,
+  tag,
+};
 
-console.log('Product Key generado:');
-console.log(formatKey(compact));
-console.log('licenseId:', licenseId);
-console.log('plan:', args.plan);
-console.log('expiresAt:', args.expiresAt);
-console.log('features:', features.join(','));
-console.log('catalog:', catalogPath);
+const signInput = stableStringify({ v: envelope.v, iv: envelope.iv, data: envelope.data, tag: envelope.tag });
+envelope.signature = signEnvelope(privateKey, signInput);
+
+fs.mkdirSync(path.dirname(outPath), { recursive: true });
+fs.writeFileSync(outPath, JSON.stringify(envelope), { mode: 0o600 });
+
+console.log('Archivo de licencia generado:', outPath);
+console.log('Machine ID:', machineId);
+console.log('Plan:', args.plan);
+console.log('Expira:', args.expiresAt);

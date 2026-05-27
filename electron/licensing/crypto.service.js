@@ -3,7 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 const PUBLIC_KEY_PATH = path.join(__dirname, '..', '..', 'asset', 'licensing', 'license-public.pem');
-const KEY_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+/** Debe coincidir con scripts/licensing/generate-license.js */
+const LICENSE_ENVELOPE_SALT = 'cotizaciones-offline-license/v1';
 
 function readPublicKey() {
   return fs.readFileSync(PUBLIC_KEY_PATH, 'utf8');
@@ -22,7 +24,11 @@ function stableStringify(obj) {
 
 function base64UrlEncode(value) {
   const buffer = Buffer.isBuffer(value) ? value : Buffer.from(String(value));
-  return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  return buffer
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
 }
 
 function base64UrlDecode(value) {
@@ -38,46 +44,49 @@ function verifySignature(payloadCanonical, signatureB64) {
   return verifier.verify(readPublicKey(), base64UrlDecode(signatureB64));
 }
 
-function normalizeProductKey(key) {
-  return String(key || '')
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '');
+function deriveLicenseKey(machineId) {
+  const normalized = String(machineId || '')
+    .replace(/[^A-Za-z0-9]/g, '')
+    .toUpperCase();
+  return crypto
+    .createHash('sha256')
+    .update(`${normalized}|${LICENSE_ENVELOPE_SALT}`)
+    .digest();
 }
 
-function formatProductKey(compact) {
-  const normalized = normalizeProductKey(compact);
-  return normalized.match(/.{1,4}/g)?.join('-') || normalized;
+function aes256GcmEncrypt(plaintextUtf8, machineId) {
+  const key = deriveLicenseKey(machineId);
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const enc = Buffer.concat([cipher.update(plaintextUtf8, 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return {
+    iv: iv.toString('hex'),
+    data: enc.toString('base64'),
+    tag: tag.toString('base64'),
+  };
 }
 
-function isValidKeyFormat(compactKey) {
-  const normalized = normalizeProductKey(compactKey);
-  return normalized.length === 16 && [...normalized].every((c) => KEY_ALPHABET.includes(c));
-}
-
-function computeCheckChar(first15Chars) {
-  const digest = sha256(first15Chars);
-  const checksum = parseInt(digest.slice(0, 8), 16) % KEY_ALPHABET.length;
-  return KEY_ALPHABET[checksum];
-}
-
-function validateKeyChecksum(compactKey) {
-  const normalized = normalizeProductKey(compactKey);
-  if (!isValidKeyFormat(normalized)) return false;
-  const core = normalized.slice(0, 15);
-  const check = normalized[15];
-  return computeCheckChar(core) === check;
+function aes256GcmDecrypt({ ivHex, dataB64, tagB64 }, machineId) {
+  const key = deriveLicenseKey(machineId);
+  const iv = Buffer.from(ivHex, 'hex');
+  const data = Buffer.from(dataB64, 'base64');
+  const tag = Buffer.from(tagB64, 'base64');
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(tag);
+  const plain = Buffer.concat([decipher.update(data), decipher.final()]);
+  return plain.toString('utf8');
 }
 
 module.exports = {
-  KEY_ALPHABET,
+  LICENSE_ENVELOPE_SALT,
   sha256,
   stableStringify,
   base64UrlEncode,
   base64UrlDecode,
   verifySignature,
-  normalizeProductKey,
-  formatProductKey,
-  isValidKeyFormat,
-  computeCheckChar,
-  validateKeyChecksum,
+  readPublicKey,
+  deriveLicenseKey,
+  aes256GcmDecrypt,
+  aes256GcmEncrypt,
 };

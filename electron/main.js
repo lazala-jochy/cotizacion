@@ -6,7 +6,8 @@ const { createAutoUpdaterService } = require('./auto-updater-service');
 const { shutdownForUpdate } = require('./shutdown-for-update');
 const {
   getActivationState,
-  activateProductKey,
+  pickAndActivateLicense,
+  activateLicenseFromText,
 } = require('./licensing/activation.service');
 
 const isDev = !app.isPackaged;
@@ -151,8 +152,13 @@ ipcMain.handle('license:get-activation-state', () => {
   return getActivationState();
 });
 
-ipcMain.handle('license:activate-product-key', (_event, productKey) => {
-  return activateProductKey(productKey);
+ipcMain.handle('license:activate-from-file', async () => {
+  if (!mainWindow) return { ok: false, message: 'Ventana principal no disponible' };
+  return pickAndActivateLicense(mainWindow);
+});
+
+ipcMain.handle('license:activate-from-text', (_event, licenseText) => {
+  return activateLicenseFromText(licenseText);
 });
 
 app.whenReady().then(async () => {
