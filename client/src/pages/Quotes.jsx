@@ -104,7 +104,11 @@ export default function Quotes() {
       setQuotes((prev) =>
         prev.map((q) => (q.id === quoteId ? { ...q, ...updated } : q))
       );
-      if (shouldPromptPayment(updated.estado, updated.balance_pendiente)) {
+      const selectedEstado = normalizeEstado(nuevoEstado);
+      if (
+        selectedEstado === 'pago_parcial' &&
+        shouldPromptPayment(updated.estado, updated.balance_pendiente)
+      ) {
         setPaymentModalQuote(updated);
       }
     } catch (err) {
