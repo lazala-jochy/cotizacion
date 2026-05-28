@@ -1,6 +1,6 @@
 {
   "name": "cotizaciones-app",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "description": "App desktop para generar y administrar cotizaciones",
   "main": "electron/main.js",
   "author": "",
@@ -29,7 +29,6 @@
     "dist:win": "node scripts/patch-nsis-crc.js && npm run build && node scripts/rebuild-sqlite.js win32 x64 && node scripts/verify-win-native.js && electron-builder --win --x64",
     "dist:publish:mac": "node scripts/prepare-update-token.js --require && npm run build && node scripts/rebuild-sqlite.js darwin && node scripts/verify-electron-native.js && electron-builder --mac --publish always",
     "dist:publish:win": "node scripts/prepare-update-token.js --require && node scripts/patch-nsis-crc.js && npm run build && node scripts/rebuild-sqlite.js win32 x64 && node scripts/verify-win-native.js && electron-builder --win --x64 --publish always",
-    "license:generate": "node scripts/licensing/generate-license.js",
     "rebuild:dev": "npm rebuild better-sqlite3",
     "rebuild:electron": "node scripts/rebuild-sqlite.js darwin",
     "rebuild:electron:win": "node scripts/rebuild-sqlite.js win32 x64",

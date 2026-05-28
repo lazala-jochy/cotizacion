@@ -4,11 +4,6 @@ const { autoUpdater } = require('electron-updater');
 const { configureGithubUpdater, getPublishConfig } = require('./updater-auth');
 const { createAutoUpdaterService } = require('./auto-updater-service');
 const { shutdownForUpdate } = require('./shutdown-for-update');
-const {
-  getActivationState,
-  pickAndActivateLicense,
-  activateLicenseFromText,
-} = require('./licensing/activation.service');
 
 const isDev = !app.isPackaged;
 const PORT = 3847;
@@ -146,19 +141,6 @@ ipcMain.handle('get-app-version', () => app.getVersion());
 ipcMain.handle('print-quote', async () => {
   if (!mainWindow) return;
   await mainWindow.webContents.print({ silent: false, printBackground: true });
-});
-
-ipcMain.handle('license:get-activation-state', () => {
-  return getActivationState();
-});
-
-ipcMain.handle('license:activate-from-file', async () => {
-  if (!mainWindow) return { ok: false, message: 'Ventana principal no disponible' };
-  return pickAndActivateLicense(mainWindow);
-});
-
-ipcMain.handle('license:activate-from-text', (_event, licenseText) => {
-  return activateLicenseFromText(licenseText);
 });
 
 app.whenReady().then(async () => {
