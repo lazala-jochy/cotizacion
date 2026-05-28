@@ -4,13 +4,14 @@ import { api } from '../api';
 
 export default function Dashboard() {
   const [emisor, setEmisor] = useState(null);
-  const [stats, setStats] = useState({ clients: 0, quotes: 0 });
+  const [stats, setStats] = useState({ quotes: 0 });
   const emisorConfigured = emisor?.nombre?.trim();
 
   useEffect(() => {
     api.emisor.get().then(setEmisor).catch(console.error);
-    Promise.all([api.clients.list(), api.quotes.list()])
-      .then(([clients, quotes]) => setStats({ clients: clients.length, quotes: quotes.length }))
+    api.quotes
+      .list()
+      .then((quotes) => setStats({ quotes: quotes.length }))
       .catch(console.error);
   }, []);
 
@@ -19,7 +20,7 @@ export default function Dashboard() {
       <header className="page-header">
         <div>
           <h1>Inicio</h1>
-          <p>Gestiona cotizaciones y clientes de tu negocio</p>
+          <p>Gestiona cotizaciones con los datos del cliente en cada una</p>
         </div>
         <Link to="/cotizaciones/nueva" className="btn-primary">
           + Nueva cotización
@@ -31,10 +32,6 @@ export default function Dashboard() {
           <span className="stat-value">{stats.quotes}</span>
           <span className="stat-label">Cotizaciones</span>
         </div>
-        <div className="stat-card">
-          <span className="stat-value">{stats.clients}</span>
-          <span className="stat-label">Clientes</span>
-        </div>
       </div>
 
       <div className="cards-row">
@@ -42,9 +39,9 @@ export default function Dashboard() {
           <h3>Nueva cotización</h3>
           <p>Crea una cotización con datos del cliente e ítems.</p>
         </Link>
-        <Link to="/clientes" className="action-card">
-          <h3>Ver clientes</h3>
-          <p>Administra tu cartera de clientes guardados.</p>
+        <Link to="/cotizaciones" className="action-card">
+          <h3>Ver cotizaciones</h3>
+          <p>Consulta y administra todas tus cotizaciones.</p>
         </Link>
         <Link to="/reportes" className="action-card">
           <h3>Reportes</h3>

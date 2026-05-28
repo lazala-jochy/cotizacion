@@ -31,7 +31,7 @@ export function QuoteTableRow({
       </td>
       <td className="q-col-client">
         <span className="cell-ellipsis" title={q.client_nombre}>
-          {q.client_nombre}
+          {q.client_nombre || '—'}
         </span>
       </td>
       <td className="q-col-date">{formatDate(q.fecha)}</td>

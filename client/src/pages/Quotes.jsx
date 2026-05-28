@@ -11,6 +11,12 @@ import {
   shouldPromptPayment,
   shouldPromptSendOnEnviada,
 } from '../constants/quoteEstados';
+import {
+  MONTO_FILTER_OPTIONS,
+  MONTH_FILTER_OPTIONS,
+  getFilterYearOptions,
+  quoteMatchesListFilters,
+} from '../utils/quoteListFilters';
 
 const PAGE_SIZE_DEFAULT = 5;
 
@@ -42,6 +48,9 @@ export default function Quotes() {
 
   const [search, setSearch] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
+  const [monthFilter, setMonthFilter] = useState('');
+  const [montoFilter, setMontoFilter] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
 
@@ -53,24 +62,28 @@ export default function Quotes() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return quotes.filter((item) => {
-      if (estadoFilter && normalizeEstado(item.estado) !== estadoFilter) return false;
-      if (!q) return true;
-      const haystack = [item.numero, item.client_nombre, item.client_rnc, item.fecha]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [quotes, search, estadoFilter]);
+  const yearOptions = useMemo(() => getFilterYearOptions(quotes), [quotes]);
+
+  const filtered = useMemo(
+    () =>
+      quotes.filter((item) =>
+        quoteMatchesListFilters(item, {
+          search,
+          estadoFilter,
+          yearFilter,
+          monthFilter,
+          montoFilter,
+          normalizeEstado,
+        })
+      ),
+    [quotes, search, estadoFilter, yearFilter, monthFilter, montoFilter]
+  );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
 
   useEffect(() => {
     setPage(1);
-  }, [search, estadoFilter, pageSize]);
+  }, [search, estadoFilter, yearFilter, monthFilter, montoFilter, pageSize]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -153,9 +166,23 @@ export default function Quotes() {
   const clearFilters = () => {
     setSearch('');
     setEstadoFilter('');
+    setYearFilter('');
+    setMonthFilter('');
+    setMontoFilter('');
   };
 
-  const hasFilters = Boolean(search.trim() || estadoFilter);
+  const hasFilters = Boolean(
+    search.trim() || estadoFilter || yearFilter || monthFilter || montoFilter
+  );
+
+  const listSummary =
+    loading ?
+      'Cargando…'
+    : filtered.length === 0 ?
+      hasFilters ?
+        'Sin resultados para los filtros'
+      : 'No hay cotizaciones'
+    : `Mostrando ${rangeStart}–${rangeEnd} de ${filtered.length}`;
 
   return (
     <div className="page">
@@ -189,43 +216,85 @@ export default function Quotes() {
 
       <section className="panel quotes-panel">
         <div className="quotes-toolbar">
-          <div className="quotes-filters">
-            <label className="quotes-search">
-              <span className="sr-only">Buscar</span>
+          <div className="quotes-filters-bar" role="group" aria-label="Filtros de cotizaciones">
+            <label className="quotes-filter-field quotes-filter-field--search">
+              <span className="quotes-filter-label">Buscar</span>
               <input
                 type="search"
-                placeholder="Buscar número, cliente, RNC…"
+                className="quotes-filter-input"
+                placeholder="Número, cliente, RNC…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </label>
-            <select
-              className="quotes-filter-select"
-              value={estadoFilter}
-              onChange={(e) => setEstadoFilter(e.target.value)}
-              aria-label="Filtrar por estado"
-            >
-              {QUOTE_ESTADOS.map((o) => (
-                <option key={o.value || 'all'} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+            <label className="quotes-filter-field quotes-filter-field--year">
+              <span className="quotes-filter-label">Año</span>
+              <select
+                className="quotes-filter-select"
+                value={yearFilter}
+                onChange={(e) => setYearFilter(e.target.value)}
+              >
+                <option value="">Todos</option>
+                {yearOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="quotes-filter-field quotes-filter-field--month">
+              <span className="quotes-filter-label">Mes</span>
+              <select
+                className="quotes-filter-select"
+                value={monthFilter}
+                onChange={(e) => setMonthFilter(e.target.value)}
+              >
+                {MONTH_FILTER_OPTIONS.map((o) => (
+                  <option key={o.value || 'all'} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="quotes-filter-field quotes-filter-field--monto">
+              <span className="quotes-filter-label">Monto</span>
+              <select
+                className="quotes-filter-select"
+                value={montoFilter}
+                onChange={(e) => setMontoFilter(e.target.value)}
+              >
+                {MONTO_FILTER_OPTIONS.map((o) => (
+                  <option key={o.value || 'all'} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="quotes-filter-field quotes-filter-field--estado">
+              <span className="quotes-filter-label">Estado</span>
+              <select
+                className="quotes-filter-select"
+                value={estadoFilter}
+                onChange={(e) => setEstadoFilter(e.target.value)}
+              >
+                {QUOTE_ESTADOS.map((o) => (
+                  <option key={o.value || 'all'} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
             {hasFilters && (
-              <button type="button" className="btn-ghost btn-sm" onClick={clearFilters}>
-                Limpiar
-              </button>
+              <div className="quotes-filter-field quotes-filter-field--action">
+                <span className="quotes-filter-label" aria-hidden="true">
+                  &nbsp;
+                </span>
+                <button type="button" className="btn-ghost btn-sm" onClick={clearFilters}>
+                  Limpiar
+                </button>
+              </div>
             )}
           </div>
-          <p className="quotes-summary muted">
-            {loading ?
-              'Cargando…'
-            : filtered.length === 0 ?
-              hasFilters ?
-                'Sin resultados para los filtros'
-              : 'No hay cotizaciones'
-            : `Mostrando ${rangeStart}–${rangeEnd} de ${filtered.length}`}
-          </p>
         </div>
 
         {loading ? (
@@ -297,19 +366,22 @@ export default function Quotes() {
             </div>
 
             <footer className="quotes-pagination">
-              <div className="quotes-page-size">
-                <label>
-                  Por página
-                  <select
-                    value={pageSize}
-                    onChange={(e) => setPageSize(Number(e.target.value))}
-                  >
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                  </select>
-                </label>
+              <div className="quotes-pagination-start">
+                <div className="quotes-page-size">
+                  <label>
+                    Por página
+                    <select
+                      value={pageSize}
+                      onChange={(e) => setPageSize(Number(e.target.value))}
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                    </select>
+                  </label>
+                </div>
+                <p className="quotes-summary muted">{listSummary}</p>
               </div>
               {totalPages > 1 && (
                 <div className="quotes-page-nav">

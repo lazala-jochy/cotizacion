@@ -95,11 +95,7 @@ function enrichQuoteListRow(q) {
 router.get('/', (req, res) => {
   const quotes = db
     .prepare(
-      `SELECT q.*, c.nombre as client_ref_nombre
-       FROM quotes q
-       LEFT JOIN clients c ON c.id = q.client_id
-       WHERE q.user_id = ?
-       ORDER BY q.created_at DESC`
+      `SELECT q.* FROM quotes q WHERE q.user_id = ? ORDER BY q.created_at DESC`
     )
     .all(req.user.id);
   res.json(quotes.map((q) => enrichQuoteListRow(q)));
@@ -343,7 +339,6 @@ router.delete('/:id/payments/:paymentId', (req, res) => {
 
 router.post('/', (req, res) => {
   const {
-    client_id,
     numero,
     fecha,
     validez_dias,
@@ -366,27 +361,13 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: 'Agrega al menos un ítem a la cotización' });
   }
 
-  let clientSnapshot = {
+  const clientSnapshot = {
     client_nombre: client_nombre?.trim() || null,
     client_rnc: client_rnc?.trim() || null,
     client_direccion: client_direccion?.trim() || null,
     client_telefono: client_telefono?.trim() || null,
     client_email: client_email?.trim() || null,
   };
-
-  if (client_id) {
-    const client = db
-      .prepare('SELECT * FROM clients WHERE id = ? AND user_id = ?')
-      .get(client_id, req.user.id);
-    if (!client) return res.status(400).json({ error: 'Cliente no válido' });
-    clientSnapshot = {
-      client_nombre: client.nombre,
-      client_rnc: client.rnc,
-      client_direccion: client.direccion,
-      client_telefono: client.telefono,
-      client_email: client.email,
-    };
-  }
 
   if (!clientSnapshot.client_nombre) {
     return res.status(400).json({ error: 'Datos del cliente son requeridos' });
@@ -422,7 +403,7 @@ router.post('/', (req, res) => {
       )
       .run(
         req.user.id,
-        client_id || null,
+        null,
         quoteNumero,
         quoteFecha,
         validez_dias ?? 30,
@@ -472,7 +453,6 @@ router.put('/:id', (req, res) => {
   }
 
   const {
-    client_id,
     fecha,
     validez_dias,
     notas,
@@ -488,6 +468,10 @@ router.put('/:id', (req, res) => {
     itbis_manual = false,
     itbis_rate = ITBIS_RATE_DEFAULT_PERCENT,
   } = req.body;
+
+  if (!client_nombre?.trim()) {
+    return res.status(400).json({ error: 'Datos del cliente son requeridos' });
+  }
 
   if (!items.length) {
     return res.status(400).json({ error: 'Agrega al menos un ítem' });
@@ -514,7 +498,7 @@ router.put('/:id', (req, res) => {
         itbis_rate=?, itbis_manual=?, ejecutivo=?, forma_pago=?, updated_at=datetime('now')
        WHERE id=? AND user_id=?`
     ).run(
-      client_id || null,
+      null,
       fecha,
       validez_dias ?? 30,
       notas?.trim() || null,

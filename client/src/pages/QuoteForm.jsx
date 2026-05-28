@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { canEditQuoteContent } from '../constants/quoteEstados';
+import ClientFields, { EMPTY_CLIENT_FORM } from '../components/ClientFields';
+import { buildQuoteClientSuggestions } from '../utils/quoteClientSuggestions';
 
 const FORMA_PAGO_OPTIONS = [
   'Efectivo / Transferencia',
@@ -12,14 +14,6 @@ const FORMA_PAGO_OPTIONS = [
 
 const emptyItem = { descripcion: '', cantidad: 1, precio_unitario: 0 };
 const ITBIS_RATE_DEFAULT = 18;
-
-const emptyClient = {
-  client_nombre: '',
-  client_rnc: '',
-  client_direccion: '',
-  client_telefono: '',
-  client_email: '',
-};
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(n || 0);
@@ -31,12 +25,8 @@ export default function QuoteForm() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [clients, setClients] = useState([]);
-  const [clientId, setClientId] = useState('');
-  const [clientSearch, setClientSearch] = useState('');
-  const [showClientResults, setShowClientResults] = useState(false);
-  const [saveNewClient, setSaveNewClient] = useState(true);
-  const [clientManual, setClientManual] = useState({ ...emptyClient });
+  const [quoteSuggestions, setQuoteSuggestions] = useState([]);
+  const [clientForm, setClientForm] = useState({ ...EMPTY_CLIENT_FORM });
   const [numero, setNumero] = useState('');
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
   const [validezDias, setValidezDias] = useState(30);
@@ -51,7 +41,10 @@ export default function QuoteForm() {
   const [loading, setLoading] = useState(isEdit);
 
   useEffect(() => {
-    api.clients.list().then(setClients).catch(console.error);
+    api.quotes
+      .list()
+      .then((list) => setQuoteSuggestions(buildQuoteClientSuggestions(list)))
+      .catch(console.error);
     if (!isEdit) {
       api.quotes.nextNumber().then((r) => setNumero(r.numero)).catch(console.error);
     }
@@ -62,15 +55,12 @@ export default function QuoteForm() {
     api.quotes
       .get(id)
       .then((q) => {
-        setClientId(q.client_id ? String(q.client_id) : '');
-        setSaveNewClient(false);
-        setClientSearch(q.client_nombre || '');
-        setClientManual({
-          client_nombre: q.client_nombre || '',
-          client_rnc: q.client_rnc || '',
-          client_direccion: q.client_direccion || '',
-          client_telefono: q.client_telefono || '',
-          client_email: q.client_email || '',
+        setClientForm({
+          nombre: q.client_nombre || '',
+          rnc: q.client_rnc || '',
+          direccion: q.client_direccion || '',
+          telefono: q.client_telefono || '',
+          email: q.client_email || '',
         });
         setNumero(q.numero);
         setFecha(q.fecha);
@@ -128,51 +118,6 @@ export default function QuoteForm() {
     };
   }, [items, taxMode, itbisRate]);
 
-  const filteredClients = useMemo(() => {
-    const q = clientSearch.trim().toLowerCase();
-    if (!q) return clients.slice(0, 12);
-    return clients
-      .filter((c) => {
-        const haystack = [c.nombre, c.rnc, c.email, c.telefono, c.direccion]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return haystack.includes(q);
-      })
-      .slice(0, 12);
-  }, [clients, clientSearch]);
-
-  const fillClientFromRecord = (c) => {
-    setClientManual({
-      client_nombre: c.nombre || '',
-      client_rnc: c.rnc || '',
-      client_direccion: c.direccion || '',
-      client_telefono: c.telefono || '',
-      client_email: c.email || '',
-    });
-  };
-
-  const pickClient = (c) => {
-    setClientId(String(c.id));
-    fillClientFromRecord(c);
-    setClientSearch(c.nombre);
-    setShowClientResults(false);
-    setSaveNewClient(false);
-  };
-
-  const clearLinkedClient = () => {
-    setClientId('');
-    setClientManual({ ...emptyClient });
-    setClientSearch('');
-    setSaveNewClient(true);
-  };
-
-  const onClientFieldChange = (field, value) => {
-    if (clientId) setClientId('');
-    setClientManual((prev) => ({ ...prev, [field]: value }));
-    if (field === 'client_nombre') setClientSearch(value);
-  };
-
   const updateItem = (idx, field, value) => {
     setItems((prev) => prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item)));
   };
@@ -185,24 +130,7 @@ export default function QuoteForm() {
     setError('');
 
     try {
-      let linkedClientId = clientId ? Number(clientId) : null;
-
-      if (!linkedClientId && saveNewClient && clientManual.client_nombre.trim()) {
-        const createdClient = await api.clients.create({
-          nombre: clientManual.client_nombre.trim(),
-          rnc: clientManual.client_rnc?.trim() || '',
-          direccion: clientManual.client_direccion?.trim() || '',
-          telefono: clientManual.client_telefono?.trim() || '',
-          email: clientManual.client_email?.trim() || '',
-        });
-        linkedClientId = createdClient.id;
-        setClients((prev) =>
-          [...prev, createdClient].sort((a, b) => a.nombre.localeCompare(b.nombre))
-        );
-      }
-
       const payload = {
-        client_id: linkedClientId,
         numero: isEdit ? undefined : numero,
         fecha,
         validez_dias: validezDias,
@@ -216,7 +144,11 @@ export default function QuoteForm() {
           : taxMode === 'gravado_auto' ? ITBIS_RATE_DEFAULT
           : 0,
         items,
-        ...clientManual,
+        client_nombre: clientForm.nombre.trim(),
+        client_rnc: clientForm.rnc?.trim() || '',
+        client_direccion: clientForm.direccion?.trim() || '',
+        client_telefono: clientForm.telefono?.trim() || '',
+        client_email: clientForm.email?.trim() || '',
       };
 
       if (isEdit) {
@@ -312,103 +244,11 @@ export default function QuoteForm() {
 
         <section className="panel">
           <h2>Cliente</h2>
-
-          {clients.length > 0 && (
-            <div className="client-search-wrap">
-              <label>
-                Buscar cliente guardado
-                <input
-                  type="search"
-                  value={clientSearch}
-                  onChange={(e) => {
-                    setClientSearch(e.target.value);
-                    setShowClientResults(true);
-                    if (clientId) setClientId('');
-                  }}
-                  onFocus={() => setShowClientResults(true)}
-                  placeholder="Nombre, RNC, email o teléfono…"
-                  autoComplete="off"
-                />
-              </label>
-              {showClientResults && clientSearch.trim() && filteredClients.length > 0 && (
-                <ul className="client-search-results" role="listbox">
-                  {filteredClients.map((c) => (
-                    <li key={c.id}>
-                      <button type="button" role="option" onClick={() => pickClient(c)}>
-                        <span className="client-search-name">{c.nombre}</span>
-                        <span className="client-search-meta">
-                          {[c.rnc && `RNC ${c.rnc}`, c.telefono, c.email].filter(Boolean).join(' · ')}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {showClientResults && clientSearch.trim() && filteredClients.length === 0 && (
-                <p className="client-search-empty muted">Sin coincidencias. Completa los datos abajo.</p>
-              )}
-            </div>
-          )}
-
-          {clientId && (
-            <div className="client-linked-banner">
-              <span>Cliente vinculado desde tu lista</span>
-              <button type="button" className="btn-ghost btn-sm" onClick={clearLinkedClient}>
-                Cambiar / nuevo
-              </button>
-            </div>
-          )}
-
-          {!clientId && (
-            <label className="checkbox-label save-client-check">
-              <input
-                type="checkbox"
-                checked={saveNewClient}
-                onChange={(e) => setSaveNewClient(e.target.checked)}
-              />
-              Guardar en mi lista de clientes
-            </label>
-          )}
-
-          <div className="form-grid">
-            <label>
-              Nombre *
-              <input
-                value={clientManual.client_nombre}
-                onChange={(e) => onClientFieldChange('client_nombre', e.target.value)}
-                required
-              />
-            </label>
-            <label>
-              RNC
-              <input
-                value={clientManual.client_rnc}
-                onChange={(e) => onClientFieldChange('client_rnc', e.target.value)}
-              />
-            </label>
-            <label className="span-2">
-              Dirección
-              <input
-                value={clientManual.client_direccion}
-                onChange={(e) => onClientFieldChange('client_direccion', e.target.value)}
-              />
-            </label>
-            <label>
-              Teléfono
-              <input
-                value={clientManual.client_telefono}
-                onChange={(e) => onClientFieldChange('client_telefono', e.target.value)}
-              />
-            </label>
-            <label>
-              Email
-              <input
-                type="email"
-                value={clientManual.client_email}
-                onChange={(e) => onClientFieldChange('client_email', e.target.value)}
-              />
-            </label>
-          </div>
+          <ClientFields
+            suggestions={quoteSuggestions}
+            value={clientForm}
+            onChange={setClientForm}
+          />
         </section>
 
         <section className="panel">

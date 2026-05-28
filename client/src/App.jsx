@@ -4,7 +4,6 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import Clients from './pages/Clients';
 import Quotes from './pages/Quotes';
 import QuoteForm from './pages/QuoteForm';
 import QuoteView from './pages/QuoteView';
@@ -48,7 +47,7 @@ export default function App() {
         }
       >
         <Route index element={<Dashboard />} />
-        <Route path="clientes" element={<Clients />} />
+        <Route path="clientes" element={<Navigate to="/cotizaciones" replace />} />
         <Route path="configuracion" element={<Settings />} />
         <Route path="reportes" element={<Reports />} />
         <Route path="cotizaciones" element={<Quotes />} />

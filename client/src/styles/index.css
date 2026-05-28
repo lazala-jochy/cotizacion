@@ -1118,6 +1118,55 @@ a.cell-ellipsis:hover {
   background: rgba(239, 68, 68, 0.1);
 }
 
+.page-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: -0.25rem 0 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-tab {
+  margin: 0;
+  padding: 0.65rem 1rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.page-tab:hover {
+  color: var(--text);
+  background: var(--bg-elevated);
+}
+
+.page-tab--active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: transparent;
+}
+
+.quotes-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.client-form-panel .form-actions {
+  margin-top: 1.25rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
 /* Cotizaciones — tabla con filtros y paginación */
 .quotes-panel {
   padding: 0;
@@ -1126,15 +1175,90 @@ a.cell-ellipsis:hover {
 
 .quotes-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--border);
   background: var(--bg-panel);
 }
 
+.quotes-filters-bar {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 0.625rem;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
+}
+
+.quotes-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.quotes-filter-field--search {
+  flex: 1 1 160px;
+  min-width: 140px;
+  max-width: 240px;
+}
+
+.quotes-filter-field--year .quotes-filter-select {
+  min-width: 5.5rem;
+}
+
+.quotes-filter-field--month .quotes-filter-select {
+  min-width: 9.25rem;
+}
+
+.quotes-filter-field--monto .quotes-filter-select {
+  min-width: 10.5rem;
+}
+
+.quotes-filter-field--estado .quotes-filter-select {
+  min-width: 8.5rem;
+}
+
+.quotes-filter-field--action {
+  align-self: flex-end;
+}
+
+.quotes-filter-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.quotes-filter-input,
+.quotes-filter-field .quotes-filter-select {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.quotes-filter-input:focus,
+.quotes-filter-field .quotes-filter-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Compat: clientes u otras vistas que aún usan .quotes-filters */
 .quotes-filters {
   display: flex;
   flex-wrap: wrap;
@@ -1181,6 +1305,13 @@ a.cell-ellipsis:hover {
   margin: 0;
   white-space: nowrap;
   min-width: 0;
+}
+
+.quotes-pagination-start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
 }
 
 .quotes-table-wrap {
@@ -1424,7 +1555,15 @@ a.cell-ellipsis:hover {
 .quote-card-client {
   margin-top: 0.25rem;
   font-size: 0.9rem;
-  color: var(--text-muted);
+  color: var(--text);
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.quote-card-client-meta {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
   word-break: break-word;
 }
 
@@ -2449,9 +2588,14 @@ a.cell-ellipsis:hover {
     justify-content: center;
   }
 
-  .quotes-toolbar {
-    flex-direction: column;
-    align-items: stretch;
+  .quotes-filters-bar {
+    padding-bottom: 0.35rem;
+  }
+
+  .quotes-filter-field--search {
+    flex: 1 1 120px;
+    min-width: 120px;
+    max-width: none;
   }
 
   .quotes-filters {
@@ -2463,14 +2607,16 @@ a.cell-ellipsis:hover {
     flex: 1 1 100%;
   }
 
-  .quotes-summary {
-    white-space: normal;
-  }
-
   .quotes-pagination {
     flex-direction: column;
     align-items: stretch;
     gap: 0.75rem;
+  }
+
+  .quotes-pagination-start {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 
   .quotes-page-nav {
@@ -2528,9 +2674,11 @@ a.cell-ellipsis:hover {
   .col-hide-sm {
     display: none;
   }
+}
 
-  .quotes-table-clients .col-w-tel {
-    width: 0;
+@media (max-width: 1100px) {
+  .col-hide-md {
+    display: none;
   }
 }
 
