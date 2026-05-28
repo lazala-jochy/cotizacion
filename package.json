@@ -14,8 +14,8 @@
     "url": "https://github.com/lazala-jochy/cotizacion/issues"
   },
   "scripts": {
-    "predev": "sh scripts/free-ports.sh && node scripts/ensure-dev-native.js || npm run rebuild:dev",
-    "dev": "concurrently -k -n server,client,electron -c blue,green,magenta \"npm run dev:server\" \"npm run dev:client\" \"wait-on -t 60000 http://localhost:5173 http://localhost:3847/api/health && electron .\"",
+    "predev": "sh scripts/free-ports.sh && node scripts/verify-electron-native.js || npm run rebuild:electron",
+    "dev": "concurrently -k -n client,electron -c green,magenta \"npm run dev:client\" \"wait-on -t 60000 http://localhost:5173 && electron .\"",
     "free-ports": "sh scripts/free-ports.sh",
     "dev:server": "node server/index.js",
     "dev:client": "vite",
@@ -43,7 +43,7 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^8.0.8",
-    "pdfkit": "^0.18.0",
+    "puppeteer-core": "^24.43.1",
     "uuid": "^11.0.3"
   },
   "devDependencies": {
@@ -70,6 +70,7 @@
     "files": [
       "electron/**/*",
       "server/**/*",
+      "shared/**/*",
       "dist/**/*",
       "asset/**/*",
       "package.json",
@@ -77,8 +78,7 @@
     ],
     "extraResources": [],
     "asarUnpack": [
-      "**/node_modules/better-sqlite3/**",
-      "**/node_modules/pdfkit/**"
+      "**/node_modules/better-sqlite3/**"
     ],
     "npmRebuild": true,
     "mac": {

@@ -32,7 +32,7 @@ function formatDate(fecha) {
 }
 
 const DEFAULT_INTRO =
-  'Nos complace enviarle la cotización solicitada. En el documento adjunto encontrará el detalle de conceptos, precios, impuestos y condiciones comerciales aplicables.';
+  'Adjuntamos la cotización solicitada para su revisión. Quedamos atentos a sus comentarios.';
 
 function buildBrandHeader(empresa, logoCid) {
   if (logoCid) {
@@ -63,7 +63,7 @@ function buildBrandHeader(empresa, logoCid) {
 /**
  * Plantilla empresarial HTML + texto plano para envío de cotización.
  */
-function buildQuoteEmail({ quote, emisor, customMessage, customSubject, pdfUrl }) {
+function buildQuoteEmail({ quote, emisor, customMessage, customSubject }) {
   const empresa = emisor?.nombre?.trim() || 'Nuestra empresa';
   const cliente = quote.client_nombre?.trim() || 'estimado cliente';
   const subject = customSubject?.trim() || `Cotización ${quote.numero} — ${empresa}`;
@@ -82,17 +82,13 @@ function buildQuoteEmail({ quote, emisor, customMessage, customSubject, pdfUrl }
     '',
     `Estimado/a ${cliente},`,
     '',
-    intro,
-    '',
+    intro ? intro : null,
+    intro ? '' : null,
     'RESUMEN DE LA COTIZACIÓN',
     `  Número:     ${quote.numero}`,
     `  Fecha:      ${formatDate(quote.fecha)}`,
     `  Válida por: ${quote.validez_dias ?? 30} días`,
     `  Total:      ${formatMoney(quote.total)}`,
-    '',
-    pdfUrl
-      ? `Documento adjunto: PDF con el detalle completo de la propuesta.\nVer/Descargar: ${pdfUrl}`
-      : 'Documento adjunto: PDF con el detalle completo de la propuesta.',
     '',
     'Quedamos a su disposición para cualquier consulta o ajuste.',
     '',
@@ -162,12 +158,14 @@ function buildQuoteEmail({ quote, emisor, customMessage, customSubject, pdfUrl }
           <tr>
             <td style="background-color:#ffffff;padding:40px 36px 32px;">
               <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#1e40af;text-transform:uppercase;letter-spacing:0.06em;">Cotización formal</p>
-              <p style="margin:0 0 28px;font-size:17px;color:#0f172a;line-height:1.5;">
+              <p style="margin:0 0 ${intro ? '20px' : '28px'};font-size:17px;color:#0f172a;line-height:1.5;">
                 Estimado/a <strong style="color:#0f172a;">${escapeHtml(cliente)}</strong>,
               </p>
-              <p style="margin:0 0 32px;font-size:15px;color:#475569;line-height:1.75;">
-                ${nl2br(intro)}
-              </p>
+              ${
+                intro
+                  ? `<p style="margin:0 0 32px;font-size:15px;color:#475569;line-height:1.75;">${nl2br(intro)}</p>`
+                  : ''
+              }
               <!-- Tarjeta resumen -->
               <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:32px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">
                 <tr>
@@ -189,29 +187,6 @@ function buildQuoteEmail({ quote, emisor, customMessage, customSubject, pdfUrl }
                       <tr>
                         <td style="padding:18px 24px;font-size:15px;color:#64748b;font-weight:600;">Monto total</td>
                         <td align="right" style="padding:18px 24px;font-size:24px;font-weight:800;color:#1e40af;letter-spacing:-0.02em;">${escapeHtml(formatMoney(quote.total))}</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-              <!-- Adjunto -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:28px;background-color:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;">
-                <tr>
-                  <td style="padding:20px 24px;">
-                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
-                      <tr>
-                        <td style="width:44px;vertical-align:top;">
-                          <div style="width:40px;height:40px;background-color:#1e40af;border-radius:8px;text-align:center;line-height:40px;font-size:11px;font-weight:800;color:#ffffff;letter-spacing:0.04em;">PDF</div>
-                        </td>
-                        <td style="padding-left:14px;vertical-align:middle;">
-                          <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#1e3a8a;">Documento adjunto</p>
-                          <p style="margin:0;font-size:13px;color:#3b82f6;line-height:1.5;">
-                            Pre-factura <strong>${escapeHtml(quote.numero)}</strong> en formato PDF
-                          </p>
-                        </td>
-                        ${pdfUrl ? `<td align="right" style="vertical-align:middle;">
-                          <a href="${escapeHtml(pdfUrl)}" target="_blank" style="display:inline-block;background-color:#1e40af;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;padding:10px 20px;border-radius:6px;letter-spacing:0.02em;">Ver / Descargar</a>
-                        </td>` : ''}
                       </tr>
                     </table>
                   </td>

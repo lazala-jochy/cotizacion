@@ -91,14 +91,13 @@ export default function QuoteSendEmailModal({
           <label className="span-2">
             Mensaje de presentación
             <span className="field-hint muted">
-              Solo este párrafo es editable. El correo incluye automáticamente logo o nombre de empresa,
-              resumen, total y firma con tus datos.
+              Opcional. El correo incluye resumen, total, firma y el PDF adjunto.
             </span>
             <textarea
-              rows={5}
+              rows={4}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Párrafo introductorio de la plantilla empresarial"
+              placeholder="Ej.: Adjuntamos la cotización solicitada para su revisión…"
             />
           </label>
           <div className="form-actions span-2">

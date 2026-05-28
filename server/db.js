@@ -125,6 +125,12 @@ if (!quoteCols.some((c) => c.name === 'monto_pagado')) {
 if (!quoteCols.some((c) => c.name === 'pdf_token')) {
   db.exec('ALTER TABLE quotes ADD COLUMN pdf_token TEXT');
 }
+if (!quoteCols.some((c) => c.name === 'ejecutivo')) {
+  db.exec('ALTER TABLE quotes ADD COLUMN ejecutivo TEXT');
+}
+if (!quoteCols.some((c) => c.name === 'forma_pago')) {
+  db.exec("ALTER TABLE quotes ADD COLUMN forma_pago TEXT DEFAULT 'Efectivo / Transferencia'");
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS quote_payments (

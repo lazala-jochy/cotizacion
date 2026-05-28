@@ -17,7 +17,7 @@ export async function downloadInvoicePdf(quoteId, quoteNumero) {
   const safeName = String(quoteNumero || quoteId).replace(/[^\w.-]+/g, '_');
   const a = document.createElement('a');
   a.href = url;
-  a.download = `Pre-factura-${safeName}.pdf`;
+  a.download = `Cotizacion-${safeName}.pdf`;
   document.body.appendChild(a);
   a.click();
   a.remove();

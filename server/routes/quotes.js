@@ -13,6 +13,7 @@ const {
   computeFinancials,
   syncEstadoFromPayments,
 } = require('../quoteWorkflow');
+const { getUserNombre, fillQuoteDocumentFields } = require('../quoteDocumentFields');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -71,7 +72,7 @@ function getQuoteFull(id, userId) {
   const quote = getQuoteWithItems(id, userId);
   if (!quote) return null;
   const payments = getPayments(id);
-  return enrichQuote(quote, payments);
+  return enrichQuote(fillQuoteDocumentFields(quote, userId), payments);
 }
 
 function recalcQuoteAfterPayments(quoteId, userId) {
@@ -125,14 +126,15 @@ function getEmisorForUser(userId) {
 }
 
 router.get('/:id/pdf', async (req, res) => {
-  const quote = getQuoteFull(req.params.id, req.user.id);
+  let quote = getQuoteFull(req.params.id, req.user.id);
   if (!quote) return res.status(404).json({ error: 'Cotización no encontrada' });
+  quote = fillQuoteDocumentFields(quote, req.user.id);
 
   try {
     const emisor = getEmisorForUser(req.user.id);
     const buffer = await generateInvoicePdf({ quote, emisor });
     const safeName = String(quote.numero).replace(/[^\w.-]+/g, '_');
-    const filename = `Pre-factura-${safeName}.pdf`;
+    const filename = `Cotizacion-${safeName}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buffer);
@@ -150,9 +152,6 @@ router.get('/:id/email-defaults', (req, res) => {
 });
 
 router.post('/:id/send-email', async (req, res) => {
-  const crypto = require('crypto');
-  const { BASE_URL } = require('../config');
-
   const quote = getQuoteFull(req.params.id, req.user.id);
   if (!quote) return res.status(404).json({ error: 'Cotización no encontrada' });
 
@@ -168,28 +167,46 @@ router.post('/:id/send-email', async (req, res) => {
     return res.status(400).json({ error: 'Indica el correo del destinatario o agrega email al cliente.' });
   }
 
-  const pdfToken = crypto.randomBytes(32).toString('hex');
-  db.prepare('UPDATE quotes SET pdf_token = ? WHERE id = ? AND user_id = ?')
-    .run(pdfToken, req.params.id, req.user.id);
-
-  const pdfUrl = `${BASE_URL}/api/public/pdf/${pdfToken}`;
+  if (!String(quote.ejecutivo || '').trim() && req.body.ejecutivo?.trim()) {
+    quote.ejecutivo = req.body.ejecutivo.trim();
+  }
+  if (!String(quote.ejecutivo || '').trim()) {
+    const nombre = getUserNombre(req.user.id);
+    if (nombre) quote.ejecutivo = nombre;
+  }
+  if (quote.ejecutivo) {
+    db.prepare('UPDATE quotes SET ejecutivo = ? WHERE id = ? AND user_id = ?').run(
+      quote.ejecutivo,
+      req.params.id,
+      req.user.id
+    );
+  }
 
   const emisor = getEmisorForUser(req.user.id);
   const empresa = emisor.nombre?.trim() || 'Cotizaciones';
   const customSubject = (req.body.subject || '').trim();
   const customMessage = (req.body.message || '').trim();
+
+  let buffer;
+  try {
+    buffer = await generateInvoicePdf({ quote, emisor });
+  } catch (err) {
+    console.error('PDF error (send-email):', err);
+    return res.status(500).json({
+      error: `No se pudo generar el PDF adjunto: ${err.message || 'error desconocido'}`,
+    });
+  }
+
   const { subject, text, html, inlineAttachments } = buildQuoteEmail({
     quote,
     emisor,
     customSubject: customSubject || undefined,
     customMessage: customMessage || undefined,
-    pdfUrl,
   });
 
   try {
-    const buffer = await generateInvoicePdf({ quote, emisor });
     const safeName = String(quote.numero).replace(/[^\w.-]+/g, '_');
-    const filename = `Pre-factura-${safeName}.pdf`;
+    const filename = `Cotizacion-${safeName}.pdf`;
 
     await sendQuoteEmail(smtp, {
       fromName: empresa,
@@ -224,6 +241,9 @@ router.post('/:id/send-email', async (req, res) => {
         error:
           'No se pudo autenticar en Gmail. Usa tu correo completo y una contraseña de aplicación (no la contraseña normal si tienes verificación en dos pasos).',
       });
+    }
+    if (/PDF|Chrome|puppeteer|generar el PDF/i.test(msg)) {
+      return res.status(500).json({ error: msg });
     }
     res.status(500).json({ error: 'No se pudo enviar el correo. Revisa la configuración en Empresa.' });
   }
@@ -335,6 +355,8 @@ router.post('/', (req, res) => {
     client_direccion,
     client_telefono,
     client_email,
+    ejecutivo,
+    forma_pago,
     apply_itbis = true,
     itbis_manual = false,
     itbis_rate = ITBIS_RATE_DEFAULT_PERCENT,
@@ -395,8 +417,8 @@ router.post('/', (req, res) => {
         `INSERT INTO quotes (
           user_id, client_id, numero, fecha, validez_dias, notas, subtotal, itbis, total, estado,
           client_nombre, client_rnc, client_direccion, client_telefono, client_email,
-          itbis_rate, itbis_manual, monto_pagado
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`
+          itbis_rate, itbis_manual, monto_pagado, ejecutivo, forma_pago
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`
       )
       .run(
         req.user.id,
@@ -415,7 +437,9 @@ router.post('/', (req, res) => {
         clientSnapshot.client_telefono,
         clientSnapshot.client_email,
         totals.itbis_rate,
-        totals.itbis_manual
+        totals.itbis_manual,
+        ejecutivo?.trim() || getUserNombre(req.user.id) || null,
+        forma_pago?.trim() || 'Efectivo / Transferencia'
       );
 
     const quoteId = result.lastInsertRowid;
@@ -458,6 +482,8 @@ router.put('/:id', (req, res) => {
     client_direccion,
     client_telefono,
     client_email,
+    ejecutivo,
+    forma_pago,
     apply_itbis = true,
     itbis_manual = false,
     itbis_rate = ITBIS_RATE_DEFAULT_PERCENT,
@@ -485,7 +511,7 @@ router.put('/:id', (req, res) => {
       `UPDATE quotes SET
         client_id=?, fecha=?, validez_dias=?, notas=?, subtotal=?, itbis=?, total=?, estado='creada',
         client_nombre=?, client_rnc=?, client_direccion=?, client_telefono=?, client_email=?,
-        itbis_rate=?, itbis_manual=?, updated_at=datetime('now')
+        itbis_rate=?, itbis_manual=?, ejecutivo=?, forma_pago=?, updated_at=datetime('now')
        WHERE id=? AND user_id=?`
     ).run(
       client_id || null,
@@ -502,6 +528,8 @@ router.put('/:id', (req, res) => {
       client_email?.trim() || null,
       totals.itbis_rate,
       totals.itbis_manual,
+      ejecutivo?.trim() || getUserNombre(req.user.id) || null,
+      forma_pago?.trim() || 'Efectivo / Transferencia',
       req.params.id,
       req.user.id
     );

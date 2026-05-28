@@ -1,7 +1,14 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
+import { useAuth } from '../context/AuthContext';
 import { canEditQuoteContent } from '../constants/quoteEstados';
+
+const FORMA_PAGO_OPTIONS = [
+  'Efectivo / Transferencia',
+  'Efectivo',
+  'Transferencia',
+];
 
 const emptyItem = { descripcion: '', cantidad: 1, precio_unitario: 0 };
 const ITBIS_RATE_DEFAULT = 18;
@@ -22,6 +29,7 @@ export default function QuoteForm() {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [clients, setClients] = useState([]);
   const [clientId, setClientId] = useState('');
@@ -32,6 +40,8 @@ export default function QuoteForm() {
   const [numero, setNumero] = useState('');
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
   const [validezDias, setValidezDias] = useState(30);
+  const [ejecutivo, setEjecutivo] = useState(() => user?.nombre || '');
+  const [formaPago, setFormaPago] = useState(FORMA_PAGO_OPTIONS[0]);
   const [notas, setNotas] = useState('');
   const [locked, setLocked] = useState(false);
   const [taxMode, setTaxMode] = useState('gravado_auto');
@@ -65,6 +75,8 @@ export default function QuoteForm() {
         setNumero(q.numero);
         setFecha(q.fecha);
         setValidezDias(q.validez_dias);
+        setEjecutivo(q.ejecutivo || user?.nombre || '');
+        setFormaPago(q.forma_pago || FORMA_PAGO_OPTIONS[0]);
         setNotas(q.notas || '');
         setLocked(!canEditQuoteContent(q.estado));
         const hasItbis = q.itbis > 0;
@@ -194,6 +206,8 @@ export default function QuoteForm() {
         numero: isEdit ? undefined : numero,
         fecha,
         validez_dias: validezDias,
+        ejecutivo: ejecutivo.trim(),
+        forma_pago: formaPago,
         notas,
         apply_itbis: taxMode !== 'exento',
         itbis_manual: taxMode === 'gravado_manual',
@@ -270,6 +284,25 @@ export default function QuoteForm() {
                 value={validezDias}
                 onChange={(e) => setValidezDias(Number(e.target.value))}
               />
+            </label>
+            <label>
+              Ejecutivo
+              <input
+                type="text"
+                value={ejecutivo}
+                onChange={(e) => setEjecutivo(e.target.value)}
+                placeholder="Nombre de quien atiende la cotización"
+              />
+            </label>
+            <label>
+              Forma de pago
+              <select value={formaPago} onChange={(e) => setFormaPago(e.target.value)}>
+                {FORMA_PAGO_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
           {!isEdit && (

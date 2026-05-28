@@ -143,21 +143,24 @@ ipcMain.handle('print-quote', async () => {
   await mainWindow.webContents.print({ silent: false, printBackground: true });
 });
 
+async function startEmbeddedServer() {
+  require('./pdf-bootstrap');
+  const { startServer } = require(path.join(__dirname, '..', 'server', 'index.js'));
+  return startServer();
+}
+
 app.whenReady().then(async () => {
-  if (!isDev) {
-    try {
-      const { startServer } = require(path.join(__dirname, '..', 'server', 'index.js'));
-      httpServer = await startServer();
-    } catch (err) {
-      console.error(err);
-      const msg =
-        err.message?.includes('NODE_MODULE_VERSION') ?
-          'Base de datos incompatible con esta versión. Descarga e instala de nuevo el .dmg más reciente desde GitHub Releases.'
-        : err.message || 'No se pudo iniciar el servidor interno';
-      showBootError(msg);
-      app.quit();
-      return;
-    }
+  try {
+    httpServer = await startEmbeddedServer();
+  } catch (err) {
+    console.error(err);
+    const msg =
+      err.message?.includes('NODE_MODULE_VERSION') ?
+        'Base de datos incompatible con esta versión. Descarga e instala de nuevo el .dmg más reciente desde GitHub Releases.'
+      : err.message || 'No se pudo iniciar el servidor interno';
+    showBootError(msg);
+    app.quit();
+    return;
   }
 
   const appIcon = getAppIcon();
