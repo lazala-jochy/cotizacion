@@ -492,6 +492,135 @@ label {
   margin-bottom: 0.25rem;
 }
 
+.saved-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.saved-accounts-hint {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.saved-accounts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.saved-accounts-list li {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
+.saved-account-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.saved-account-item:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.saved-account-item:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.saved-account-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1e3a5f, var(--accent));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.saved-account-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.saved-account-meta strong {
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saved-account-meta span {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saved-account-remove {
+  width: 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.saved-account-remove:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.saved-accounts-other {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.saved-accounts-back {
+  align-self: flex-start;
+  margin-bottom: 0.25rem;
+  padding-left: 0;
+}
+
+.remember-me-label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.remember-me-label input {
+  width: auto;
+  margin: 0;
+}
+
 .auth-footer {
   text-align: center;
   margin-top: 1.25rem;

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { saveAccountAfterLogin } from '../utils/savedAccounts';
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
@@ -96,6 +97,11 @@ export default function Register() {
         direccion: cuenta.direccion,
         telefono: cuenta.telefono,
         emisor_email: cuenta.emisor_email,
+      });
+      saveAccountAfterLogin({
+        user,
+        password: cuenta.password,
+        rememberPassword: true,
       });
       login(user, token);
       navigate('/');
