@@ -14,6 +14,36 @@ export type InvoiceAuditAction =
   | 'enviada'
   | 'pagada';
 
+export interface FiscalDocumentType {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  requires_tax_id: boolean;
+  is_electronic: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FiscalSequence {
+  id: number;
+  user_id: number;
+  fiscal_document_type_id: number;
+  start_number: number;
+  end_number: number;
+  last_used_number: number;
+  expiration_date: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  document_type_code?: string;
+  document_type_name?: string;
+  document_type_requires_tax_id?: boolean;
+  document_type_is_electronic?: boolean;
+}
+
+/** @deprecated Use FiscalSequence */
 export interface FiscalRange {
   id: number;
   user_id: number;
@@ -43,8 +73,11 @@ export interface Invoice {
   id: number;
   user_id: number;
   quote_id: number | null;
-  fiscal_range_id: number;
+  fiscal_range_id: number | null;
+  fiscal_sequence_id: number | null;
+  fiscal_document_type_id: number | null;
   numero: string;
+  /** Número fiscal NCF / e-CF (invoiceNumber) */
   fiscal_number: string;
   serie: string;
   secuencia: number;
@@ -70,4 +103,6 @@ export interface Invoice {
   updated_at: string;
   items?: InvoiceItem[];
   quote_numero?: string | null;
+  document_type_code?: string | null;
+  document_type_name?: string | null;
 }

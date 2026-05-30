@@ -1,4 +1,6 @@
 const db = require('../db');
+const fiscalSequenceRepo = require('./fiscalSequenceRepository');
+const { ensureLegacyFiscalRangeMirror } = require('./fiscalLegacyMirror');
 
 function rowToInvoice(row) {
   if (!row) return null;
@@ -23,9 +25,12 @@ function getItems(invoiceId) {
 function getById(id, userId) {
   const row = db
     .prepare(
-      `SELECT i.*, q.numero AS quote_numero
+      `SELECT i.*, q.numero AS quote_numero,
+        dt.code AS document_type_code,
+        dt.name AS document_type_name
        FROM invoices i
        LEFT JOIN quotes q ON q.id = i.quote_id
+       LEFT JOIN fiscal_document_types dt ON dt.id = i.fiscal_document_type_id
        WHERE i.id = ? AND i.user_id = ?`
     )
     .get(id, userId);
@@ -36,13 +41,22 @@ function getById(id, userId) {
 }
 
 function listByUser(userId, filters = {}) {
-  let sql = `SELECT i.*, q.numero AS quote_numero FROM invoices i
-    LEFT JOIN quotes q ON q.id = i.quote_id WHERE i.user_id = ?`;
+  let sql = `SELECT i.*, q.numero AS quote_numero,
+    dt.code AS document_type_code,
+    dt.name AS document_type_name
+    FROM invoices i
+    LEFT JOIN quotes q ON q.id = i.quote_id
+    LEFT JOIN fiscal_document_types dt ON dt.id = i.fiscal_document_type_id
+    WHERE i.user_id = ?`;
   const params = [userId];
 
   if (filters.estado) {
     sql += ' AND i.estado = ?';
     params.push(filters.estado);
+  }
+  if (filters.fiscal_document_type_id) {
+    sql += ' AND i.fiscal_document_type_id = ?';
+    params.push(Number(filters.fiscal_document_type_id));
   }
   if (filters.search?.trim()) {
     sql += ` AND (
@@ -80,13 +94,15 @@ function nextInternalNumber(userId) {
 function insertInvoiceWithItems(invoiceRow, items) {
   const insertInvoice = db.prepare(
     `INSERT INTO invoices (
-      user_id, quote_id, fiscal_range_id, numero, fiscal_number, serie, secuencia,
+      user_id, quote_id, fiscal_range_id, fiscal_sequence_id, fiscal_document_type_id,
+      numero, fiscal_number, serie, secuencia,
       fecha_emision, fecha_vencimiento, estado,
       client_nombre, client_rnc, client_direccion, client_telefono, client_email,
       subtotal, itbis, descuento, total, itbis_rate, itbis_manual,
       notas, ejecutivo, forma_pago, monto_pagado, updated_at
     ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?,
+      ?, ?, ?, ?,
       ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
@@ -100,10 +116,27 @@ function insertInvoiceWithItems(invoiceRow, items) {
   );
 
   const run = db.transaction(() => {
+    const fiscalSequenceId =
+      invoiceRow.fiscal_sequence_id ?? invoiceRow.fiscal_range_id ?? null;
+    let fiscalRangeId = null;
+    if (fiscalSequenceId) {
+      const sequence = fiscalSequenceRepo.getById(fiscalSequenceId, invoiceRow.user_id);
+      if (sequence) {
+        fiscalRangeId = ensureLegacyFiscalRangeMirror(sequence);
+      } else {
+        const legacy = db
+          .prepare('SELECT id FROM fiscal_ranges WHERE id = ? AND user_id = ?')
+          .get(fiscalSequenceId, invoiceRow.user_id);
+        fiscalRangeId = legacy?.id ?? null;
+      }
+    }
+
     const result = insertInvoice.run(
       invoiceRow.user_id,
       invoiceRow.quote_id ?? null,
-      invoiceRow.fiscal_range_id,
+      fiscalRangeId,
+      fiscalSequenceId,
+      invoiceRow.fiscal_document_type_id,
       invoiceRow.numero,
       invoiceRow.fiscal_number,
       invoiceRow.serie,

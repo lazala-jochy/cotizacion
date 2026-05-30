@@ -1,10 +1,14 @@
+/** Longitud fija de la parte secuencial del NCF / e-CF (después del código de tipo). */
+const FISCAL_SEQUENCE_DIGITS = 8;
+
 /**
- * Formato fiscal: serie + secuencia con 9 dígitos (ej. B02 + 000000126 → B02000000126).
+ * Formato fiscal: código de tipo + secuencia con 8 dígitos.
+ * Ej.: B01 + 126 → B0100000126, E35 + 301 → E3500000301
  */
 function formatFiscalNumber(serie, secuencia) {
   const s = String(serie || '').trim().toUpperCase();
   const seq = Math.max(0, Math.floor(Number(secuencia) || 0));
-  return `${s}${String(seq).padStart(9, '0')}`;
+  return `${s}${String(seq).padStart(FISCAL_SEQUENCE_DIGITS, '0')}`;
 }
 
 function parseSerieFromFiscalNumber(fiscalNumber, serie) {
@@ -27,7 +31,7 @@ function parseFiscalNumber(fiscalNumber, defaultSerie) {
     .toUpperCase();
   if (serieHint && raw.startsWith(serieHint)) {
     const tail = raw.slice(serieHint.length);
-    if (/^\d{1,9}$/.test(tail)) {
+    if (/^\d{1,8}$/.test(tail)) {
       const secuencia = parseInt(tail, 10);
       return {
         serie: serieHint,
@@ -37,7 +41,7 @@ function parseFiscalNumber(fiscalNumber, defaultSerie) {
     }
   }
 
-  const match = raw.match(/^([A-Z][A-Z0-9]*?)(\d{1,9})$/);
+  const match = raw.match(/^([A-Z][A-Z0-9]*?)(\d{1,8})$/);
   if (!match) return null;
   const serie = match[1];
   const secuencia = parseInt(match[2], 10);
@@ -50,6 +54,7 @@ function parseFiscalNumber(fiscalNumber, defaultSerie) {
 }
 
 module.exports = {
+  FISCAL_SEQUENCE_DIGITS,
   formatFiscalNumber,
   parseSerieFromFiscalNumber,
   parseFiscalNumber,

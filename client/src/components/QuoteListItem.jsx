@@ -75,9 +75,9 @@ export function QuoteTableRow({
         <QuoteConvertToInvoiceButton
           quoteId={q.id}
           quoteNumero={q.numero}
+          clientRnc={q.client_rnc}
           className="btn-ghost btn-sm btn-convert-invoice"
           label="Factura"
-          busyLabel="…"
         />
       </td>
       <td className="q-col-actions">
@@ -154,9 +154,9 @@ export function QuoteCard({
         <QuoteConvertToInvoiceButton
           quoteId={q.id}
           quoteNumero={q.numero}
+          clientRnc={q.client_rnc}
           className="btn-ghost btn-sm btn-convert-invoice"
           label="Factura"
-          busyLabel="…"
         />
       </div>
       <footer className="quote-card-footer">

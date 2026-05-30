@@ -5,16 +5,16 @@ const { validateFiscalRangeForIssue } = require('../server/invoices/fiscalValida
 const { calcTotals } = require('../server/invoices/invoiceTotals');
 
 describe('formatFiscalNumber', () => {
-  test('concatena serie y 9 dígitos', () => {
-    assert.strictEqual(formatFiscalNumber('B02', 126), 'B02000000126');
-    assert.strictEqual(formatFiscalNumber('b02', 1), 'B02000000001');
+  test('concatena código y 8 dígitos', () => {
+    assert.strictEqual(formatFiscalNumber('B02', 126), 'B0200000126');
+    assert.strictEqual(formatFiscalNumber('b02', 1), 'B0200000001');
   });
 });
 
 describe('parseFiscalNumber', () => {
   test('normaliza con serie del rango', () => {
-    const p = parseFiscalNumber('b02000000126', 'B02');
-    assert.strictEqual(p.fiscal_number, 'B02000000126');
+    const p = parseFiscalNumber('b0200000126', 'B02');
+    assert.strictEqual(p.fiscal_number, 'B0200000126');
     assert.strictEqual(p.secuencia, 126);
   });
 });

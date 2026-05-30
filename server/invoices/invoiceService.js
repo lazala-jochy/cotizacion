@@ -1,5 +1,7 @@
 const db = require('../db');
-const fiscalRangeRepo = require('./fiscalRangeRepository');
+const fiscalSequenceRepo = require('./fiscalSequenceRepository');
+const { ensureLegacyFiscalRangeMirror } = require('./fiscalLegacyMirror');
+const fiscalDocumentTypeRepo = require('./fiscalDocumentTypeRepository');
 const invoiceRepo = require('./invoiceRepository');
 const auditRepo = require('./invoiceAuditRepository');
 const { calcTotals } = require('./invoiceTotals');
@@ -9,9 +11,12 @@ const {
   validateFiscalRangeForIssue,
   validateActiveRangeBase,
   validateSecuenciaInRange,
+  validateClientTaxId,
 } = require('./fiscalValidation');
 
 const MAX_ALLOC_RETRIES = 8;
+const RNC_REQUIRED_MSG =
+  'Este tipo de comprobante requiere que el cliente tenga un RNC registrado.';
 
 class InvoiceError extends Error {
   constructor(message, code = 'INVOICE_ERROR') {
@@ -25,19 +30,50 @@ function getUserNombre(userId) {
   return row?.nombre || 'Usuario';
 }
 
+function resolveDocumentTypeId(overrides = {}) {
+  const raw =
+    overrides.fiscal_document_type_id ??
+    overrides.fiscalDocumentTypeId ??
+    overrides.document_type_id;
+  const id = Number(raw);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function getSequenceForAllocation(userId, fiscalDocumentTypeId) {
+  if (!fiscalDocumentTypeId) {
+    throw new InvoiceError(
+      'Seleccione el tipo de comprobante fiscal.',
+      'FISCAL_DOCUMENT_TYPE'
+    );
+  }
+  const docType = fiscalDocumentTypeRepo.getById(fiscalDocumentTypeId);
+  if (!docType || !docType.is_active) {
+    throw new InvoiceError('Tipo de comprobante no válido o inactivo.', 'FISCAL_DOCUMENT_TYPE');
+  }
+  const sequence = fiscalSequenceRepo.getActiveForDocumentType(userId, fiscalDocumentTypeId);
+  if (!sequence) {
+    throw new InvoiceError(
+      `No hay un rango activo para ${docType.code} — ${docType.name}. Configure Comprobantes fiscales en Empresa.`,
+      'FISCAL_RANGE'
+    );
+  }
+  return { docType, sequence };
+}
+
 /**
  * Asigna el siguiente número fiscal con bloqueo optimista (transacción + reintento).
  */
-function allocateFiscalNumber(userId) {
+function allocateFiscalNumber(userId, fiscalDocumentTypeId) {
   for (let attempt = 0; attempt < MAX_ALLOC_RETRIES; attempt += 1) {
     try {
       const result = db.transaction(() => {
-        const range = fiscalRangeRepo.getActiveRange(userId);
-        const check = validateFiscalRangeForIssue(range);
+        const { docType, sequence } = getSequenceForAllocation(userId, fiscalDocumentTypeId);
+        const check = validateFiscalRangeForIssue(sequence);
         if (!check.ok) throw new InvoiceError(check.error, 'FISCAL_RANGE');
 
         const nextSecuencia = check.nextSecuencia;
-        const fiscalNumber = formatFiscalNumber(range.serie, nextSecuencia);
+        const serie = docType.code;
+        const fiscalNumber = formatFiscalNumber(serie, nextSecuencia);
 
         const dup = db
           .prepare('SELECT id FROM invoices WHERE user_id = ? AND fiscal_number = ?')
@@ -51,16 +87,23 @@ function allocateFiscalNumber(userId) {
 
         const updated = db
           .prepare(
-            `UPDATE fiscal_ranges SET ultimo_numero_utilizado = ?, updated_at = datetime('now')
-             WHERE id = ? AND user_id = ? AND ultimo_numero_utilizado = ?`
+            `UPDATE fiscal_sequences SET last_used_number = ?, updated_at = datetime('now')
+             WHERE id = ? AND user_id = ? AND last_used_number = ?`
           )
-          .run(nextSecuencia, range.id, userId, range.ultimo_numero_utilizado);
+          .run(nextSecuencia, sequence.id, userId, sequence.last_used_number);
 
         if (updated.changes === 0) {
           throw new InvoiceError('CONFLICT', 'CONFLICT');
         }
 
-        return { range, nextSecuencia, fiscalNumber };
+        return {
+          docType,
+          sequence,
+          range: sequence,
+          nextSecuencia,
+          fiscalNumber,
+          serie,
+        };
       })();
       return result;
     } catch (err) {
@@ -75,31 +118,43 @@ function allocateFiscalNumber(userId) {
   );
 }
 
-function syncRangeUltimoIfHigher(userId, rangeId, secuencia) {
-  const range = fiscalRangeRepo.getById(rangeId, userId);
-  if (!range) return;
-  if (secuencia > range.ultimo_numero_utilizado) {
+function syncSequenceLastUsedIfHigher(userId, sequenceId, secuencia) {
+  const sequence = fiscalSequenceRepo.getById(sequenceId, userId);
+  if (!sequence) return;
+  if (secuencia > sequence.last_used_number) {
     db.prepare(
-      `UPDATE fiscal_ranges SET ultimo_numero_utilizado = ?, updated_at = datetime('now')
+      `UPDATE fiscal_sequences SET last_used_number = ?, updated_at = datetime('now')
        WHERE id = ? AND user_id = ?`
-    ).run(secuencia, rangeId, userId);
+    ).run(secuencia, sequenceId, userId);
   }
 }
 
+function syncRangeUltimoIfHigher(userId, rangeId, secuencia) {
+  syncSequenceLastUsedIfHigher(userId, rangeId, secuencia);
+}
+
 function resolveCustomFiscalNumber(userId, fiscalNumberInput, options = {}) {
-  const range = fiscalRangeRepo.getActiveRange(userId);
-  const base = validateActiveRangeBase(range);
+  const typeId = resolveDocumentTypeId(options) || options.fiscalDocumentTypeId;
+  const { docType, sequence } = getSequenceForAllocation(userId, typeId);
+  const base = validateActiveRangeBase(sequence);
   if (!base.ok) throw new InvoiceError(base.error, 'FISCAL_RANGE');
 
-  const parsed = parseFiscalNumber(fiscalNumberInput, range.serie);
+  const parsed = parseFiscalNumber(fiscalNumberInput, docType.code);
   if (!parsed) {
     throw new InvoiceError(
-      'Número fiscal inválido. Use el formato serie + secuencia, por ejemplo B02000000126.',
+      `Número fiscal inválido. Use el formato ${docType.code} + secuencia, por ejemplo ${formatFiscalNumber(docType.code, 1)}.`,
       'INVALID_FISCAL'
     );
   }
 
-  const inRange = validateSecuenciaInRange(range, parsed.secuencia);
+  if (parsed.serie !== docType.code) {
+    throw new InvoiceError(
+      `El número fiscal debe corresponder al tipo ${docType.code}.`,
+      'INVALID_FISCAL'
+    );
+  }
+
+  const inRange = validateSecuenciaInRange(sequence, parsed.secuencia);
   if (!inRange.ok) throw new InvoiceError(inRange.error, 'FISCAL_RANGE');
 
   if (
@@ -112,7 +167,9 @@ function resolveCustomFiscalNumber(userId, fiscalNumberInput, options = {}) {
   }
 
   return {
-    range,
+    docType,
+    sequence,
+    range: sequence,
     nextSecuencia: parsed.secuencia,
     fiscalNumber: parsed.fiscal_number,
     serie: parsed.serie,
@@ -122,23 +179,44 @@ function resolveCustomFiscalNumber(userId, fiscalNumberInput, options = {}) {
 
 function resolveFiscalAllocation(userId, overrides = {}, options = {}) {
   const manual = overrides.fiscal_number?.trim();
+  const typeId = resolveDocumentTypeId(overrides);
   if (manual) {
-    return resolveCustomFiscalNumber(userId, manual, options);
+    return resolveCustomFiscalNumber(userId, manual, {
+      ...options,
+      fiscalDocumentTypeId: typeId,
+    });
   }
-  return allocateFiscalNumber(userId);
+  if (!typeId) {
+    throw new InvoiceError(
+      'Seleccione el tipo de comprobante fiscal.',
+      'FISCAL_DOCUMENT_TYPE'
+    );
+  }
+  return allocateFiscalNumber(userId, typeId);
 }
 
-function previewNextFiscalNumber(userId) {
-  const range = fiscalRangeRepo.getActiveRange(userId);
-  const check = validateFiscalRangeForIssue(range);
+function previewNextFiscalNumber(userId, fiscalDocumentTypeId) {
+  const { docType, sequence } = getSequenceForAllocation(userId, fiscalDocumentTypeId);
+  const check = validateFiscalRangeForIssue(sequence);
   if (!check.ok) {
     throw new InvoiceError(check.error, 'FISCAL_RANGE');
   }
   return {
-    fiscal_number: formatFiscalNumber(range.serie, check.nextSecuencia),
-    serie: range.serie,
+    fiscal_number: formatFiscalNumber(docType.code, check.nextSecuencia),
+    serie: docType.code,
     secuencia: check.nextSecuencia,
+    fiscal_document_type_id: docType.id,
+    document_type_code: docType.code,
+    document_type_name: docType.name,
   };
+}
+
+function assertClientTaxIdForType(quoteOrClient, docType) {
+  const rnc = quoteOrClient?.client_rnc ?? quoteOrClient?.rnc;
+  const check = validateClientTaxId(rnc, docType);
+  if (!check.ok) {
+    throw new InvoiceError(check.error || RNC_REQUIRED_MSG, 'CLIENT_TAX_ID');
+  }
 }
 
 function mapQuoteToInvoicePayload(quote, fiscalAllocation, overrides = {}) {
@@ -160,13 +238,17 @@ function mapQuoteToInvoicePayload(quote, fiscalAllocation, overrides = {}) {
     fechaVencimiento = d.toISOString().slice(0, 10);
   }
 
+  const { docType, sequence } = fiscalAllocation;
+
   return {
     user_id: quote.user_id,
     quote_id: quote.id,
-    fiscal_range_id: fiscalAllocation.range.id,
+    fiscal_range_id: sequence.id,
+    fiscal_sequence_id: sequence.id,
+    fiscal_document_type_id: docType.id,
     numero: invoiceRepo.nextInternalNumber(quote.user_id),
     fiscal_number: fiscalAllocation.fiscalNumber,
-    serie: fiscalAllocation.serie || fiscalAllocation.range.serie,
+    serie: fiscalAllocation.serie || docType.code,
     secuencia: fiscalAllocation.nextSecuencia,
     fecha_emision: fechaEmision,
     fecha_vencimiento: fechaVencimiento ?? null,
@@ -204,18 +286,33 @@ function convertQuoteToInvoice(quote, userId, userNombre, overrides = {}) {
     );
   }
 
+  const typeId = resolveDocumentTypeId(overrides);
+  const { docType } = getSequenceForAllocation(userId, typeId);
+  assertClientTaxIdForType(quote, docType);
+
   const fiscalAllocation = resolveFiscalAllocation(userId, overrides);
+  ensureLegacyFiscalRangeMirror(fiscalAllocation.sequence);
   const payload = mapQuoteToInvoicePayload({ ...quote, user_id: userId }, fiscalAllocation, overrides);
 
   let invoiceId;
   try {
     invoiceId = invoiceRepo.insertInvoiceWithItems(payload, payload.items);
-    syncRangeUltimoIfHigher(userId, fiscalAllocation.range.id, fiscalAllocation.nextSecuencia);
+    syncSequenceLastUsedIfHigher(
+      userId,
+      fiscalAllocation.sequence.id,
+      fiscalAllocation.nextSecuencia
+    );
   } catch (err) {
     if (String(err.message).includes('UNIQUE')) {
       throw new InvoiceError(
         'El número de factura ya existe. Operación cancelada.',
         'DUPLICATE_FISCAL'
+      );
+    }
+    if (String(err.code) === 'SQLITE_CONSTRAINT_FOREIGNKEY' || String(err.message).includes('FOREIGN KEY')) {
+      throw new InvoiceError(
+        'No se pudo vincular el rango fiscal. Verifique Comprobantes fiscales en Empresa.',
+        'FISCAL_RANGE'
       );
     }
     throw err;
@@ -227,6 +324,8 @@ function convertQuoteToInvoice(quote, userId, userNombre, overrides = {}) {
     quote_id: quote.id,
     quote_numero: quote.numero,
     fiscal_number: payload.fiscal_number,
+    fiscal_document_type_id: docType.id,
+    document_type_code: docType.code,
   });
 
   return invoiceRepo.getById(invoiceId, userId);
@@ -236,6 +335,10 @@ function createManualInvoice(userId, userNombre, body) {
   if (!body.items?.length) {
     throw new InvoiceError('Agregue al menos un ítem a la factura.');
   }
+
+  const typeId = resolveDocumentTypeId(body);
+  const { docType } = getSequenceForAllocation(userId, typeId);
+  assertClientTaxIdForType(body, docType);
 
   const applyItbis = body.apply_itbis !== false;
   const totals = calcTotals(
@@ -247,13 +350,16 @@ function createManualInvoice(userId, userNombre, body) {
   );
 
   const fiscalAllocation = resolveFiscalAllocation(userId, body);
+  ensureLegacyFiscalRangeMirror(fiscalAllocation.sequence);
   const payload = {
     user_id: userId,
     quote_id: null,
-    fiscal_range_id: fiscalAllocation.range.id,
+    fiscal_range_id: fiscalAllocation.sequence.id,
+    fiscal_sequence_id: fiscalAllocation.sequence.id,
+    fiscal_document_type_id: docType.id,
     numero: invoiceRepo.nextInternalNumber(userId),
     fiscal_number: fiscalAllocation.fiscalNumber,
-    serie: fiscalAllocation.serie || fiscalAllocation.range.serie,
+    serie: fiscalAllocation.serie || docType.code,
     secuencia: fiscalAllocation.nextSecuencia,
     fecha_emision: body.fecha_emision || new Date().toISOString().slice(0, 10),
     fecha_vencimiento: body.fecha_vencimiento || null,
@@ -274,7 +380,11 @@ function createManualInvoice(userId, userNombre, body) {
   let invoiceId;
   try {
     invoiceId = invoiceRepo.insertInvoiceWithItems(payload, body.items);
-    syncRangeUltimoIfHigher(userId, fiscalAllocation.range.id, fiscalAllocation.nextSecuencia);
+    syncSequenceLastUsedIfHigher(
+      userId,
+      fiscalAllocation.sequence.id,
+      fiscalAllocation.nextSecuencia
+    );
   } catch (err) {
     if (String(err.message).includes('UNIQUE')) {
       throw new InvoiceError('El número de factura ya existe. Operación cancelada.', 'DUPLICATE_FISCAL');
@@ -285,6 +395,7 @@ function createManualInvoice(userId, userNombre, body) {
   auditRepo.log(invoiceId, userId, userNombre || getUserNombre(userId), 'creada', {
     origen: 'manual',
     fiscal_number: payload.fiscal_number,
+    fiscal_document_type_id: docType.id,
   });
 
   return invoiceRepo.getById(invoiceId, userId);
@@ -325,6 +436,7 @@ function updateInvoice(id, userId, userNombre, body) {
   if (body.fiscal_number != null && String(body.fiscal_number).trim()) {
     const parsed = resolveCustomFiscalNumber(userId, String(body.fiscal_number).trim(), {
       excludeInvoiceId: id,
+      fiscalDocumentTypeId: existing.fiscal_document_type_id,
     });
     if (
       parsed.fiscalNumber !== existing.fiscal_number ||
@@ -334,7 +446,11 @@ function updateInvoice(id, userId, userNombre, body) {
       patch.fiscal_number = parsed.fiscalNumber;
       patch.serie = parsed.serie;
       patch.secuencia = parsed.nextSecuencia;
-      syncRangeUltimoIfHigher(userId, existing.fiscal_range_id, parsed.nextSecuencia);
+      syncSequenceLastUsedIfHigher(
+        userId,
+        existing.fiscal_sequence_id || existing.fiscal_range_id,
+        parsed.nextSecuencia
+      );
     }
   }
 
@@ -382,4 +498,5 @@ module.exports = {
   updateInvoice,
   annulInvoice,
   getUserNombre,
+  RNC_REQUIRED_MSG,
 };

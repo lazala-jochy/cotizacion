@@ -52,18 +52,36 @@ function validateSecuenciaInRange(range, secuencia) {
 }
 
 function validateRangePayload(data) {
-  const inicial = Number(data.numero_inicial);
-  const final = Number(data.numero_final);
-  if (!data.serie?.trim()) return 'La serie es requerida';
+  return validateSequencePayload(data);
+}
+
+function validateSequencePayload(data) {
+  const typeId = Number(data.fiscal_document_type_id);
+  if (!typeId) return 'Seleccione el tipo de comprobante';
+  const inicial = Number(data.start_number ?? data.numero_inicial);
+  const final = Number(data.end_number ?? data.numero_final);
   if (!Number.isInteger(inicial) || inicial < 0) return 'Número inicial inválido';
   if (!Number.isInteger(final) || final < inicial) {
     return 'El número final debe ser mayor o igual al inicial';
   }
-  const ultimo = Number(data.ultimo_numero_utilizado ?? inicial - 1);
+  const ultimo = Number(data.last_used_number ?? data.ultimo_numero_utilizado ?? inicial - 1);
   if (ultimo < inicial - 1 || ultimo > final) {
     return 'Último número utilizado fuera del rango autorizado';
   }
   return null;
+}
+
+function validateClientTaxId(clientRnc, documentType) {
+  if (!documentType?.requires_tax_id) return { ok: true };
+  const rnc = String(clientRnc || '').trim();
+  if (!rnc) {
+    return {
+      ok: false,
+      error:
+        'Este tipo de comprobante requiere que el cliente tenga un RNC registrado.',
+    };
+  }
+  return { ok: true };
 }
 
 module.exports = {
@@ -71,6 +89,8 @@ module.exports = {
   validateActiveRangeBase,
   validateSecuenciaInRange,
   validateRangePayload,
+  validateSequencePayload,
+  validateClientTaxId,
   RANGE_EXHAUSTED_MSG,
   formatFiscalNumber,
 };

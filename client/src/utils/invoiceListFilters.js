@@ -35,9 +35,16 @@ function matchesMontoRange(total, montoFilter) {
 
 export function invoiceMatchesListFilters(
   invoice,
-  { yearFilter, monthFilter, montoFilter, estadoFilter, search }
+  { yearFilter, monthFilter, montoFilter, estadoFilter, documentTypeFilter, search }
 ) {
   if (estadoFilter && normalizeInvoiceEstado(invoice.estado) !== estadoFilter) {
+    return false;
+  }
+
+  if (
+    documentTypeFilter &&
+    String(invoice.fiscal_document_type_id) !== String(documentTypeFilter)
+  ) {
     return false;
   }
 
@@ -65,6 +72,8 @@ export function invoiceMatchesListFilters(
       invoice.client_direccion,
       invoice.fecha_emision,
       invoice.quote_numero,
+      invoice.document_type_code,
+      invoice.document_type_name,
     ]
       .filter(Boolean)
       .join(' ')

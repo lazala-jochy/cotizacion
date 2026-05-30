@@ -10,6 +10,9 @@ function mapInvoiceForTemplate(invoice) {
   return {
     numero: invoice.fiscal_number,
     fiscal_number: invoice.fiscal_number,
+    document_type_code: invoice.document_type_code,
+    document_type_name: invoice.document_type_name,
+    tipo_comprobante: invoice.document_type_name || invoice.document_type_code,
     numero_interno: invoice.numero,
     fecha: invoice.fecha_emision,
     fecha_vencimiento: invoice.fecha_vencimiento,

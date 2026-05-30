@@ -34,7 +34,11 @@ function handleInvoiceError(err, res) {
     const status =
       err.code === 'DUPLICATE_FISCAL' ? 409
       : err.code === 'ALREADY_CONVERTED' ? 409
-      : err.code === 'FISCAL_RANGE' || err.code === 'INVALID_FISCAL' ? 400
+      :       err.code === 'FISCAL_RANGE' ||
+        err.code === 'INVALID_FISCAL' ||
+        err.code === 'FISCAL_DOCUMENT_TYPE' ||
+        err.code === 'CLIENT_TAX_ID' ?
+        400
       : 400;
     return res.status(status).json({ error: err.message, code: err.code });
   }
@@ -49,14 +53,25 @@ function handleInvoiceError(err, res) {
 }
 
 router.get('/', (req, res) => {
-  const { estado, search } = req.query;
-  const list = invoiceRepo.listByUser(req.user.id, { estado, search });
+  const { estado, search, fiscal_document_type_id } = req.query;
+  const list = invoiceRepo.listByUser(req.user.id, {
+    estado,
+    search,
+    fiscal_document_type_id,
+  });
   res.json(list);
 });
 
 router.get('/next-fiscal-number', (req, res) => {
   try {
-    res.json(invoiceService.previewNextFiscalNumber(req.user.id));
+    const typeId = Number(req.query.fiscal_document_type_id);
+    if (!typeId) {
+      return res.status(400).json({
+        error: 'Indique fiscal_document_type_id (tipo de comprobante).',
+        code: 'FISCAL_DOCUMENT_TYPE',
+      });
+    }
+    res.json(invoiceService.previewNextFiscalNumber(req.user.id, typeId));
   } catch (err) {
     return handleInvoiceError(err, res);
   }

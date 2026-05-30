@@ -52,19 +52,33 @@ export const api = {
       request(`/api/templates/${id}/preview`, { method: 'POST', body: JSON.stringify(body) }),
   },
   fiscal: {
-    list: () => request('/api/fiscal'),
+    documentTypes: () => request('/api/fiscal/document-types'),
+    previewNextForType: (typeId) =>
+      request(`/api/fiscal/document-types/${typeId}/preview-next`),
+    sequences: () => request('/api/fiscal/sequences'),
+    list: () => request('/api/fiscal/sequences'),
     getActive: () => request('/api/fiscal/active'),
-    get: (id) => request(`/api/fiscal/${id}`),
-    create: (body) => request('/api/fiscal', { method: 'POST', body: JSON.stringify(body) }),
+    get: (id) => request(`/api/fiscal/sequences/${id}`),
+    createSequence: (body) =>
+      request('/api/fiscal/sequences', { method: 'POST', body: JSON.stringify(body) }),
+    updateSequence: (id, body) =>
+      request(`/api/fiscal/sequences/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    create: (body) => request('/api/fiscal/sequences', { method: 'POST', body: JSON.stringify(body) }),
     update: (id, body) =>
-      request(`/api/fiscal/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+      request(`/api/fiscal/sequences/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   },
   invoices: {
-    nextFiscalNumber: () => request('/api/invoices/next-fiscal-number'),
+    nextFiscalNumber: (fiscalDocumentTypeId) =>
+      request(
+        `/api/invoices/next-fiscal-number?fiscal_document_type_id=${encodeURIComponent(fiscalDocumentTypeId)}`
+      ),
     list: (params = {}) => {
       const q = new URLSearchParams();
       if (params.estado) q.set('estado', params.estado);
       if (params.search) q.set('search', params.search);
+      if (params.fiscal_document_type_id) {
+        q.set('fiscal_document_type_id', params.fiscal_document_type_id);
+      }
       const qs = q.toString();
       return request(`/api/invoices${qs ? `?${qs}` : ''}`);
     },

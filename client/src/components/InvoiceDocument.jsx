@@ -8,6 +8,9 @@ function mapInvoiceForPreview(invoice) {
   return {
     numero: invoice.fiscal_number,
     fiscal_number: invoice.fiscal_number,
+    tipo_comprobante: invoice.document_type_name || invoice.document_type_code,
+    document_type_code: invoice.document_type_code,
+    document_type_name: invoice.document_type_name,
     fecha: invoice.fecha_emision,
     fecha_vencimiento: invoice.fecha_vencimiento,
     notas: invoice.notas,

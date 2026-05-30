@@ -80,6 +80,7 @@ export default function QuoteView() {
           <QuoteConvertToInvoiceButton
             quoteId={id}
             quoteNumero={quote?.numero}
+            clientRnc={quote?.client_rnc}
             className="btn-primary btn-sm"
             onError={setError}
           />
@@ -97,6 +98,7 @@ export default function QuoteView() {
         <QuoteConvertToInvoiceButton
           quoteId={id}
           quoteNumero={quote.numero}
+          clientRnc={quote.client_rnc}
           className="btn-primary"
           onError={setError}
         />

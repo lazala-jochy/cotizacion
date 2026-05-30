@@ -1,24 +1,23 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 
-const emptyRange = {
-  tipo_comprobante: 'Factura de crédito fiscal',
-  serie: 'B02',
-  prefijo: '',
-  numero_inicial: 1,
-  numero_final: 999999,
-  ultimo_numero_utilizado: 0,
-  fecha_vencimiento: '',
-  estado: 'activo',
+const emptySequence = {
+  fiscal_document_type_id: '',
+  start_number: 1,
+  end_number: 99999999,
+  last_used_number: 0,
+  expiration_date: '',
+  is_active: true,
 };
 
 function padSeq(n) {
-  return String(n).padStart(9, '0');
+  return String(n).padStart(8, '0');
 }
 
 export default function FiscalSettingsSection() {
-  const [ranges, setRanges] = useState([]);
-  const [form, setForm] = useState(emptyRange);
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [sequences, setSequences] = useState([]);
+  const [form, setForm] = useState(emptySequence);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -26,9 +25,11 @@ export default function FiscalSettingsSection() {
   const [success, setSuccess] = useState('');
 
   const load = () =>
-    api.fiscal
-      .list()
-      .then(setRanges)
+    Promise.all([api.fiscal.documentTypes(), api.fiscal.sequences()])
+      .then(([types, seqs]) => {
+        setDocumentTypes(types);
+        setSequences(seqs);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
 
@@ -37,21 +38,23 @@ export default function FiscalSettingsSection() {
   }, []);
 
   const resetForm = () => {
-    setForm(emptyRange);
+    setForm(emptySequence);
     setEditingId(null);
   };
 
-  const handleEdit = (range) => {
-    setEditingId(range.id);
+  const selectedType = documentTypes.find(
+    (t) => t.id === Number(form.fiscal_document_type_id)
+  );
+
+  const handleEdit = (seq) => {
+    setEditingId(seq.id);
     setForm({
-      tipo_comprobante: range.tipo_comprobante,
-      serie: range.serie,
-      prefijo: range.prefijo || '',
-      numero_inicial: range.numero_inicial,
-      numero_final: range.numero_final,
-      ultimo_numero_utilizado: range.ultimo_numero_utilizado,
-      fecha_vencimiento: range.fecha_vencimiento || '',
-      estado: range.estado,
+      fiscal_document_type_id: String(seq.fiscal_document_type_id),
+      start_number: seq.start_number,
+      end_number: seq.end_number,
+      last_used_number: seq.last_used_number,
+      expiration_date: seq.expiration_date || '',
+      is_active: seq.is_active,
     });
     setError('');
     setSuccess('');
@@ -64,19 +67,19 @@ export default function FiscalSettingsSection() {
     setSuccess('');
     try {
       const payload = {
-        ...form,
-        numero_inicial: Number(form.numero_inicial),
-        numero_final: Number(form.numero_final),
-        ultimo_numero_utilizado: Number(form.ultimo_numero_utilizado),
-        fecha_vencimiento: form.fecha_vencimiento || null,
-        prefijo: form.prefijo?.trim() || null,
+        fiscal_document_type_id: Number(form.fiscal_document_type_id),
+        start_number: Number(form.start_number),
+        end_number: Number(form.end_number),
+        last_used_number: Number(form.last_used_number),
+        expiration_date: form.expiration_date || null,
+        is_active: form.is_active,
       };
       if (editingId) {
-        await api.fiscal.update(editingId, payload);
-        setSuccess('Rango fiscal actualizado.');
+        await api.fiscal.updateSequence(editingId, payload);
+        setSuccess('Rango actualizado.');
       } else {
-        await api.fiscal.create(payload);
-        setSuccess('Rango fiscal registrado.');
+        await api.fiscal.createSequence(payload);
+        setSuccess('Rango registrado.');
       }
       resetForm();
       await load();
@@ -88,18 +91,19 @@ export default function FiscalSettingsSection() {
   };
 
   const previewNext =
-    form.serie && Number(form.ultimo_numero_utilizado) >= 0
-      ? `${String(form.serie).trim().toUpperCase()}${padSeq(Number(form.ultimo_numero_utilizado) + 1)}`
+    selectedType && Number(form.last_used_number) >= 0
+      ? `${selectedType.code}${padSeq(Number(form.last_used_number) + 1)}`
       : '—';
 
-  if (loading) return <p className="muted">Cargando facturación fiscal…</p>;
+  if (loading) return <p className="muted">Cargando comprobantes fiscales…</p>;
 
   return (
     <section className="panel" style={{ marginTop: '1.5rem' }}>
       <div className="form-section-title">
-        <h2>Facturación fiscal</h2>
+        <h2>Comprobantes fiscales</h2>
         <p className="muted">
-          Configure el rango de comprobantes fiscales. Solo un rango puede estar activo a la vez.
+          Registre un rango independiente por cada tipo de comprobante (B01, B02, E31, etc.). Al
+          convertir una cotización en factura, se usa el rango activo del tipo elegido.
         </p>
       </div>
 
@@ -108,36 +112,31 @@ export default function FiscalSettingsSection() {
 
       <form className="form-grid" onSubmit={handleSubmit}>
         <label className="span-2">
-          Tipo de comprobante
-          <input
-            value={form.tipo_comprobante}
-            onChange={(e) => setForm({ ...form, tipo_comprobante: e.target.value })}
+          Tipo de comprobante *
+          <select
+            value={form.fiscal_document_type_id}
+            onChange={(e) =>
+              setForm({ ...form, fiscal_document_type_id: e.target.value })
+            }
             required
-          />
-        </label>
-        <label>
-          Serie *
-          <input
-            value={form.serie}
-            onChange={(e) => setForm({ ...form, serie: e.target.value.toUpperCase() })}
-            placeholder="B02"
-            required
-          />
-        </label>
-        <label>
-          Prefijo
-          <input
-            value={form.prefijo}
-            onChange={(e) => setForm({ ...form, prefijo: e.target.value })}
-          />
+            disabled={Boolean(editingId)}
+          >
+            <option value="">Seleccione…</option>
+            {documentTypes.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.code} — {t.name}
+                {t.requires_tax_id ? ' (requiere RNC)' : ''}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           Número inicial autorizado *
           <input
             type="number"
             min={0}
-            value={form.numero_inicial}
-            onChange={(e) => setForm({ ...form, numero_inicial: e.target.value })}
+            value={form.start_number}
+            onChange={(e) => setForm({ ...form, start_number: e.target.value })}
             required
           />
         </label>
@@ -146,8 +145,8 @@ export default function FiscalSettingsSection() {
           <input
             type="number"
             min={0}
-            value={form.numero_final}
-            onChange={(e) => setForm({ ...form, numero_final: e.target.value })}
+            value={form.end_number}
+            onChange={(e) => setForm({ ...form, end_number: e.target.value })}
             required
           />
         </label>
@@ -156,26 +155,26 @@ export default function FiscalSettingsSection() {
           <input
             type="number"
             min={0}
-            value={form.ultimo_numero_utilizado}
-            onChange={(e) => setForm({ ...form, ultimo_numero_utilizado: e.target.value })}
+            value={form.last_used_number}
+            onChange={(e) => setForm({ ...form, last_used_number: e.target.value })}
           />
         </label>
         <label>
           Fecha de vencimiento del rango
           <input
             type="date"
-            value={form.fecha_vencimiento}
-            onChange={(e) => setForm({ ...form, fecha_vencimiento: e.target.value })}
+            value={form.expiration_date}
+            onChange={(e) => setForm({ ...form, expiration_date: e.target.value })}
           />
         </label>
         <label>
-          Estado
+          Activo
           <select
-            value={form.estado}
-            onChange={(e) => setForm({ ...form, estado: e.target.value })}
+            value={form.is_active ? '1' : '0'}
+            onChange={(e) => setForm({ ...form, is_active: e.target.value === '1' })}
           >
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
+            <option value="1">Sí</option>
+            <option value="0">No</option>
           </select>
         </label>
         <p className="muted span-2">
@@ -193,35 +192,43 @@ export default function FiscalSettingsSection() {
         </div>
       </form>
 
-      {ranges.length > 0 && (
+      {sequences.length > 0 && (
         <div className="table-wrap" style={{ marginTop: '1.5rem' }}>
           <table className="data-table">
             <thead>
               <tr>
-                <th>Serie</th>
+                <th>Tipo</th>
                 <th>Rango</th>
                 <th>Último</th>
                 <th>Vence</th>
-                <th>Estado</th>
+                <th>Activo</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {ranges.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.serie}</td>
+              {sequences.map((s) => (
+                <tr key={s.id}>
                   <td>
-                    {padSeq(r.numero_inicial)} – {padSeq(r.numero_final)}
+                    <strong>{s.document_type_code}</strong>
+                    <br />
+                    <span className="muted small">{s.document_type_name}</span>
                   </td>
-                  <td>{padSeq(r.ultimo_numero_utilizado)}</td>
-                  <td>{r.fecha_vencimiento || '—'}</td>
                   <td>
-                    <span className={`badge badge-${r.estado === 'activo' ? 'ok' : 'muted'}`}>
-                      {r.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                    {padSeq(s.start_number)} – {padSeq(s.end_number)}
+                  </td>
+                  <td>{padSeq(s.last_used_number)}</td>
+                  <td>{s.expiration_date || '—'}</td>
+                  <td>
+                    <span className={`badge badge-${s.is_active ? 'ok' : 'muted'}`}>
+                      {s.is_active ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
                   <td>
-                    <button type="button" className="btn-ghost btn-sm" onClick={() => handleEdit(r)}>
+                    <button
+                      type="button"
+                      className="btn-ghost btn-sm"
+                      onClick={() => handleEdit(s)}
+                    >
                       Editar
                     </button>
                   </td>

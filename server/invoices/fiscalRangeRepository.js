@@ -1,106 +1,41 @@
-const db = require('../db');
-
-function rowToRange(row) {
-  if (!row) return null;
-  return {
-    ...row,
-    numero_inicial: Number(row.numero_inicial),
-    numero_final: Number(row.numero_final),
-    ultimo_numero_utilizado: Number(row.ultimo_numero_utilizado),
-  };
-}
+/**
+ * @deprecated Use fiscalSequenceRepository. Mantiene compatibilidad con rutas legadas.
+ */
+const fiscalSequenceRepo = require('./fiscalSequenceRepository');
 
 function listByUser(userId) {
-  return db
-    .prepare(
-      `SELECT * FROM fiscal_ranges WHERE user_id = ? ORDER BY estado DESC, updated_at DESC`
-    )
-    .all(userId)
-    .map(rowToRange);
+  return fiscalSequenceRepo.listByUser(userId);
 }
 
 function getById(id, userId) {
-  return rowToRange(
-    db.prepare('SELECT * FROM fiscal_ranges WHERE id = ? AND user_id = ?').get(id, userId)
-  );
+  return fiscalSequenceRepo.getById(id, userId);
 }
 
 function getActiveRange(userId) {
-  return rowToRange(
-    db
-      .prepare(
-        `SELECT * FROM fiscal_ranges WHERE user_id = ? AND estado = 'activo'
-         ORDER BY id DESC LIMIT 1`
-      )
-      .get(userId)
-  );
+  const all = fiscalSequenceRepo.listByUser(userId);
+  return all.find((s) => s.is_active) || null;
 }
 
 function create(userId, data) {
-  if (data.estado === 'activo') {
-    db.prepare(`UPDATE fiscal_ranges SET estado = 'inactivo', updated_at = datetime('now') WHERE user_id = ?`).run(
-      userId
-    );
-  }
-  const result = db
-    .prepare(
-      `INSERT INTO fiscal_ranges (
-        user_id, tipo_comprobante, serie, prefijo, numero_inicial, numero_final,
-        ultimo_numero_utilizado, fecha_vencimiento, estado, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-    )
-    .run(
-      userId,
-      data.tipo_comprobante?.trim() || 'Factura de crédito fiscal',
-      data.serie.trim().toUpperCase(),
-      data.prefijo?.trim() || null,
-      Number(data.numero_inicial),
-      Number(data.numero_final),
-      Number(data.ultimo_numero_utilizado ?? data.numero_inicial - 1) || 0,
-      data.fecha_vencimiento || null,
-      data.estado || 'activo'
-    );
-  return getById(result.lastInsertRowid, userId);
+  return fiscalSequenceRepo.create(userId, {
+    fiscal_document_type_id: data.fiscal_document_type_id,
+    start_number: data.numero_inicial ?? data.start_number,
+    end_number: data.numero_final ?? data.end_number,
+    last_used_number: data.ultimo_numero_utilizado ?? data.last_used_number,
+    expiration_date: data.fecha_vencimiento ?? data.expiration_date,
+    is_active: data.estado !== 'inactivo',
+  });
 }
 
 function update(id, userId, data) {
-  const existing = getById(id, userId);
-  if (!existing) return null;
-
-  if (data.estado === 'activo' && existing.estado !== 'activo') {
-    db.prepare(`UPDATE fiscal_ranges SET estado = 'inactivo', updated_at = datetime('now') WHERE user_id = ? AND id != ?`).run(
-      userId,
-      id
-    );
-  }
-
-  db.prepare(
-    `UPDATE fiscal_ranges SET
-      tipo_comprobante = ?,
-      serie = ?,
-      prefijo = ?,
-      numero_inicial = ?,
-      numero_final = ?,
-      ultimo_numero_utilizado = ?,
-      fecha_vencimiento = ?,
-      estado = ?,
-      updated_at = datetime('now')
-     WHERE id = ? AND user_id = ?`
-  ).run(
-    data.tipo_comprobante?.trim() || existing.tipo_comprobante,
-    (data.serie ?? existing.serie).trim().toUpperCase(),
-    data.prefijo !== undefined ? data.prefijo?.trim() || null : existing.prefijo,
-    data.numero_inicial !== undefined ? Number(data.numero_inicial) : existing.numero_inicial,
-    data.numero_final !== undefined ? Number(data.numero_final) : existing.numero_final,
-    data.ultimo_numero_utilizado !== undefined ?
-      Number(data.ultimo_numero_utilizado)
-    : existing.ultimo_numero_utilizado,
-    data.fecha_vencimiento !== undefined ? data.fecha_vencimiento : existing.fecha_vencimiento,
-    data.estado ?? existing.estado,
-    id,
-    userId
-  );
-  return getById(id, userId);
+  return fiscalSequenceRepo.update(id, userId, {
+    fiscal_document_type_id: data.fiscal_document_type_id,
+    start_number: data.numero_inicial,
+    end_number: data.numero_final,
+    last_used_number: data.ultimo_numero_utilizado,
+    expiration_date: data.fecha_vencimiento,
+    is_active: data.estado !== undefined ? data.estado === 'activo' : undefined,
+  });
 }
 
 module.exports = {

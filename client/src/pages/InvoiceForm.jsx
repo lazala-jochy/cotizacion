@@ -34,6 +34,8 @@ export default function InvoiceForm() {
   const [taxMode, setTaxMode] = useState('gravado_auto');
   const [itbisRate, setItbisRate] = useState(ITBIS_RATE_DEFAULT);
   const [items, setItems] = useState([{ ...emptyItem }]);
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [fiscalDocumentTypeId, setFiscalDocumentTypeId] = useState('');
   const [fiscalNumber, setFiscalNumber] = useState('');
   const [numeroInterno, setNumeroInterno] = useState('');
   const [error, setError] = useState('');
@@ -41,12 +43,16 @@ export default function InvoiceForm() {
   const [locked, setLocked] = useState(false);
 
   useEffect(() => {
-    if (isEdit) return;
+    api.fiscal.documentTypes().then(setDocumentTypes).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (isEdit || !fiscalDocumentTypeId) return;
     api.invoices
-      .nextFiscalNumber()
+      .nextFiscalNumber(Number(fiscalDocumentTypeId))
       .then((r) => setFiscalNumber(r.fiscal_number || ''))
       .catch((e) => setError(e.message));
-  }, [isEdit]);
+  }, [isEdit, fiscalDocumentTypeId]);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -62,6 +68,9 @@ export default function InvoiceForm() {
           email: inv.client_email || '',
         });
         setFiscalNumber(inv.fiscal_number || '');
+        setFiscalDocumentTypeId(
+          inv.fiscal_document_type_id ? String(inv.fiscal_document_type_id) : ''
+        );
         setNumeroInterno(inv.numero || '');
         setFechaEmision(inv.fecha_emision);
         setFechaVencimiento(inv.fecha_vencimiento || '');
@@ -113,7 +122,16 @@ export default function InvoiceForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    const selectedType = documentTypes.find((t) => t.id === Number(fiscalDocumentTypeId));
+    if (!isEdit && selectedType?.requires_tax_id && !clientForm.rnc?.trim()) {
+      setError(
+        'Este tipo de comprobante requiere que el cliente tenga un RNC registrado.'
+      );
+      return;
+    }
+
     const payload = {
+      fiscal_document_type_id: fiscalDocumentTypeId ? Number(fiscalDocumentTypeId) : undefined,
       fiscal_number: fiscalNumber.trim(),
       fecha_emision: fechaEmision,
       fecha_vencimiento: fechaVencimiento || null,
@@ -171,7 +189,7 @@ export default function InvoiceForm() {
         <div>
           <h1>{isEdit ? 'Editar factura' : 'Nueva factura'}</h1>
           <p className="muted">
-            Número fiscal (NCF) según el rango activo en Empresa. Puede ajustarlo antes de guardar.
+            Elija el tipo de comprobante y el NCF según el rango activo de ese tipo en Empresa.
           </p>
         </div>
       </header>
@@ -182,14 +200,32 @@ export default function InvoiceForm() {
         <section className="panel">
           <h2>Datos generales</h2>
           <div className="form-grid">
+            {!isEdit && (
+              <label>
+                Tipo de comprobante *
+                <select
+                  value={fiscalDocumentTypeId}
+                  onChange={(e) => setFiscalDocumentTypeId(e.target.value)}
+                  required
+                >
+                  <option value="">Seleccione…</option>
+                  {documentTypes.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.code} — {t.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label>
               Número de factura (NCF) *
               <input
                 value={fiscalNumber}
                 onChange={(e) => setFiscalNumber(e.target.value.toUpperCase())}
-                placeholder="Ej: B02000000126"
+                placeholder="Ej: B0200000126"
                 required
                 spellCheck={false}
+                disabled={!isEdit && !fiscalDocumentTypeId}
               />
             </label>
             {isEdit && numeroInterno && (

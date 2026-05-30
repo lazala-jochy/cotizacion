@@ -43,7 +43,9 @@ export default function Invoices() {
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  const [documentTypes, setDocumentTypes] = useState([]);
   const [search, setSearch] = useState('');
+  const [documentTypeFilter, setDocumentTypeFilter] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [monthFilter, setMonthFilter] = useState('');
@@ -52,9 +54,11 @@ export default function Invoices() {
   const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
 
   useEffect(() => {
-    api.invoices
-      .list()
-      .then(setInvoices)
+    Promise.all([api.invoices.list(), api.fiscal.documentTypes()])
+      .then(([list, types]) => {
+        setInvoices(list);
+        setDocumentTypes(types);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -67,19 +71,20 @@ export default function Invoices() {
         invoiceMatchesListFilters(item, {
           search,
           estadoFilter,
+          documentTypeFilter,
           yearFilter,
           monthFilter,
           montoFilter,
         })
       ),
-    [invoices, search, estadoFilter, yearFilter, monthFilter, montoFilter]
+    [invoices, search, estadoFilter, documentTypeFilter, yearFilter, monthFilter, montoFilter]
   );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
 
   useEffect(() => {
     setPage(1);
-  }, [search, estadoFilter, yearFilter, monthFilter, montoFilter, pageSize]);
+  }, [search, estadoFilter, documentTypeFilter, yearFilter, monthFilter, montoFilter, pageSize]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -152,6 +157,7 @@ export default function Invoices() {
 
   const clearFilters = () => {
     setSearch('');
+    setDocumentTypeFilter('');
     setEstadoFilter('');
     setYearFilter('');
     setMonthFilter('');
@@ -159,7 +165,12 @@ export default function Invoices() {
   };
 
   const hasFilters = Boolean(
-    search.trim() || estadoFilter || yearFilter || monthFilter || montoFilter
+    search.trim() ||
+      documentTypeFilter ||
+      estadoFilter ||
+      yearFilter ||
+      monthFilter ||
+      montoFilter
   );
 
   const listSummary =
@@ -262,6 +273,21 @@ export default function Invoices() {
                 {MONTO_FILTER_OPTIONS.map((o) => (
                   <option key={o.value || 'all'} value={o.value}>
                     {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="quotes-filter-field quotes-filter-field--estado">
+              <span className="quotes-filter-label">Comprobante</span>
+              <select
+                className="quotes-filter-select"
+                value={documentTypeFilter}
+                onChange={(e) => setDocumentTypeFilter(e.target.value)}
+              >
+                <option value="">Todos</option>
+                {documentTypes.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.code}
                   </option>
                 ))}
               </select>
