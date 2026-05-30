@@ -14,6 +14,7 @@ const {
   syncEstadoFromPayments,
 } = require('../quoteWorkflow');
 const { getUserNombre, fillQuoteDocumentFields } = require('../quoteDocumentFields');
+const { getEmisorRow, publicEmisorFields } = require('../emisorSmtp');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -106,19 +107,7 @@ router.get('/next-number', (req, res) => {
 });
 
 function getEmisorForUser(userId) {
-  let row = db.prepare('SELECT * FROM emisor_settings WHERE user_id = ?').get(userId);
-  if (!row) {
-    db.prepare('INSERT INTO emisor_settings (user_id, nombre) VALUES (?, ?)').run(userId, '');
-    row = db.prepare('SELECT * FROM emisor_settings WHERE user_id = ?').get(userId);
-  }
-  return {
-    nombre: row.nombre || '',
-    rnc: row.rnc || '',
-    direccion: row.direccion || '',
-    telefono: row.telefono || '',
-    email: row.email || '',
-    logo: row.logo || null,
-  };
+  return publicEmisorFields(getEmisorRow(userId));
 }
 
 router.get('/:id/pdf', async (req, res) => {
@@ -128,7 +117,7 @@ router.get('/:id/pdf', async (req, res) => {
 
   try {
     const emisor = getEmisorForUser(req.user.id);
-    const buffer = await generateInvoicePdf({ quote, emisor });
+    const buffer = await generateInvoicePdf({ quote, emisor, userId: req.user.id });
     const safeName = String(quote.numero).replace(/[^\w.-]+/g, '_');
     const filename = `Cotizacion-${safeName}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
@@ -185,7 +174,7 @@ router.post('/:id/send-email', async (req, res) => {
 
   let buffer;
   try {
-    buffer = await generateInvoicePdf({ quote, emisor });
+    buffer = await generateInvoicePdf({ quote, emisor, userId: req.user.id });
   } catch (err) {
     console.error('PDF error (send-email):', err);
     return res.status(500).json({

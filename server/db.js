@@ -131,6 +131,20 @@ if (!quoteCols.some((c) => c.name === 'ejecutivo')) {
 if (!quoteCols.some((c) => c.name === 'forma_pago')) {
   db.exec("ALTER TABLE quotes ADD COLUMN forma_pago TEXT DEFAULT 'Efectivo / Transferencia'");
 }
+db.exec(`
+  CREATE TABLE IF NOT EXISTS quote_templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    is_default INTEGER NOT NULL DEFAULT 0,
+    definition_json TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_quote_templates_user ON quote_templates(user_id);
+`);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS quote_payments (

@@ -141,6 +141,7 @@ export default function Layout() {
             Cotizaciones
           </NavLink>
           <NavLink to="/reportes">Reportes</NavLink>
+          <NavLink to="/plantillas">Plantillas</NavLink>
           <NavLink to="/configuracion">Empresa</NavLink>
         </nav>
         <div className="sidebar-footer">

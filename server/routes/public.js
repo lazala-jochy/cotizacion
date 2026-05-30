@@ -3,6 +3,7 @@ const db = require('../db');
 const { generateInvoicePdf } = require('../pdf/generate-invoice-pdf');
 const { enrichQuote } = require('../quoteWorkflow');
 const { fillQuoteDocumentFields } = require('../quoteDocumentFields');
+const { getEmisorRow, publicEmisorFields } = require('../emisorSmtp');
 
 const router = express.Router();
 
@@ -30,12 +31,14 @@ router.get('/pdf/:token', async (req, res) => {
     .all(quote.id);
   const enriched = enrichQuote(fillQuoteDocumentFields(quote, quote.user_id), payments);
 
-  const emisor = db
-    .prepare('SELECT * FROM emisor_settings WHERE user_id = ?')
-    .get(quote.user_id) || { nombre: '' };
+  const emisor = publicEmisorFields(getEmisorRow(quote.user_id));
 
   try {
-    const buffer = await generateInvoicePdf({ quote: enriched, emisor });
+    const buffer = await generateInvoicePdf({
+      quote: enriched,
+      emisor,
+      userId: quote.user_id,
+    });
     const safeName = String(quote.numero).replace(/[^\w.-]+/g, '_');
     const filename = `Cotizacion-${safeName}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');

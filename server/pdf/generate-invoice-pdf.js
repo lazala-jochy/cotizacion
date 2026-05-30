@@ -1,33 +1,19 @@
-const { renderQuoteDocumentHtml } = require('./render-quote-document-html');
-const { generatePdfFromHtmlPuppeteer } = require('./html-to-pdf');
+const templatePdfService = require('../templates/templatePdfService');
+const {
+  generateInvoicePdfFromHtml,
+  setPdfFromHtmlImplementation,
+} = require('./pdf-from-html');
 
-let pdfFromHtmlImpl = null;
-
-function setPdfFromHtmlImplementation(impl) {
-  pdfFromHtmlImpl = impl;
-}
-
-async function generateInvoicePdf({ quote, emisor }) {
-  const html = renderQuoteDocumentHtml({ quote, emisor });
-  if (pdfFromHtmlImpl) {
-    return pdfFromHtmlImpl(html);
+/** Genera PDF de cotización usando la plantilla predeterminada del usuario. */
+async function generateInvoicePdf({ quote, emisor, userId }) {
+  if (!userId) {
+    throw new Error('userId es requerido para generar el PDF con plantilla');
   }
-  if (process.versions?.electron) {
-    throw new Error(
-      'El generador de PDF no está listo. Cierra Cotizaciones y vuelve a abrir con npm run dev o desde la app instalada.'
-    );
-  }
-  try {
-    return await generatePdfFromHtmlPuppeteer(html);
-  } catch (err) {
-    throw new Error(
-      `${err.message || 'Error al generar PDF'}. Usa npm run dev (Electron) o instala Google Chrome.`
-    );
-  }
+  return templatePdfService.generateQuotePdf(quote, emisor, userId);
 }
 
 module.exports = {
   generateInvoicePdf,
+  generateInvoicePdfFromHtml,
   setPdfFromHtmlImplementation,
-  renderQuoteDocumentHtml,
 };

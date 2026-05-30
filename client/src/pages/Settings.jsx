@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api';
 
 const emptyEmisor = {
@@ -78,10 +79,11 @@ export default function Settings() {
       <header className="page-header">
         <div>
           <h1>Datos de la empresa</h1>
-          <p>
-            Información de tu empresa que aparece en las cotizaciones (razón social, RNC, dirección, etc.)
-          </p>
+          <p>Razón social, logo, contacto y correo Gmail para envíos.</p>
         </div>
+        <Link to="/plantillas" className="btn-primary">
+          Diseñador de plantillas
+        </Link>
       </header>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -134,7 +136,6 @@ export default function Settings() {
             <input
               value={form.direccion}
               onChange={(e) => setForm({ ...form, direccion: e.target.value })}
-              placeholder="Ej: av principal, la mata, cotui, rd"
             />
           </label>
           <label>
@@ -142,7 +143,6 @@ export default function Settings() {
             <input
               value={form.telefono}
               onChange={(e) => setForm({ ...form, telefono: e.target.value })}
-              placeholder="Ej: 849-405-8727"
             />
           </label>
           <label>
@@ -151,31 +151,29 @@ export default function Settings() {
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="Ej: contacto@miempresa.com"
             />
           </label>
 
           <div className="form-section-title span-2">
             <h2>Envío por Gmail</h2>
             <p className="muted">
-              Cuenta de Gmail para enviar cotizaciones por correo. Si tienes verificación en dos pasos, crea una{' '}
+              Si tienes verificación en dos pasos, usa una{' '}
               <a
                 href="https://myaccount.google.com/apppasswords"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 contraseña de aplicación
-              </a>{' '}
-              y úsala aquí (no tu contraseña habitual).
+              </a>
+              .
             </p>
           </div>
           <label>
-            Usuario (correo Gmail) *
+            Usuario (correo Gmail)
             <input
               type="email"
               value={form.smtp_user}
               onChange={(e) => setForm({ ...form, smtp_user: e.target.value })}
-              placeholder="tuempresa@gmail.com"
               autoComplete="username"
             />
           </label>
@@ -186,14 +184,12 @@ export default function Settings() {
                 type={showSmtpPassword ? 'text' : 'password'}
                 value={form.smtp_password}
                 onChange={(e) => setForm({ ...form, smtp_password: e.target.value })}
-                placeholder="Contraseña de aplicación de Gmail"
                 autoComplete="off"
               />
               <button
                 type="button"
                 className="btn-ghost btn-sm btn-password-toggle"
                 onClick={() => setShowSmtpPassword((v) => !v)}
-                aria-label={showSmtpPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {showSmtpPassword ? 'Ocultar' : 'Mostrar'}
               </button>

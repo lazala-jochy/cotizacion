@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
 const { JWT_SECRET, JWT_EXPIRES } = require('../config');
+const templateRepo = require('../templates/templateRepository');
 
 const router = express.Router();
 
@@ -54,6 +55,8 @@ router.post('/register', (req, res) => {
     telefono?.trim() || null,
     emisor_email?.trim() || null
   );
+
+  templateRepo.ensureDefaultTemplate(userId);
 
   const user = { id: userId, nombre: nombre.trim(), email: email.trim().toLowerCase() };
   const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES });

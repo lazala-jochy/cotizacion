@@ -13,8 +13,8 @@ export default function QuoteView() {
   const [emisor, setEmisor] = useState(null);
   const [error, setError] = useState('');
   const [pdfLoading, setPdfLoading] = useState(false);
-  const [emailModalOpen, setEmailModalOpen] = useState(false);
-  const [emailSuccess, setEmailSuccess] = useState('');
+  const [sendModalOpen, setSendModalOpen] = useState(false);
+  const [sendSuccess, setSendSuccess] = useState('');
 
   const load = () =>
     Promise.all([api.quotes.get(id), api.emisor.get()])
@@ -27,14 +27,6 @@ export default function QuoteView() {
   useEffect(() => {
     load();
   }, [id]);
-
-  const handlePrint = () => {
-    if (window.electronAPI?.printQuote) {
-      window.electronAPI.printQuote();
-    } else {
-      window.print();
-    }
-  };
 
   const handleDownloadPdf = async () => {
     setPdfLoading(true);
@@ -56,51 +48,49 @@ export default function QuoteView() {
 
   return (
     <div className="page quote-view-page">
-      <div className="no-print toolbar">
-        <Link to="/cotizaciones" className="btn-ghost">
+      <div className="no-print quote-view-toolbar">
+        <Link to="/cotizaciones" className="btn-ghost btn-sm">
           ← Volver
         </Link>
-        <div className="toolbar-actions">
+        <div className="quote-view-toolbar-actions">
           {editable && (
-            <Link to={`/cotizaciones/${id}/editar`} className="btn-ghost">
+            <Link to={`/cotizaciones/${id}/editar`} className="btn-ghost btn-sm">
               Editar
             </Link>
           )}
-          <button type="button" className="btn-ghost" onClick={handlePrint}>
-            Imprimir
+          <button
+            type="button"
+            className="btn-ghost btn-sm"
+            onClick={handleDownloadPdf}
+            disabled={pdfLoading}
+          >
+            {pdfLoading ? 'Generando PDF…' : 'Descargar PDF'}
           </button>
           <button
             type="button"
-            className="btn-ghost"
+            className="btn-primary btn-sm"
             onClick={() => {
-              setEmailSuccess('');
+              setSendSuccess('');
               setError('');
-              setEmailModalOpen(true);
+              setSendModalOpen(true);
             }}
           >
             Enviar por correo
           </button>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={handleDownloadPdf}
-            disabled={pdfLoading}
-          >
-            {pdfLoading ? 'Generando PDF…' : 'Descargar cotización PDF'}
-          </button>
         </div>
       </div>
 
-      {emailSuccess && <div className="alert alert-success no-print">{emailSuccess}</div>}
+      {sendSuccess && <div className="alert alert-success no-print">{sendSuccess}</div>}
       {error && <div className="alert alert-error no-print">{error}</div>}
 
-      {emailModalOpen && (
+      {sendModalOpen && (
         <QuoteSendEmailModal
           quote={quote}
-          onClose={() => setEmailModalOpen(false)}
+          onClose={() => setSendModalOpen(false)}
           onSent={(updated) => {
-            setQuote(updated);
-            setEmailSuccess(`Cotización enviada correctamente.`);
+            if (updated) setQuote(updated);
+            setSendSuccess('Cotización enviada por correo correctamente.');
+            setSendModalOpen(false);
           }}
         />
       )}

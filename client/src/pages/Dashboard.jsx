@@ -43,6 +43,10 @@ export default function Dashboard() {
           <h3>Ver cotizaciones</h3>
           <p>Consulta y administra todas tus cotizaciones.</p>
         </Link>
+        <Link to="/plantillas" className="action-card">
+          <h3>Diseñador de plantillas</h3>
+          <p>Diseña el PDF de tus cotizaciones con arrastrar y soltar.</p>
+        </Link>
         <Link to="/reportes" className="action-card">
           <h3>Reportes</h3>
           <p>Gráficos de ventas, estados y clientes principales.</p>

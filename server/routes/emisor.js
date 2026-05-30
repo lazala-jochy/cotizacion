@@ -2,7 +2,6 @@ const express = require('express');
 const db = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 const { getEmisorRow, publicEmisorFields, readSmtpPassword } = require('../emisorSmtp');
-
 const router = express.Router();
 router.use(authMiddleware);
 
@@ -26,7 +25,6 @@ router.put('/', (req, res) => {
   const current = getEmisorRow(req.user.id);
   const logoValue = logo !== undefined ? logo || null : current?.logo || null;
   const smtpUserValue = smtp_user !== undefined ? smtp_user?.trim() || null : current.smtp_user;
-
   let smtpPasswordValue = readSmtpPassword(current) || null;
   if (smtp_password !== undefined) {
     const raw = String(smtp_password);

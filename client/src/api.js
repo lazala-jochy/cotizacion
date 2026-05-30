@@ -37,6 +37,20 @@ export const api = {
       request(`/api/clients/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     remove: (id) => request(`/api/clients/${id}`, { method: 'DELETE' }),
   },
+  templates: {
+    list: () => request('/api/templates'),
+    getDefault: () => request('/api/templates/default'),
+    get: (id) => request(`/api/templates/${id}`),
+    create: (body) =>
+      request('/api/templates', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id, body) =>
+      request(`/api/templates/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    remove: (id) => request(`/api/templates/${id}`, { method: 'DELETE' }),
+    duplicate: (id) => request(`/api/templates/${id}/duplicate`, { method: 'POST' }),
+    setDefault: (id) => request(`/api/templates/${id}/set-default`, { method: 'POST' }),
+    preview: (id, body = {}) =>
+      request(`/api/templates/${id}/preview`, { method: 'POST', body: JSON.stringify(body) }),
+  },
   quotes: {
     list: () => request('/api/quotes'),
     get: (id) => request(`/api/quotes/${id}`),

@@ -62,6 +62,7 @@ function createWindow() {
     title: 'Cotizaciones',
     icon: getAppIconPath(),
     show: false,
+    backgroundColor: '#0f1419',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

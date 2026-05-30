@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -6,9 +7,20 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Quotes from './pages/Quotes';
 import QuoteForm from './pages/QuoteForm';
-import QuoteView from './pages/QuoteView';
 import Settings from './pages/Settings';
 import Reports from './pages/Reports';
+
+const QuoteView = lazy(() => import('./pages/QuoteView'));
+const TemplateDesignerList = lazy(() => import('./pages/TemplateDesignerList'));
+const TemplateDesignerEditor = lazy(() => import('./pages/TemplateDesignerEditor'));
+
+function PageLoading() {
+  return (
+    <div className="page">
+      <p className="muted">Cargando…</p>
+    </div>
+  );
+}
 
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -49,10 +61,33 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="clientes" element={<Navigate to="/cotizaciones" replace />} />
         <Route path="configuracion" element={<Settings />} />
+        <Route
+          path="plantillas"
+          element={
+            <Suspense fallback={<PageLoading />}>
+              <TemplateDesignerList />
+            </Suspense>
+          }
+        />
+        <Route
+          path="plantillas/:id"
+          element={
+            <Suspense fallback={<PageLoading />}>
+              <TemplateDesignerEditor />
+            </Suspense>
+          }
+        />
         <Route path="reportes" element={<Reports />} />
         <Route path="cotizaciones" element={<Quotes />} />
         <Route path="cotizaciones/nueva" element={<QuoteForm />} />
-        <Route path="cotizaciones/:id" element={<QuoteView />} />
+        <Route
+          path="cotizaciones/:id"
+          element={
+            <Suspense fallback={<PageLoading />}>
+              <QuoteView />
+            </Suspense>
+          }
+        />
         <Route path="cotizaciones/:id/editar" element={<QuoteForm />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

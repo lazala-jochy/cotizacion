@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const clientsRoutes = require('./routes/clients');
 const quotesRoutes = require('./routes/quotes');
 const emisorRoutes = require('./routes/emisor');
+const templatesRoutes = require('./routes/templates');
 const publicRoutes = require('./routes/public');
 
 const app = express();
@@ -22,6 +23,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/public', publicRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/emisor', emisorRoutes);
+app.use('/api/templates', templatesRoutes);
 app.use('/api/clients', clientsRoutes);
 app.use('/api/quotes', quotesRoutes);
 

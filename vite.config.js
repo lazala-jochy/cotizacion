@@ -6,6 +6,11 @@ export default defineConfig({
   plugins: [react()],
   base: './',
   root: path.resolve(__dirname, 'client'),
+  resolve: {
+    alias: {
+      '@template-designer': path.resolve(__dirname, 'shared/template-designer/src'),
+    },
+  },
   build: {
     outDir: path.resolve(__dirname, 'dist'),
     emptyOutDir: true,

@@ -1,6 +1,5 @@
 const db = require('./db');
 const { decrypt } = require('./utils/credentials');
-
 function getEmisorRow(userId) {
   let row = db.prepare('SELECT * FROM emisor_settings WHERE user_id = ?').get(userId);
   if (!row) {
