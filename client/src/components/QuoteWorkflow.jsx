@@ -12,6 +12,7 @@ import {
 import { formatMoney } from '../utils/quoteFinancial';
 import QuotePaymentForm from './QuotePaymentForm';
 import QuoteEnviadaModal from './QuoteEnviadaModal';
+import ConfirmModal from './ConfirmModal';
 
 export default function QuoteWorkflow({ quote, onUpdate }) {
   const [error, setError] = useState('');
@@ -20,6 +21,11 @@ export default function QuoteWorkflow({ quote, onUpdate }) {
   const [paymentBusy, setPaymentBusy] = useState(false);
   const [estadoSel, setEstadoSel] = useState(normalizeEstado(quote.estado));
   const [enviadaModalOpen, setEnviadaModalOpen] = useState(false);
+  const [deletePaymentTarget, setDeletePaymentTarget] = useState(null);
+  const [deletePaymentBusy, setDeletePaymentBusy] = useState(false);
+  const [deletePaymentError, setDeletePaymentError] = useState('');
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [cancelBusy, setCancelBusy] = useState(false);
 
   const estado = normalizeEstado(quote.estado);
   const balance = Number(quote.balance_pendiente) || 0;
@@ -81,18 +87,34 @@ export default function QuoteWorkflow({ quote, onUpdate }) {
     }
   };
 
-  const handleDeletePayment = async (paymentId) => {
-    if (!confirm('¿Eliminar este pago del historial?')) return;
-    setBusy(true);
-    setError('');
+  const openDeletePaymentConfirm = (payment) => {
+    setDeletePaymentError('');
+    setDeletePaymentTarget(payment);
+  };
+
+  const handleConfirmDeletePayment = async () => {
+    if (!deletePaymentTarget) return;
+    setDeletePaymentBusy(true);
+    setDeletePaymentError('');
     try {
-      const updated = await api.quotes.removePayment(quote.id, paymentId);
+      const updated = await api.quotes.removePayment(quote.id, deletePaymentTarget.id);
       onUpdate(updated);
       setEstadoSel(normalizeEstado(updated.estado));
+      setDeletePaymentTarget(null);
     } catch (err) {
-      setError(err.message);
+      setDeletePaymentError(err.message);
     } finally {
-      setBusy(false);
+      setDeletePaymentBusy(false);
+    }
+  };
+
+  const handleConfirmCancelQuote = async () => {
+    setCancelBusy(true);
+    try {
+      await applyEstadoChange('cancelada');
+      setCancelConfirmOpen(false);
+    } finally {
+      setCancelBusy(false);
     }
   };
 
@@ -105,6 +127,48 @@ export default function QuoteWorkflow({ quote, onUpdate }) {
           onUpdated={handleEnviadaUpdated}
         />
       )}
+
+      <ConfirmModal
+        open={Boolean(deletePaymentTarget)}
+        onClose={() => !deletePaymentBusy && setDeletePaymentTarget(null)}
+        title="Eliminar pago"
+        subtitle={deletePaymentTarget ? formatMoney(deletePaymentTarget.monto) : undefined}
+        titleId="delete-payment-title"
+        confirmLabel={deletePaymentBusy ? 'Eliminando…' : 'Eliminar pago'}
+        onConfirm={handleConfirmDeletePayment}
+        busy={deletePaymentBusy}
+        error={deletePaymentError}
+        confirmVariant="danger"
+      >
+        <p className="app-modal-message">
+          Se quitará este pago del historial y se recalculará el saldo pendiente de la cotización.
+        </p>
+        {deletePaymentTarget && (
+          <p className="app-modal-hint muted">
+            {deletePaymentTarget.fecha}
+            {deletePaymentTarget.metodo ? ` · ${deletePaymentTarget.metodo}` : ''}
+            {deletePaymentTarget.referencia ? ` · Ref. ${deletePaymentTarget.referencia}` : ''}
+          </p>
+        )}
+      </ConfirmModal>
+
+      <ConfirmModal
+        open={cancelConfirmOpen}
+        onClose={() => !cancelBusy && setCancelConfirmOpen(false)}
+        title="Cancelar cotización"
+        subtitle={quote.numero}
+        titleId="cancel-quote-title"
+        confirmLabel={cancelBusy ? 'Cancelando…' : 'Cancelar cotización'}
+        onConfirm={handleConfirmCancelQuote}
+        busy={cancelBusy}
+        confirmVariant="danger"
+      >
+        <p className="app-modal-message">
+          La cotización pasará al estado <strong>Cancelada</strong> y dejará de avanzar en el flujo
+          de trabajo.
+        </p>
+      </ConfirmModal>
+
       {error && <div className="alert alert-error">{error}</div>}
 
       <section className="panel workflow-panel">
@@ -149,7 +213,7 @@ export default function QuoteWorkflow({ quote, onUpdate }) {
               type="button"
               className="btn-ghost btn-sm danger"
               disabled={busy}
-              onClick={() => handleEstadoChange('cancelada')}
+              onClick={() => setCancelConfirmOpen(true)}
             >
               Cancelar cotización
             </button>
@@ -221,7 +285,7 @@ export default function QuoteWorkflow({ quote, onUpdate }) {
                         type="button"
                         className="btn-ghost btn-sm danger"
                         disabled={busy}
-                        onClick={() => handleDeletePayment(p.id)}
+                        onClick={() => openDeletePaymentConfirm(p)}
                       >
                         Eliminar
                       </button>

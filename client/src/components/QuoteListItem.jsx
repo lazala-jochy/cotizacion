@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { IconEye, IconEdit, IconTrash } from './Icons';
+import QuoteConvertToInvoiceButton from './QuoteConvertToInvoiceButton';
 import {
   QUOTE_ESTADO_OPTIONS,
   quoteEstadoHint,
@@ -65,10 +66,19 @@ export function QuoteTableRow({
           className="btn-ghost btn-sm btn-download-pdf"
           onClick={() => onDownloadPdf(q)}
           disabled={downloadingId === q.id}
-          title="Descargar factura PDF"
+          title="Descargar PDF de cotización"
         >
           {downloadingId === q.id ? '…' : 'PDF'}
         </button>
+      </td>
+      <td className="q-col-factura">
+        <QuoteConvertToInvoiceButton
+          quoteId={q.id}
+          quoteNumero={q.numero}
+          className="btn-ghost btn-sm btn-convert-invoice"
+          label="Factura"
+          busyLabel="…"
+        />
       </td>
       <td className="q-col-actions">
         <QuoteRowActions
@@ -132,15 +142,24 @@ export function QuoteCard({
           ))}
         </select>
       </label>
-      <footer className="quote-card-footer">
+      <div className="quote-card-doc-actions">
         <button
           type="button"
           className="btn-ghost btn-sm btn-download-pdf"
           onClick={() => onDownloadPdf(q)}
           disabled={downloadingId === q.id}
         >
-          {downloadingId === q.id ? 'Generando…' : 'Descargar PDF'}
+          {downloadingId === q.id ? '…' : 'PDF'}
         </button>
+        <QuoteConvertToInvoiceButton
+          quoteId={q.id}
+          quoteNumero={q.numero}
+          className="btn-ghost btn-sm btn-convert-invoice"
+          label="Factura"
+          busyLabel="…"
+        />
+      </div>
+      <footer className="quote-card-footer">
         {showPayBtn && (
           <button
             type="button"

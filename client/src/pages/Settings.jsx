@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import FiscalSettingsSection from '../components/FiscalSettingsSection';
 
 const emptyEmisor = {
   nombre: '',
@@ -203,6 +204,8 @@ export default function Settings() {
           </div>
         </form>
       </section>
+
+      <FiscalSettingsSection />
     </div>
   );
 }

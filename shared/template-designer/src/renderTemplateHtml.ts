@@ -188,3 +188,17 @@ export function renderQuoteWithTemplate(
     `Cotización ${quote.numero || ''}`
   );
 }
+
+export function renderInvoiceWithTemplate(
+  definition: QuoteTemplateDefinition,
+  invoice: Parameters<typeof buildPlaceholderContext>[0],
+  emisor: Parameters<typeof buildPlaceholderContext>[1],
+  options?: Parameters<typeof buildPlaceholderContext>[2]
+): string {
+  const context = buildPlaceholderContext(invoice, emisor, {
+    ...options,
+    documentType: 'invoice',
+  });
+  const num = invoice.fiscal_number || invoice.numero || '';
+  return renderTemplateDocumentHtml(definition, context, `Factura ${num}`);
+}

@@ -83,8 +83,16 @@ router.post('/:id/preview', (req, res) => {
     quote = sampleQuote(emisor);
   }
 
-  const context = buildPlaceholderContext(quote, emisor);
-  const html = renderTemplateDocumentHtml(definition, context, 'Vista previa');
+  const docType = req.body?.documentType === 'invoice' ? 'invoice' : 'quote';
+  const context = buildPlaceholderContext(quote, emisor, {
+    documentType: docType,
+    estadoLabel: req.body?.estadoLabel,
+  });
+  const title =
+    docType === 'invoice'
+      ? `Factura ${quote.fiscal_number || quote.numero || ''}`
+      : 'Vista previa';
+  const html = renderTemplateDocumentHtml(definition, context, title);
   res.json({ html });
 });
 

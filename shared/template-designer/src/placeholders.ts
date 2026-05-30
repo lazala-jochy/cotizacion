@@ -35,8 +35,11 @@ function formatDate(fecha: string): string {
 
 interface QuoteLike {
   numero?: string;
+  fiscal_number?: string;
   fecha?: string;
+  fecha_vencimiento?: string;
   validez_dias?: number;
+  descuento?: number;
   notas?: string;
   subtotal?: number;
   itbis?: number;
@@ -109,13 +112,26 @@ function escapeHtml(value: string): string {
 export function buildPlaceholderContext(
   quote: QuoteLike,
   emisor: EmisorLike,
-  options?: { estadoLabel?: string }
+  options?: { estadoLabel?: string; documentType?: 'quote' | 'invoice' }
 ): PlaceholderContext {
   const subtotal = Number(quote.subtotal) || 0;
   const tax = Number(quote.itbis) || 0;
+  const disc = Number(quote.descuento) || 0;
   const total = Number(quote.total) || 0;
   const validity = quote.validez_dias ?? 30;
   const estadoText = options?.estadoLabel || quote.estado || '';
+  const isInvoice = options?.documentType === 'invoice';
+  const docNumber = isInvoice
+    ? quote.fiscal_number || quote.numero
+    : quote.numero;
+  const docLabel = isInvoice ? 'Factura' : PLACEHOLDER_FIELD_LABELS.quotation_number;
+  const dateLabel = isInvoice ? 'Fecha de emisión' : PLACEHOLDER_FIELD_LABELS.date;
+  const validityLabel = isInvoice ? 'Vencimiento' : PLACEHOLDER_FIELD_LABELS.validity_days;
+  const validityValue = isInvoice
+    ? quote.fecha_vencimiento
+      ? formatDate(quote.fecha_vencimiento)
+      : '—'
+    : `${validity} días`;
 
   return {
     company_name: labeledField(PLACEHOLDER_FIELD_LABELS.company_name, emisor.nombre),
@@ -130,18 +146,16 @@ export function buildPlaceholderContext(
     client_address: labeledField(PLACEHOLDER_FIELD_LABELS.client_address, quote.client_direccion),
     client_phone: labeledField(PLACEHOLDER_FIELD_LABELS.client_phone, quote.client_telefono),
     client_email: labeledField(PLACEHOLDER_FIELD_LABELS.client_email, quote.client_email),
-    quotation_number: labeledField(
-      PLACEHOLDER_FIELD_LABELS.quotation_number,
-      quote.numero
-    ),
-    date: labeledField(PLACEHOLDER_FIELD_LABELS.date, formatDate(quote.fecha || '')),
-    validity_days: labeledField(
-      PLACEHOLDER_FIELD_LABELS.validity_days,
-      `${validity} días`
-    ),
+    quotation_number: labeledField(docLabel, docNumber),
+    fiscal_number: labeledField('Número fiscal', quote.fiscal_number || docNumber),
+    date: labeledField(dateLabel, formatDate(quote.fecha || '')),
+    validity_days: labeledField(validityLabel, validityValue),
     subtotal: labeledField(PLACEHOLDER_FIELD_LABELS.subtotal, formatMoney(subtotal)),
     tax: labeledField(PLACEHOLDER_FIELD_LABELS.tax, formatMoney(tax)),
-    discount: '',
+    discount:
+      disc > 0
+        ? labeledField(PLACEHOLDER_FIELD_LABELS.discount, formatMoney(disc))
+        : '',
     total: labeledField(PLACEHOLDER_FIELD_LABELS.total, formatMoney(total)),
     notes: labeledField(PLACEHOLDER_FIELD_LABELS.notes, quote.notas),
     signature: quote.ejecutivo?.trim() ? `Atentamente, ${quote.ejecutivo}` : '',
@@ -149,6 +163,8 @@ export function buildPlaceholderContext(
     forma_pago: labeledField(PLACEHOLDER_FIELD_LABELS.forma_pago, quote.forma_pago),
     estado: labeledField(PLACEHOLDER_FIELD_LABELS.estado, estadoText),
     items_table_html: buildItemsTableHtml(quote.items),
-    qr_payload: `COT:${quote.numero || ''}`,
+    qr_payload: isInvoice
+      ? `FAC:${quote.fiscal_number || quote.numero || ''}`
+      : `COT:${quote.numero || ''}`,
   };
 }

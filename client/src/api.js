@@ -51,6 +51,45 @@ export const api = {
     preview: (id, body = {}) =>
       request(`/api/templates/${id}/preview`, { method: 'POST', body: JSON.stringify(body) }),
   },
+  fiscal: {
+    list: () => request('/api/fiscal'),
+    getActive: () => request('/api/fiscal/active'),
+    get: (id) => request(`/api/fiscal/${id}`),
+    create: (body) => request('/api/fiscal', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id, body) =>
+      request(`/api/fiscal/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  },
+  invoices: {
+    nextFiscalNumber: () => request('/api/invoices/next-fiscal-number'),
+    list: (params = {}) => {
+      const q = new URLSearchParams();
+      if (params.estado) q.set('estado', params.estado);
+      if (params.search) q.set('search', params.search);
+      const qs = q.toString();
+      return request(`/api/invoices${qs ? `?${qs}` : ''}`);
+    },
+    get: (id) => request(`/api/invoices/${id}`),
+    audit: (id) => request(`/api/invoices/${id}/audit`),
+    create: (body) => request('/api/invoices', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id, body) =>
+      request(`/api/invoices/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    setEstado: (id, estado) =>
+      request(`/api/invoices/${id}/estado`, {
+        method: 'PATCH',
+        body: JSON.stringify({ estado }),
+      }),
+    remove: (id) => request(`/api/invoices/${id}`, { method: 'DELETE' }),
+    fromQuote: (quoteId, body = {}) =>
+      request(`/api/invoices/from-quote/${quoteId}`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    annul: (id, body = {}) =>
+      request(`/api/invoices/${id}/anular`, { method: 'POST', body: JSON.stringify(body) }),
+    getEmailDefaults: (id) => request(`/api/invoices/${id}/email-defaults`),
+    sendEmail: (id, body) =>
+      request(`/api/invoices/${id}/send-email`, { method: 'POST', body: JSON.stringify(body) }),
+  },
   quotes: {
     list: () => request('/api/quotes'),
     get: (id) => request(`/api/quotes/${id}`),

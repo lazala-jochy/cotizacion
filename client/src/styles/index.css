@@ -200,25 +200,22 @@ label {
   white-space: nowrap;
 }
 
-.modal-subtitle {
-  margin: 0.25rem 0 0;
+/* Mensajes dentro de modales */
+.app-modal-message {
+  margin: 0 0 1rem;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.app-modal-hint {
+  margin: 0;
   font-size: 0.85rem;
+  line-height: 1.45;
 }
 
-.enviada-modal-text {
-  margin: 0 0 1.25rem;
-  line-height: 1.5;
-}
-
-.enviada-modal-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.enviada-modal-hint {
-  margin: 1rem 0 0;
-  font-size: 0.85rem;
+.app-modal-hint a {
+  font-weight: 500;
 }
 
 .field-hint {
@@ -1351,7 +1348,7 @@ a.cell-ellipsis:hover {
 .quotes-table-quotes {
   table-layout: fixed;
   width: 100%;
-  min-width: 1060px;
+  min-width: 1140px;
 }
 
 .quotes-table-quotes th,
@@ -1403,12 +1400,17 @@ a.cell-ellipsis:hover {
   overflow: visible;
 }
 
-.quotes-table-quotes .q-col-pdf {
+.quotes-table-quotes .q-col-pdf,
+.quotes-table-quotes .q-col-factura {
   width: 76px;
   padding-left: 0.5rem;
   padding-right: 0.75rem;
   text-align: center;
   overflow: visible;
+}
+
+.quotes-table-quotes .btn-convert-invoice {
+  min-width: 4.25rem;
 }
 
 .quotes-table-quotes .q-col-actions {
@@ -1529,9 +1531,20 @@ a.cell-ellipsis:hover {
 }
 
 .quotes-estado-select.estado-cancelada,
-.quotes-estado-select.estado-rechazada {
+.quotes-estado-select.estado-rechazada,
+.quotes-estado-select.estado-anulada {
   background-color: rgba(239, 68, 68, 0.2);
   color: #fca5a5;
+}
+
+.quotes-estado-select.estado-vencida {
+  background-color: rgba(249, 115, 22, 0.2);
+  color: #fdba74;
+}
+
+.quotes-estado-select.estado-parcial {
+  background-color: rgba(234, 179, 8, 0.2);
+  color: #fde047;
 }
 
 /* Tarjetas — pantallas estrechas */
@@ -2018,46 +2031,134 @@ a.cell-ellipsis:hover {
   background: rgba(234, 179, 8, 0.15);
 }
 
-.modal-overlay {
+/* Modales — mismo lenguaje visual que .panel y formularios */
+.app-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
-}
-
-.modal-panel {
-  width: 100%;
-  max-width: 520px;
-  max-height: 90vh;
-  overflow-y: auto;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 12px;
   padding: 1.25rem;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+  background: rgba(8, 12, 18, 0.72);
+  backdrop-filter: blur(4px);
 }
 
-.modal-header {
+.app-modal-panel {
+  width: 100%;
+  max-height: min(90vh, 720px);
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.08),
+    0 24px 48px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.app-modal-panel--sm {
+  max-width: 440px;
+}
+
+.app-modal-panel--md {
+  max-width: 520px;
+}
+
+.app-modal-panel--lg {
+  max-width: 640px;
+}
+
+.app-modal-header {
+  display: flex;
   align-items: flex-start;
+  justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1rem;
+  padding: 1.15rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+  flex-shrink: 0;
 }
 
-.modal-header h2 {
-  font-size: 1.1rem;
+.app-modal-title {
   margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
 }
 
-.modal-footer {
-  margin-top: 1rem;
-  padding-top: 0.75rem;
+.app-modal-subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.app-modal-close {
+  flex-shrink: 0;
+  margin: -0.15rem -0.25rem 0 0;
+}
+
+.app-modal-body {
+  padding: 1.25rem;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.app-modal-body .form-grid {
+  gap: 0.85rem;
+}
+
+.app-modal-footer {
+  padding: 0.85rem 1.25rem 1.15rem;
   border-top: 1px solid var(--border);
+  background: var(--bg-elevated);
+  flex-shrink: 0;
+}
+
+.app-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.app-modal-actions--stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.app-modal-actions--stack .btn-primary,
+.app-modal-actions--stack .btn-ghost {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 480px) {
+  .app-modal-overlay {
+    padding: 0.75rem;
+    align-items: flex-end;
+  }
+
+  .app-modal-panel {
+    max-height: 92vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .app-modal-actions:not(.app-modal-actions--stack) {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .app-modal-actions:not(.app-modal-actions--stack) .btn-primary,
+  .app-modal-actions:not(.app-modal-actions--stack) .btn-ghost {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .quote-balance-row {
@@ -2306,6 +2407,44 @@ a.cell-ellipsis:hover {
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+
+.quote-convert-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.12), rgba(30, 64, 175, 0.04));
+}
+
+.quote-convert-banner-text {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.quote-convert-banner-text strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.quote-convert-banner-text p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.quote-card-doc-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.quote-card-doc-actions .btn-ghost {
+  width: 100%;
+  justify-content: center;
 }
 
 .toolbar-actions {
@@ -3034,7 +3173,267 @@ a.cell-ellipsis:hover {
   padding-top: 0.5rem !important;
 }
 
-/* Template Designer */
+/* Template Designer — galería de plantillas PDF */
+.template-designer-list-page .page-header {
+  align-items: flex-start;
+}
+
+.template-preset-section {
+  margin-bottom: 1.5rem;
+}
+
+.template-preset-section-head {
+  margin-bottom: 1rem;
+}
+
+.template-preset-section-head h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.template-preset-section-head p {
+  margin: 0;
+  font-size: 0.92rem;
+  max-width: 52rem;
+}
+
+.template-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.template-preset-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.template-preset-card:hover {
+  border-color: rgba(30, 64, 175, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.template-preset-preview {
+  position: relative;
+  background: linear-gradient(145deg, #e2e8f0 0%, #f1f5f9 100%);
+  padding: 1rem 1rem 0.65rem;
+  min-height: 148px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.template-preset-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 120px;
+  aspect-ratio: 210 / 297;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
+  overflow: hidden;
+}
+
+.template-preset-preview-label {
+  margin-top: 0.5rem;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.tp-block {
+  position: absolute;
+  border-radius: 1px;
+  background: #cbd5e1;
+}
+
+.tp-header {
+  top: 4%;
+  left: 8%;
+  right: 8%;
+  height: 6%;
+  background: #94a3b8;
+}
+
+.tp-logo {
+  top: 14%;
+  left: 8%;
+  width: 22%;
+  height: 8%;
+  background: #e2e8f0;
+}
+
+.tp-meta {
+  top: 14%;
+  right: 8%;
+  width: 38%;
+  height: 12%;
+}
+
+.tp-client {
+  top: 30%;
+  left: 8%;
+  right: 8%;
+  height: 14%;
+}
+
+.tp-table {
+  top: 48%;
+  left: 8%;
+  right: 8%;
+  height: 28%;
+  background: #e2e8f0;
+}
+
+.tp-totals {
+  bottom: 10%;
+  right: 8%;
+  width: 38%;
+  height: 10%;
+}
+
+/* Variantes de miniatura */
+.template-preset-preview--moderna .tp-header {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5%;
+  background: #1e40af;
+}
+
+.template-preset-preview--moderna .tp-meta {
+  top: 12%;
+  right: 8%;
+  width: 42%;
+  height: 14%;
+}
+
+.template-preset-preview--compacta .tp-header,
+.template-preset-preview--compacta .tp-logo {
+  display: none;
+}
+
+.template-preset-preview--compacta .tp-meta {
+  top: 8%;
+  left: 8%;
+  right: 8%;
+  width: auto;
+  height: 8%;
+}
+
+.template-preset-preview--compacta .tp-client {
+  top: 18%;
+  height: 8%;
+}
+
+.template-preset-preview--compacta .tp-table {
+  top: 28%;
+  height: 48%;
+}
+
+.template-preset-preview--formal .tp-header {
+  top: 6%;
+  left: 15%;
+  right: 15%;
+  height: 8%;
+  background: #64748b;
+}
+
+.template-preset-preview--formal .tp-logo {
+  top: 18%;
+  left: 38%;
+  width: 24%;
+}
+
+.template-preset-preview--formal .tp-meta {
+  display: none;
+}
+
+.template-preset-preview--formal .tp-client {
+  top: 32%;
+}
+
+.template-preset-preview--factura .tp-header {
+  top: 8%;
+  left: 8%;
+  width: 42%;
+  height: 10%;
+  background: #1e40af;
+  opacity: 0.35;
+}
+
+.template-preset-preview--factura .tp-meta {
+  top: 22%;
+  left: 8%;
+  width: 50%;
+  height: 8%;
+}
+
+.template-preset-preview--factura .tp-logo {
+  top: 8%;
+  right: 8%;
+  left: auto;
+  width: 28%;
+}
+
+.template-preset-card-body {
+  padding: 1rem 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 0.35rem;
+}
+
+.template-preset-card-body h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.template-preset-preview-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.template-preset-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  flex: 1;
+}
+
+.template-preset-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.template-preset-tag {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(30, 64, 175, 0.12);
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.template-preset-use-btn {
+  width: 100%;
+  margin-top: auto;
+}
+
+.template-my-section {
+  margin-top: 0.5rem;
+}
+
 .template-list {
   list-style: none;
   margin: 0;

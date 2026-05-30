@@ -84,6 +84,7 @@ export interface PlaceholderContext {
   client_phone: string;
   client_email: string;
   quotation_number: string;
+  fiscal_number: string;
   date: string;
   validity_days: string;
   subtotal: string;

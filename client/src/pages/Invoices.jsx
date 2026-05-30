@@ -1,23 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
-import { downloadInvoicePdf } from '../utils/downloadInvoicePdf';
-import { QuoteCard, QuoteTableRow } from '../components/QuoteListItem';
-import QuotePaymentModal from '../components/QuotePaymentModal';
-import QuoteEnviadaModal from '../components/QuoteEnviadaModal';
+import { downloadFacturaPdf } from '../utils/downloadFacturaPdf';
+import { InvoiceCard, InvoiceTableRow } from '../components/InvoiceListItem';
 import ConfirmModal from '../components/ConfirmModal';
-import {
-  QUOTE_ESTADOS,
-  normalizeEstado,
-  shouldPromptPayment,
-  shouldPromptSendOnEnviada,
-} from '../constants/quoteEstados';
+import InvoiceAnnulModal from '../components/InvoiceAnnulModal';
+import { INVOICE_ESTADOS_FILTER, normalizeInvoiceEstado } from '../constants/invoiceEstados';
 import {
   MONTO_FILTER_OPTIONS,
   MONTH_FILTER_OPTIONS,
-  getFilterYearOptions,
-  quoteMatchesListFilters,
-} from '../utils/quoteListFilters';
+  getInvoiceFilterYearOptions,
+  invoiceMatchesListFilters,
+} from '../utils/invoiceListFilters';
 
 const PAGE_SIZE_DEFAULT = 5;
 
@@ -38,14 +32,13 @@ function formatDate(d) {
   }
 }
 
-export default function Quotes() {
-  const [quotes, setQuotes] = useState([]);
+export default function Invoices() {
+  const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [downloadingId, setDownloadingId] = useState(null);
   const [savingEstadoId, setSavingEstadoId] = useState(null);
-  const [paymentModalQuote, setPaymentModalQuote] = useState(null);
-  const [enviadaModalQuote, setEnviadaModalQuote] = useState(null);
+  const [annulTarget, setAnnulTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -59,28 +52,27 @@ export default function Quotes() {
   const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
 
   useEffect(() => {
-    api.quotes
+    api.invoices
       .list()
-      .then(setQuotes)
+      .then(setInvoices)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
-  const yearOptions = useMemo(() => getFilterYearOptions(quotes), [quotes]);
+  const yearOptions = useMemo(() => getInvoiceFilterYearOptions(invoices), [invoices]);
 
   const filtered = useMemo(
     () =>
-      quotes.filter((item) =>
-        quoteMatchesListFilters(item, {
+      invoices.filter((item) =>
+        invoiceMatchesListFilters(item, {
           search,
           estadoFilter,
           yearFilter,
           monthFilter,
           montoFilter,
-          normalizeEstado,
         })
       ),
-    [quotes, search, estadoFilter, yearFilter, monthFilter, montoFilter]
+    [invoices, search, estadoFilter, yearFilter, monthFilter, montoFilter]
   );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -101,11 +93,11 @@ export default function Quotes() {
   const rangeStart = filtered.length === 0 ? 0 : (page - 1) * pageSize + 1;
   const rangeEnd = Math.min(page * pageSize, filtered.length);
 
-  const handleDownloadPdf = async (q) => {
-    setDownloadingId(q.id);
+  const handleDownloadPdf = async (inv) => {
+    setDownloadingId(inv.id);
     setError('');
     try {
-      await downloadInvoicePdf(q.id, q.numero);
+      await downloadFacturaPdf(inv.id, inv.fiscal_number);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -113,21 +105,14 @@ export default function Quotes() {
     }
   };
 
-  const applyEstadoChange = async (quoteId, nuevoEstado) => {
-    setSavingEstadoId(quoteId);
+  const handleEstadoChange = async (invoiceId, nuevoEstado) => {
+    setSavingEstadoId(invoiceId);
     setError('');
     try {
-      const updated = await api.quotes.setEstado(quoteId, nuevoEstado);
-      setQuotes((prev) =>
-        prev.map((q) => (q.id === quoteId ? { ...q, ...updated } : q))
+      const updated = await api.invoices.setEstado(invoiceId, nuevoEstado);
+      setInvoices((prev) =>
+        prev.map((inv) => (inv.id === invoiceId ? { ...inv, ...updated } : inv))
       );
-      const selectedEstado = normalizeEstado(nuevoEstado);
-      if (
-        selectedEstado === 'pago_parcial' &&
-        shouldPromptPayment(updated.estado, updated.balance_pendiente)
-      ) {
-        setPaymentModalQuote(updated);
-      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -135,43 +120,28 @@ export default function Quotes() {
     }
   };
 
-  const handleEstadoChange = (quoteId, nuevoEstado) => {
-    const q = quotes.find((item) => item.id === quoteId);
-    if (q && shouldPromptSendOnEnviada(nuevoEstado, q.estado)) {
-      setEnviadaModalQuote(q);
+  const handleDeleteClick = (inv) => {
+    if (normalizeInvoiceEstado(inv.estado) === 'anulada') {
+      setDeleteError('');
+      setDeleteTarget(inv);
       return;
     }
-    applyEstadoChange(quoteId, nuevoEstado);
+    setAnnulTarget(inv);
   };
 
-  const handleEnviadaUpdated = (updated) => {
-    setQuotes((prev) => prev.map((q) => (q.id === updated.id ? { ...q, ...updated } : q)));
-    setEnviadaModalQuote(null);
-    if (shouldPromptPayment(updated.estado, updated.balance_pendiente)) {
-      setPaymentModalQuote(updated);
-    }
+  const handleAnnulled = (updated) => {
+    setInvoices((prev) =>
+      prev.map((item) => (item.id === updated.id ? { ...item, ...updated } : item))
+    );
   };
 
-  const handlePaymentUpdated = (updated) => {
-    setQuotes((prev) => prev.map((q) => (q.id === updated.id ? { ...q, ...updated } : q)));
-    setPaymentModalQuote(null);
-  };
-
-  const openDeleteConfirm = (id) => {
-    const q = quotes.find((x) => x.id === id);
-    if (q) {
-      setDeleteError('');
-      setDeleteTarget(q);
-    }
-  };
-
-  const handleConfirmDelete = async () => {
+  const handleConfirmDeleteInvoice = async () => {
     if (!deleteTarget) return;
     setDeleteBusy(true);
     setDeleteError('');
     try {
-      await api.quotes.remove(deleteTarget.id);
-      setQuotes((prev) => prev.filter((x) => x.id !== deleteTarget.id));
+      await api.invoices.remove(deleteTarget.id);
+      setInvoices((prev) => prev.filter((x) => x.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (err) {
       setDeleteError(err.message);
@@ -198,67 +168,57 @@ export default function Quotes() {
     : filtered.length === 0 ?
       hasFilters ?
         'Sin resultados para los filtros'
-      : 'No hay cotizaciones'
+      : 'No hay facturas'
     : `Mostrando ${rangeStart}–${rangeEnd} de ${filtered.length}`;
 
   return (
     <div className="page">
       <header className="page-header">
         <div>
-          <h1>Cotizaciones</h1>
-          <p>Listado de cotizaciones generadas</p>
+          <h1>Facturas</h1>
+          <p>Listado de facturas fiscales emitidas</p>
         </div>
-        <Link to="/cotizaciones/nueva" className="btn-primary">
-          + Nueva cotización
+        <Link to="/facturas/nueva" className="btn-primary">
+          + Nueva factura
         </Link>
       </header>
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      {paymentModalQuote && (
-        <QuotePaymentModal
-          quote={paymentModalQuote}
-          onClose={() => setPaymentModalQuote(null)}
-          onUpdated={handlePaymentUpdated}
-        />
-      )}
-
-      {enviadaModalQuote && (
-        <QuoteEnviadaModal
-          quote={enviadaModalQuote}
-          onClose={() => setEnviadaModalQuote(null)}
-          onUpdated={handleEnviadaUpdated}
-        />
-      )}
+      <InvoiceAnnulModal
+        invoice={annulTarget}
+        open={Boolean(annulTarget)}
+        onClose={() => setAnnulTarget(null)}
+        onAnnulled={handleAnnulled}
+      />
 
       <ConfirmModal
         open={Boolean(deleteTarget)}
         onClose={() => !deleteBusy && setDeleteTarget(null)}
-        title="Eliminar cotización"
-        subtitle={deleteTarget?.numero}
-        titleId="delete-quote-title"
-        confirmLabel={deleteBusy ? 'Eliminando…' : 'Eliminar cotización'}
-        cancelLabel="Cancelar"
-        onConfirm={handleConfirmDelete}
+        title="Eliminar factura"
+        subtitle={deleteTarget?.fiscal_number}
+        titleId="delete-invoice-title"
+        confirmLabel={deleteBusy ? 'Eliminando…' : 'Eliminar permanentemente'}
+        onConfirm={handleConfirmDeleteInvoice}
         busy={deleteBusy}
         error={deleteError}
         confirmVariant="danger"
       >
         <p className="app-modal-message">
-          Se borrará la cotización <strong>{deleteTarget?.numero}</strong> y su historial de pagos.
-          Esta acción no se puede deshacer.
+          Se borrará la factura anulada <strong>{deleteTarget?.fiscal_number}</strong> de forma
+          permanente. Esta acción no se puede deshacer.
         </p>
       </ConfirmModal>
 
       <section className="panel quotes-panel">
         <div className="quotes-toolbar">
-          <div className="quotes-filters-bar" role="group" aria-label="Filtros de cotizaciones">
+          <div className="quotes-filters-bar" role="group" aria-label="Filtros de facturas">
             <label className="quotes-filter-field quotes-filter-field--search">
               <span className="quotes-filter-label">Buscar</span>
               <input
                 type="search"
                 className="quotes-filter-input"
-                placeholder="Número, cliente, RNC…"
+                placeholder="NCF, cliente, RNC…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -313,7 +273,7 @@ export default function Quotes() {
                 value={estadoFilter}
                 onChange={(e) => setEstadoFilter(e.target.value)}
               >
-                {QUOTE_ESTADOS.map((o) => (
+                {INVOICE_ESTADOS_FILTER.map((o) => (
                   <option key={o.value || 'all'} value={o.value}>
                     {o.label}
                   </option>
@@ -334,17 +294,17 @@ export default function Quotes() {
         </div>
 
         {loading ? (
-          <p className="muted quotes-empty">Cargando cotizaciones…</p>
-        ) : quotes.length === 0 ? (
+          <p className="muted quotes-empty">Cargando facturas…</p>
+        ) : invoices.length === 0 ? (
           <div className="quotes-empty">
-            <p className="muted">No hay cotizaciones aún.</p>
-            <Link to="/cotizaciones/nueva" className="btn-primary btn-sm">
+            <p className="muted">No hay facturas aún.</p>
+            <Link to="/facturas/nueva" className="btn-primary btn-sm">
               Crear la primera
             </Link>
           </div>
         ) : filtered.length === 0 ? (
           <div className="quotes-empty">
-            <p className="muted">Ninguna cotización coincide con tu búsqueda.</p>
+            <p className="muted">Ninguna factura coincide con tu búsqueda.</p>
             <button type="button" className="btn-ghost btn-sm" onClick={clearFilters}>
               Quitar filtros
             </button>
@@ -362,23 +322,22 @@ export default function Quotes() {
                     <th>Pendiente</th>
                     <th>Estado</th>
                     <th>PDF</th>
-                    <th>Factura</th>
+                    <th>Cotización</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paginated.map((q) => (
-                    <QuoteTableRow
-                      key={q.id}
-                      q={q}
+                  {paginated.map((inv) => (
+                    <InvoiceTableRow
+                      key={inv.id}
+                      inv={inv}
                       formatDate={formatDate}
                       formatMoney={formatMoney}
                       savingEstadoId={savingEstadoId}
                       downloadingId={downloadingId}
                       onEstadoChange={handleEstadoChange}
                       onDownloadPdf={handleDownloadPdf}
-                      onDelete={openDeleteConfirm}
-                      onRegisterPayment={setPaymentModalQuote}
+                      onDelete={handleDeleteClick}
                     />
                   ))}
                 </tbody>
@@ -386,18 +345,17 @@ export default function Quotes() {
             </div>
 
             <div className="quotes-list-mobile">
-              {paginated.map((q) => (
-                <QuoteCard
-                  key={q.id}
-                  q={q}
+              {paginated.map((inv) => (
+                <InvoiceCard
+                  key={inv.id}
+                  inv={inv}
                   formatDate={formatDate}
                   formatMoney={formatMoney}
                   savingEstadoId={savingEstadoId}
                   downloadingId={downloadingId}
                   onEstadoChange={handleEstadoChange}
                   onDownloadPdf={handleDownloadPdf}
-                  onDelete={openDeleteConfirm}
-                  onRegisterPayment={setPaymentModalQuote}
+                  onDelete={handleDeleteClick}
                 />
               ))}
             </div>

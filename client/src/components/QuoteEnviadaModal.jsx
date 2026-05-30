@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import AppModal from './AppModal';
 import QuoteSendEmailModal from './QuoteSendEmailModal';
 
 export default function QuoteEnviadaModal({ quote, onClose, onUpdated }) {
@@ -43,29 +44,19 @@ export default function QuoteEnviadaModal({ quote, onClose, onUpdated }) {
   }
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="enviada-modal-title">
-      <div className="modal-panel">
-        <div className="modal-header">
-          <div>
-            <h2 id="enviada-modal-title">Marcar como enviada</h2>
-            <p className="muted modal-subtitle">
-              Cotización {quote.numero}
-              {quote.client_nombre ? ` — ${quote.client_nombre}` : ''}
-            </p>
-          </div>
-          <button type="button" className="btn-ghost btn-sm" onClick={onClose} aria-label="Cerrar">
-            ✕
-          </button>
-        </div>
-
-        {error && <div className="alert alert-error">{error}</div>}
-
-        <p className="enviada-modal-text">
-          ¿Deseas enviar la cotización por correo al cliente al cambiar el estado a{' '}
-          <strong>Enviada</strong>?
-        </p>
-
-        <div className="enviada-modal-actions">
+    <AppModal
+      open
+      onClose={onClose}
+      title="Marcar como enviada"
+      subtitle={
+        quote.client_nombre
+          ? `${quote.numero} — ${quote.client_nombre}`
+          : quote.numero
+      }
+      titleId="enviada-modal-title"
+      size="sm"
+      footer={
+        <div className="app-modal-actions app-modal-actions--stack">
           <button type="button" className="btn-primary" onClick={handleSendClick}>
             Enviar por correo
           </button>
@@ -81,15 +72,20 @@ export default function QuoteEnviadaModal({ quote, onClose, onUpdated }) {
             Cancelar
           </button>
         </div>
+      }
+    >
+      {error && <div className="alert alert-error">{error}</div>}
 
-        <p className="enviada-modal-hint muted">
-          El correo adjunta el PDF. Configura Gmail en{' '}
-          <Link to="/configuracion" onClick={onClose}>
-            Empresa
-          </Link>
-          .
-        </p>
-      </div>
-    </div>
+      <p className="app-modal-message">
+        ¿Deseas enviar la cotización por correo al cambiar el estado a <strong>Enviada</strong>?
+      </p>
+      <p className="app-modal-hint muted">
+        El correo incluye el PDF adjunto. Configura Gmail en{' '}
+        <Link to="/configuracion" onClick={onClose}>
+          Empresa
+        </Link>
+        .
+      </p>
+    </AppModal>
   );
 }

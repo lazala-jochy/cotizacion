@@ -160,6 +160,9 @@ db.exec(`
   );
 `);
 
+const { migrateInvoicingSchema } = require('./invoices/migrateSchema');
+migrateInvoicingSchema(db);
+
 const { migrateLegacyEstados } = require('./quoteWorkflow');
 migrateLegacyEstados(db);
 

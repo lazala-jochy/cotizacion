@@ -11,6 +11,9 @@ import Settings from './pages/Settings';
 import Reports from './pages/Reports';
 
 const QuoteView = lazy(() => import('./pages/QuoteView'));
+const Invoices = lazy(() => import('./pages/Invoices'));
+const InvoiceView = lazy(() => import('./pages/InvoiceView'));
+const InvoiceForm = lazy(() => import('./pages/InvoiceForm'));
 const TemplateDesignerList = lazy(() => import('./pages/TemplateDesignerList'));
 const TemplateDesignerEditor = lazy(() => import('./pages/TemplateDesignerEditor'));
 
@@ -89,6 +92,38 @@ export default function App() {
           }
         />
         <Route path="cotizaciones/:id/editar" element={<QuoteForm />} />
+        <Route
+          path="facturas"
+          element={
+            <Suspense fallback={<PageLoading />}>
+              <Invoices />
+            </Suspense>
+          }
+        />
+        <Route
+          path="facturas/nueva"
+          element={
+            <Suspense fallback={<PageLoading />}>
+              <InvoiceForm />
+            </Suspense>
+          }
+        />
+        <Route
+          path="facturas/:id"
+          element={
+            <Suspense fallback={<PageLoading />}>
+              <InvoiceView />
+            </Suspense>
+          }
+        />
+        <Route
+          path="facturas/:id/editar"
+          element={
+            <Suspense fallback={<PageLoading />}>
+              <InvoiceForm />
+            </Suspense>
+          }
+        />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

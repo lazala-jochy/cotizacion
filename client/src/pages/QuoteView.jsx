@@ -6,6 +6,7 @@ import { canEditQuoteContent } from '../constants/quoteEstados';
 import QuoteWorkflow from '../components/QuoteWorkflow';
 import QuoteDocument from '../components/QuoteDocument';
 import QuoteSendEmailModal from '../components/QuoteSendEmailModal';
+import QuoteConvertToInvoiceButton from '../components/QuoteConvertToInvoiceButton';
 
 export default function QuoteView() {
   const { id } = useParams();
@@ -15,7 +16,6 @@ export default function QuoteView() {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [sendSuccess, setSendSuccess] = useState('');
-
   const load = () =>
     Promise.all([api.quotes.get(id), api.emisor.get()])
       .then(([q, e]) => {
@@ -68,7 +68,7 @@ export default function QuoteView() {
           </button>
           <button
             type="button"
-            className="btn-primary btn-sm"
+            className="btn-ghost btn-sm"
             onClick={() => {
               setSendSuccess('');
               setError('');
@@ -77,8 +77,30 @@ export default function QuoteView() {
           >
             Enviar por correo
           </button>
+          <QuoteConvertToInvoiceButton
+            quoteId={id}
+            quoteNumero={quote?.numero}
+            className="btn-primary btn-sm"
+            onError={setError}
+          />
         </div>
       </div>
+
+      <section className="panel quote-convert-banner no-print" aria-label="Facturación">
+        <div className="quote-convert-banner-text">
+          <strong>Facturación</strong>
+          <p className="muted">
+            Emite una factura fiscal con los mismos datos de esta cotización. La cotización{' '}
+            <strong>{quote.numero}</strong> permanece sin cambios.
+          </p>
+        </div>
+        <QuoteConvertToInvoiceButton
+          quoteId={id}
+          quoteNumero={quote.numero}
+          className="btn-primary"
+          onError={setError}
+        />
+      </section>
 
       {sendSuccess && <div className="alert alert-success no-print">{sendSuccess}</div>}
       {error && <div className="alert alert-error no-print">{error}</div>}
