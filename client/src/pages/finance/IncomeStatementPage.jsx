@@ -13,14 +13,14 @@ import { api } from '../../api';
 import { formatMoney } from '../../utils/formatMoney';
 import ReportTooltip from '../../components/reports/ReportTooltip';
 import { CHART_AXIS_TICK, CHART_COLORS } from '../../utils/reportStats';
+import MonthYearFilterFields from '../../components/filters/MonthYearFilterFields';
+import { dateRangeFromYearMonth, getDefaultYearMonth } from '../../utils/dateRangeFilters';
 
-function yearRange() {
-  const y = new Date().getFullYear();
-  return { from: `${y}-01-01`, to: `${y}-12-31` };
-}
+const defaultPeriod = getDefaultYearMonth();
 
 export default function IncomeStatementPage() {
-  const [range, setRange] = useState(yearRange);
+  const [yearFilter, setYearFilter] = useState(defaultPeriod.year);
+  const [monthFilter, setMonthFilter] = useState('');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,6 +28,7 @@ export default function IncomeStatementPage() {
   const load = () => {
     setLoading(true);
     setError('');
+    const range = dateRangeFromYearMonth(yearFilter, monthFilter);
     api.expenses
       .incomeStatement(range)
       .then(setData)
@@ -42,25 +43,14 @@ export default function IncomeStatementPage() {
         <p className="muted panel-desc">
           Ingresos por facturas emitidas menos costo de productos y gastos operativos del período.
         </p>
-        <div className="quotes-filters-bar">
-          <label className="quotes-filter-field">
-            <span className="quotes-filter-label">Desde</span>
-            <input
-              type="date"
-              className="quotes-filter-input"
-              value={range.from}
-              onChange={(e) => setRange({ ...range, from: e.target.value })}
-            />
-          </label>
-          <label className="quotes-filter-field">
-            <span className="quotes-filter-label">Hasta</span>
-            <input
-              type="date"
-              className="quotes-filter-input"
-              value={range.to}
-              onChange={(e) => setRange({ ...range, to: e.target.value })}
-            />
-          </label>
+        <div className="quotes-filters-bar" role="group" aria-label="Período del estado de resultados">
+          <MonthYearFilterFields
+            year={yearFilter}
+            month={monthFilter}
+            onYearChange={setYearFilter}
+            onMonthChange={setMonthFilter}
+            idPrefix="income-statement"
+          />
         </div>
         <button type="button" className="btn-primary btn-sm" onClick={load} disabled={loading}>
           {loading ? 'Calculando…' : 'Generar'}

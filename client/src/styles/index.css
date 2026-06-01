@@ -3138,6 +3138,18 @@ a.cell-ellipsis:hover {
   min-width: 180px;
 }
 
+.reports-header-filters {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  min-width: 0;
+}
+
+.reports-header-filters .quotes-filters-bar {
+  display: contents;
+}
+
 .reports-period label {
   font-size: 0.75rem;
   color: var(--text-muted);

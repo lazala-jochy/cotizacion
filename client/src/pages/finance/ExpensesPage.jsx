@@ -6,6 +6,10 @@ import ExpenseRowActions from '../../components/finance/ExpenseRowActions';
 import ExpenseAttachmentViewer from '../../components/finance/ExpenseAttachmentViewer';
 import ConfirmModal from '../../components/ConfirmModal';
 import { getAttachmentSource } from '../../utils/expenseAttachment';
+import MonthYearFilterFields from '../../components/filters/MonthYearFilterFields';
+import { dateRangeFromYearMonth, getDefaultYearMonth } from '../../utils/dateRangeFilters';
+
+const defaultPeriod = getDefaultYearMonth();
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState([]);
@@ -17,20 +21,23 @@ export default function ExpensesPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [viewAttachment, setViewAttachment] = useState(null);
-  const [filters, setFilters] = useState({ from: '', to: '', category_id: '' });
+  const [yearFilter, setYearFilter] = useState(defaultPeriod.year);
+  const [monthFilter, setMonthFilter] = useState(defaultPeriod.month);
+  const [categoryId, setCategoryId] = useState('');
 
   const load = useCallback(() => {
     setLoading(true);
+    const { from, to } = dateRangeFromYearMonth(yearFilter, monthFilter);
     const params = {};
-    if (filters.from) params.from = filters.from;
-    if (filters.to) params.to = filters.to;
-    if (filters.category_id) params.category_id = filters.category_id;
+    if (from) params.from = from;
+    if (to) params.to = to;
+    if (categoryId) params.category_id = categoryId;
     api.expenses
       .list(params)
       .then(setExpenses)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [filters]);
+  }, [yearFilter, monthFilter, categoryId]);
 
   useEffect(() => {
     api.expenses.categories().then(setCategories).catch(() => {});
@@ -89,31 +96,20 @@ export default function ExpensesPage() {
           </button>
         </div>
 
-        <div className="quotes-filters-bar">
-          <label className="quotes-filter-field">
-            <span className="quotes-filter-label">Desde</span>
-            <input
-              type="date"
-              className="quotes-filter-input"
-              value={filters.from}
-              onChange={(e) => setFilters({ ...filters, from: e.target.value })}
-            />
-          </label>
-          <label className="quotes-filter-field">
-            <span className="quotes-filter-label">Hasta</span>
-            <input
-              type="date"
-              className="quotes-filter-input"
-              value={filters.to}
-              onChange={(e) => setFilters({ ...filters, to: e.target.value })}
-            />
-          </label>
+        <div className="quotes-filters-bar" role="group" aria-label="Filtros de gastos">
+          <MonthYearFilterFields
+            year={yearFilter}
+            month={monthFilter}
+            onYearChange={setYearFilter}
+            onMonthChange={setMonthFilter}
+            idPrefix="expenses"
+          />
           <label className="quotes-filter-field">
             <span className="quotes-filter-label">Categoría</span>
             <select
               className="quotes-filter-select"
-              value={filters.category_id}
-              onChange={(e) => setFilters({ ...filters, category_id: e.target.value })}
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
             >
               <option value="">Todas</option>
               {categories.map((c) => (

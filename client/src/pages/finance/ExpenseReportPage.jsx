@@ -12,19 +12,14 @@ import { api } from '../../api';
 import { formatMoney } from '../../utils/formatMoney';
 import ReportTooltip from '../../components/reports/ReportTooltip';
 import { CHART_AXIS_TICK, CHART_COLORS } from '../../utils/reportStats';
+import MonthYearFilterFields from '../../components/filters/MonthYearFilterFields';
+import { dateRangeFromYearMonth, getDefaultYearMonth } from '../../utils/dateRangeFilters';
 
-function defaultRange() {
-  const end = new Date();
-  const start = new Date();
-  start.setMonth(start.getMonth() - 3);
-  return {
-    from: start.toISOString().slice(0, 10),
-    to: end.toISOString().slice(0, 10),
-  };
-}
+const defaultPeriod = getDefaultYearMonth();
 
 export default function ExpenseReportPage() {
-  const [range, setRange] = useState(defaultRange);
+  const [yearFilter, setYearFilter] = useState(defaultPeriod.year);
+  const [monthFilter, setMonthFilter] = useState(defaultPeriod.month);
   const [categories, setCategories] = useState([]);
   const [clients, setClients] = useState([]);
   const [filters, setFilters] = useState({ category_id: '', client_id: '' });
@@ -40,7 +35,10 @@ export default function ExpenseReportPage() {
   const loadReport = () => {
     setLoading(true);
     setError('');
+    const range = dateRangeFromYearMonth(yearFilter, monthFilter);
     const params = { ...range, ...filters };
+    if (!params.from) delete params.from;
+    if (!params.to) delete params.to;
     if (!params.category_id) delete params.category_id;
     if (!params.client_id) delete params.client_id;
     api.expenses
@@ -61,6 +59,7 @@ export default function ExpenseReportPage() {
     })) || [];
 
   const handleExport = (format) => {
+    const range = dateRangeFromYearMonth(yearFilter, monthFilter);
     api.expenses.exportReport({ ...range, ...filters, format });
   };
 
@@ -68,25 +67,14 @@ export default function ExpenseReportPage() {
     <>
       <section className="panel">
         <h2 className="panel-title">Reporte de gastos</h2>
-        <div className="quotes-filters-bar">
-          <label className="quotes-filter-field">
-            <span className="quotes-filter-label">Desde</span>
-            <input
-              type="date"
-              className="quotes-filter-input"
-              value={range.from}
-              onChange={(e) => setRange({ ...range, from: e.target.value })}
-            />
-          </label>
-          <label className="quotes-filter-field">
-            <span className="quotes-filter-label">Hasta</span>
-            <input
-              type="date"
-              className="quotes-filter-input"
-              value={range.to}
-              onChange={(e) => setRange({ ...range, to: e.target.value })}
-            />
-          </label>
+        <div className="quotes-filters-bar" role="group" aria-label="Filtros del reporte">
+          <MonthYearFilterFields
+            year={yearFilter}
+            month={monthFilter}
+            onYearChange={setYearFilter}
+            onMonthChange={setMonthFilter}
+            idPrefix="expense-report"
+          />
           <label className="quotes-filter-field">
             <span className="quotes-filter-label">Categoría</span>
             <select

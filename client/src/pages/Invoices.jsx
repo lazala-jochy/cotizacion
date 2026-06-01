@@ -8,10 +8,10 @@ import InvoiceAnnulModal from '../components/InvoiceAnnulModal';
 import { INVOICE_ESTADOS_FILTER, normalizeInvoiceEstado } from '../constants/invoiceEstados';
 import {
   MONTO_FILTER_OPTIONS,
-  MONTH_FILTER_OPTIONS,
   getInvoiceFilterYearOptions,
   invoiceMatchesListFilters,
 } from '../utils/invoiceListFilters';
+import MonthYearFilterFields from '../components/filters/MonthYearFilterFields';
 
 const PAGE_SIZE_DEFAULT = 5;
 
@@ -234,35 +234,14 @@ export default function Invoices() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </label>
-            <label className="quotes-filter-field quotes-filter-field--year">
-              <span className="quotes-filter-label">Año</span>
-              <select
-                className="quotes-filter-select"
-                value={yearFilter}
-                onChange={(e) => setYearFilter(e.target.value)}
-              >
-                <option value="">Todos</option>
-                {yearOptions.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="quotes-filter-field quotes-filter-field--month">
-              <span className="quotes-filter-label">Mes</span>
-              <select
-                className="quotes-filter-select"
-                value={monthFilter}
-                onChange={(e) => setMonthFilter(e.target.value)}
-              >
-                {MONTH_FILTER_OPTIONS.map((o) => (
-                  <option key={o.value || 'all'} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <MonthYearFilterFields
+              year={yearFilter}
+              month={monthFilter}
+              onYearChange={setYearFilter}
+              onMonthChange={setMonthFilter}
+              yearOptions={[{ value: '', label: 'Todos' }, ...yearOptions]}
+              idPrefix="invoices"
+            />
             <label className="quotes-filter-field quotes-filter-field--monto">
               <span className="quotes-filter-label">Monto</span>
               <select

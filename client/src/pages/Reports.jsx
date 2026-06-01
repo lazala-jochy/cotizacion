@@ -26,6 +26,8 @@ import {
   groupByMonth,
   topClientsByMonto,
 } from '../utils/reportStats';
+import MonthYearFilterFields from '../components/filters/MonthYearFilterFields';
+import { getYearOptionsFromItems, matchesYearMonth } from '../utils/dateRangeFilters';
 
 const PERIODS = [
   { value: 3, label: 'Últimos 3 meses' },
@@ -64,6 +66,8 @@ export default function Reports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [months, setMonths] = useState(6);
+  const [yearFilter, setYearFilter] = useState('');
+  const [monthFilter, setMonthFilter] = useState('');
 
   useEffect(() => {
     api.quotes
@@ -73,10 +77,15 @@ export default function Reports() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = useMemo(
-    () => filterQuotesByMonths(quotes, months || null),
-    [quotes, months]
+  const yearOptions = useMemo(
+    () => getYearOptionsFromItems(quotes, (q) => q.fecha),
+    [quotes]
   );
+
+  const filtered = useMemo(() => {
+    const byPeriod = filterQuotesByMonths(quotes, months || null);
+    return byPeriod.filter((q) => matchesYearMonth(q.fecha, yearFilter, monthFilter));
+  }, [quotes, months, yearFilter, monthFilter]);
 
   const kpis = useMemo(() => computeKpis(filtered), [filtered]);
   const monthly = useMemo(() => groupByMonth(filtered), [filtered]);
@@ -92,19 +101,30 @@ export default function Reports() {
           <h1>Reportes</h1>
           <p>Resumen visual de tus cotizaciones y ventas</p>
         </div>
-        <div className="reports-period">
-          <label htmlFor="report-period">Período</label>
-          <select
-            id="report-period"
-            value={months}
-            onChange={(e) => setMonths(Number(e.target.value))}
-          >
-            {PERIODS.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </select>
+        <div className="reports-period reports-header-filters">
+          <label htmlFor="report-period">
+            <span className="quotes-filter-label">Ventana</span>
+            <select
+              id="report-period"
+              className="quotes-filter-select"
+              value={months}
+              onChange={(e) => setMonths(Number(e.target.value))}
+            >
+              {PERIODS.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <MonthYearFilterFields
+            year={yearFilter}
+            month={monthFilter}
+            onYearChange={setYearFilter}
+            onMonthChange={setMonthFilter}
+            yearOptions={yearOptions}
+            idPrefix="reports"
+          />
         </div>
       </header>
 

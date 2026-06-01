@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api';
+import MonthYearFilterFields from '../../components/filters/MonthYearFilterFields';
+import { getYearOptionsFromItems, matchesDgiiPeriod } from '../../utils/dateRangeFilters';
 
 const TYPE_LABELS = {
   '606': 'Compras (606)',
@@ -10,8 +12,24 @@ const TYPE_LABELS = {
 export default function DgiiReportsHistory() {
   const [reports, setReports] = useState([]);
   const [filter, setFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
+  const [monthFilter, setMonthFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const yearOptions = useMemo(
+    () =>
+      getYearOptionsFromItems(reports, (r) => {
+        const p = String(r.period || '');
+        return p.length >= 6 ? `${p.slice(0, 4)}-${p.slice(4, 6)}-01` : r.generated_at;
+      }),
+    [reports]
+  );
+
+  const visibleReports = useMemo(
+    () => reports.filter((r) => matchesDgiiPeriod(r.period, yearFilter, monthFilter)),
+    [reports, yearFilter, monthFilter]
+  );
 
   useEffect(() => {
     setLoading(true);
@@ -34,7 +52,15 @@ export default function DgiiReportsHistory() {
     <section className="panel quotes-panel">
       <h2 className="panel-title">Historial de reportes</h2>
 
-      <div className="quotes-filters-bar">
+      <div className="quotes-filters-bar" role="group" aria-label="Filtros del historial">
+        <MonthYearFilterFields
+          year={yearFilter}
+          month={monthFilter}
+          onYearChange={setYearFilter}
+          onMonthChange={setMonthFilter}
+          yearOptions={yearOptions}
+          idPrefix="dgii-history"
+        />
         <label className="quotes-filter-field">
           <span className="quotes-filter-label">Formato</span>
           <select className="quotes-filter-select" value={filter} onChange={(e) => setFilter(e.target.value)}>
@@ -63,14 +89,16 @@ export default function DgiiReportsHistory() {
               </tr>
             </thead>
             <tbody>
-              {reports.length === 0 && (
+              {visibleReports.length === 0 && (
                 <tr>
                   <td colSpan={6} className="muted">
-                    Aún no hay reportes generados.
+                    {reports.length === 0
+                      ? 'Aún no hay reportes generados.'
+                      : 'No hay reportes con estos filtros.'}
                   </td>
                 </tr>
               )}
-              {reports.map((r) => (
+              {visibleReports.map((r) => (
                 <tr key={r.id}>
                   <td>{r.generated_at?.replace('T', ' ').slice(0, 16)}</td>
                   <td>{TYPE_LABELS[r.report_type] || r.report_type}</td>
