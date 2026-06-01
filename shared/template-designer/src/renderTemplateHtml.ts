@@ -117,6 +117,9 @@ function renderElementHtml(el: TemplateElement, context: PlaceholderContext): st
   }
 
   const text = resolveElementText(el, context);
+  if (type === 'discount' && !text.trim()) {
+    return '';
+  }
   const inner = escapeHtml(text).replace(/\n/g, '<br>');
   return `<div class="td-el td-el-text" style="${baseStyle}"><div class="td-el-text-inner">${inner}</div></div>`;
 }

@@ -10,6 +10,7 @@ const clientsRoutes = require('./routes/clients');
 const quotesRoutes = require('./routes/quotes');
 const invoicesRoutes = require('./routes/invoices');
 const fiscalRoutes = require('./routes/fiscal');
+const dgiiRoutes = require('./routes/dgii');
 const emisorRoutes = require('./routes/emisor');
 const templatesRoutes = require('./routes/templates');
 const publicRoutes = require('./routes/public');
@@ -30,6 +31,7 @@ app.use('/api/clients', clientsRoutes);
 app.use('/api/quotes', quotesRoutes);
 app.use('/api/invoices', invoicesRoutes);
 app.use('/api/fiscal', fiscalRoutes);
+app.use('/api/dgii', dgiiRoutes);
 
 const distPath = path.join(__dirname, '..', 'dist');
 app.use(express.static(distPath));

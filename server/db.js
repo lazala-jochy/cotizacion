@@ -131,6 +131,9 @@ if (!quoteCols.some((c) => c.name === 'ejecutivo')) {
 if (!quoteCols.some((c) => c.name === 'forma_pago')) {
   db.exec("ALTER TABLE quotes ADD COLUMN forma_pago TEXT DEFAULT 'Efectivo / Transferencia'");
 }
+if (!quoteCols.some((c) => c.name === 'descuento')) {
+  db.exec('ALTER TABLE quotes ADD COLUMN descuento REAL NOT NULL DEFAULT 0');
+}
 db.exec(`
   CREATE TABLE IF NOT EXISTS quote_templates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -162,6 +165,17 @@ db.exec(`
 
 const { migrateInvoicingSchema } = require('./invoices/migrateSchema');
 migrateInvoicingSchema(db);
+
+const { migrateDgiiSchema } = require('./dgii/migrateDgiiSchema');
+migrateDgiiSchema(db);
+
+try {
+  const { backfillCancelledInvoices } = require('./dgii/dgiiService');
+  const dgiiUsers = db.prepare('SELECT id FROM users').all();
+  for (const u of dgiiUsers) backfillCancelledInvoices(u.id);
+} catch (err) {
+  console.warn('[dgii] backfill cancelled:', err.message);
+}
 
 const { migrateLegacyEstados } = require('./quoteWorkflow');
 migrateLegacyEstados(db);

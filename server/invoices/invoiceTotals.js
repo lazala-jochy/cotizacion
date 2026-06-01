@@ -10,6 +10,21 @@ function resolveItbisRate(applyItbis, itbisManual, itbisRate) {
   return ITBIS_RATE_DEFAULT_PERCENT;
 }
 
+function validateDescuento(subtotal, descuento) {
+  const sub = Number(subtotal) || 0;
+  const disc = Number(descuento) || 0;
+  if (disc < 0) {
+    return { ok: false, error: 'El descuento no puede ser negativo.' };
+  }
+  if (disc > sub + 0.009) {
+    return {
+      ok: false,
+      error: 'El descuento no puede ser mayor al subtotal.',
+    };
+  }
+  return { ok: true, descuento: disc };
+}
+
 function calcTotals(
   items,
   applyItbis = true,
@@ -35,4 +50,8 @@ function calcTotals(
   };
 }
 
-module.exports = { calcTotals, ITBIS_RATE_DEFAULT_PERCENT };
+module.exports = {
+  calcTotals,
+  validateDescuento,
+  ITBIS_RATE_DEFAULT_PERCENT,
+};

@@ -16,6 +16,11 @@ const InvoiceView = lazy(() => import('./pages/InvoiceView'));
 const InvoiceForm = lazy(() => import('./pages/InvoiceForm'));
 const TemplateDesignerList = lazy(() => import('./pages/TemplateDesignerList'));
 const TemplateDesignerEditor = lazy(() => import('./pages/TemplateDesignerEditor'));
+const DgiiLayout = lazy(() => import('./pages/dgii/DgiiLayout'));
+const DgiiFormat607 = lazy(() => import('./pages/dgii/DgiiFormat607'));
+const DgiiFormat608 = lazy(() => import('./pages/dgii/DgiiFormat608'));
+const DgiiFormat606 = lazy(() => import('./pages/dgii/DgiiFormat606'));
+const DgiiReportsHistory = lazy(() => import('./pages/dgii/DgiiReportsHistory'));
 
 function PageLoading() {
   return (
@@ -81,6 +86,48 @@ export default function App() {
           }
         />
         <Route path="reportes" element={<Reports />} />
+        <Route
+          path="dgii"
+          element={
+            <Suspense fallback={<PageLoading />}>
+              <DgiiLayout />
+            </Suspense>
+          }
+        >
+          <Route index element={<Navigate to="/dgii/607" replace />} />
+          <Route
+            path="607"
+            element={
+              <Suspense fallback={<PageLoading />}>
+                <DgiiFormat607 />
+              </Suspense>
+            }
+          />
+          <Route
+            path="608"
+            element={
+              <Suspense fallback={<PageLoading />}>
+                <DgiiFormat608 />
+              </Suspense>
+            }
+          />
+          <Route
+            path="606"
+            element={
+              <Suspense fallback={<PageLoading />}>
+                <DgiiFormat606 />
+              </Suspense>
+            }
+          />
+          <Route
+            path="historial"
+            element={
+              <Suspense fallback={<PageLoading />}>
+                <DgiiReportsHistory />
+              </Suspense>
+            }
+          />
+        </Route>
         <Route path="cotizaciones" element={<Quotes />} />
         <Route path="cotizaciones/nueva" element={<QuoteForm />} />
         <Route

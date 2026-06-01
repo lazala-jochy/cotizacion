@@ -2,7 +2,7 @@ const { test, describe } = require('node:test');
 const assert = require('node:assert');
 const { formatFiscalNumber, parseFiscalNumber } = require('../server/invoices/fiscalNumber');
 const { validateFiscalRangeForIssue } = require('../server/invoices/fiscalValidation');
-const { calcTotals } = require('../server/invoices/invoiceTotals');
+const { calcTotals, validateDescuento } = require('../server/invoices/invoiceTotals');
 
 describe('formatFiscalNumber', () => {
   test('concatena código y 8 dígitos', () => {
@@ -44,6 +44,14 @@ describe('validateFiscalRangeForIssue', () => {
     const r = validateFiscalRangeForIssue(range);
     assert.strictEqual(r.ok, true);
     assert.strictEqual(r.nextSecuencia, 126);
+  });
+});
+
+describe('validateDescuento', () => {
+  test('rechaza descuento mayor al subtotal', () => {
+    const r = validateDescuento(1000, 1001);
+    assert.strictEqual(r.ok, false);
+    assert.match(r.error, /subtotal/i);
   });
 });
 

@@ -19,23 +19,14 @@ const { getEmisorRow, publicEmisorFields } = require('../emisorSmtp');
 const router = express.Router();
 router.use(authMiddleware);
 
-const ITBIS_RATE_DEFAULT_PERCENT = 18;
+const {
+  calcTotals,
+  validateDescuento,
+  ITBIS_RATE_DEFAULT_PERCENT,
+} = require('../invoices/invoiceTotals');
 
-function resolveItbisRate(applyItbis, itbisManual, itbisRate) {
-  if (!applyItbis) return 0;
-  if (itbisManual) {
-    const pct = Number(itbisRate);
-    if (Number.isNaN(pct) || pct < 0 || pct > 100) return ITBIS_RATE_DEFAULT_PERCENT;
-    return pct;
-  }
-  return ITBIS_RATE_DEFAULT_PERCENT;
-}
-
-function calcTotals(items, applyItbis = true, itbisManual = false, itbisRate = ITBIS_RATE_DEFAULT_PERCENT) {
-  const subtotal = items.reduce((s, i) => s + Number(i.cantidad) * Number(i.precio_unitario), 0);
-  const pct = resolveItbisRate(applyItbis, itbisManual, itbisRate);
-  const itbis = applyItbis ? subtotal * (pct / 100) : 0;
-  return { subtotal, itbis, total: subtotal + itbis, itbis_rate: pct, itbis_manual: itbisManual ? 1 : 0 };
+function itemsSubtotal(items) {
+  return items.reduce((s, i) => s + Number(i.cantidad) * Number(i.precio_unitario), 0);
 }
 
 function nextQuoteNumber(userId) {
@@ -344,6 +335,7 @@ router.post('/', (req, res) => {
     apply_itbis = true,
     itbis_manual = false,
     itbis_rate = ITBIS_RATE_DEFAULT_PERCENT,
+    descuento = 0,
   } = req.body;
 
   if (!items.length) {
@@ -373,7 +365,18 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: 'Cada ítem necesita descripción y cantidad mayor a 0' });
   }
 
-  const totals = calcTotals(normalizedItems, apply_itbis, itbis_manual, itbis_rate);
+  const discCheck = validateDescuento(itemsSubtotal(normalizedItems), descuento);
+  if (!discCheck.ok) {
+    return res.status(400).json({ error: discCheck.error });
+  }
+
+  const totals = calcTotals(
+    normalizedItems,
+    apply_itbis,
+    itbis_manual,
+    itbis_rate,
+    descuento
+  );
   const quoteNumero = numero?.trim() || nextQuoteNumber(req.user.id);
   const quoteFecha = fecha || new Date().toISOString().slice(0, 10);
   const estadoInicial = validateEstado(estado || 'creada').estado || 'creada';
@@ -385,10 +388,10 @@ router.post('/', (req, res) => {
     const result = db
       .prepare(
         `INSERT INTO quotes (
-          user_id, client_id, numero, fecha, validez_dias, notas, subtotal, itbis, total, estado,
+          user_id, client_id, numero, fecha, validez_dias, notas, subtotal, itbis, descuento, total, estado,
           client_nombre, client_rnc, client_direccion, client_telefono, client_email,
           itbis_rate, itbis_manual, monto_pagado, ejecutivo, forma_pago
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`
       )
       .run(
         req.user.id,
@@ -399,6 +402,7 @@ router.post('/', (req, res) => {
         notas?.trim() || null,
         totals.subtotal,
         totals.itbis,
+        totals.descuento,
         totals.total,
         estadoInicial,
         clientSnapshot.client_nombre,
@@ -456,6 +460,7 @@ router.put('/:id', (req, res) => {
     apply_itbis = true,
     itbis_manual = false,
     itbis_rate = ITBIS_RATE_DEFAULT_PERCENT,
+    descuento = 0,
   } = req.body;
 
   if (!client_nombre?.trim()) {
@@ -477,12 +482,23 @@ router.put('/:id', (req, res) => {
     return res.status(400).json({ error: 'Cada ítem necesita descripción y cantidad mayor a 0' });
   }
 
-  const totals = calcTotals(normalizedItems, apply_itbis, itbis_manual, itbis_rate);
+  const discCheck = validateDescuento(itemsSubtotal(normalizedItems), descuento);
+  if (!discCheck.ok) {
+    return res.status(400).json({ error: discCheck.error });
+  }
+
+  const totals = calcTotals(
+    normalizedItems,
+    apply_itbis,
+    itbis_manual,
+    itbis_rate,
+    descuento
+  );
 
   const updateAll = db.transaction(() => {
     db.prepare(
       `UPDATE quotes SET
-        client_id=?, fecha=?, validez_dias=?, notas=?, subtotal=?, itbis=?, total=?, estado='creada',
+        client_id=?, fecha=?, validez_dias=?, notas=?, subtotal=?, itbis=?, descuento=?, total=?, estado='creada',
         client_nombre=?, client_rnc=?, client_direccion=?, client_telefono=?, client_email=?,
         itbis_rate=?, itbis_manual=?, ejecutivo=?, forma_pago=?, updated_at=datetime('now')
        WHERE id=? AND user_id=?`
@@ -493,6 +509,7 @@ router.put('/:id', (req, res) => {
       notas?.trim() || null,
       totals.subtotal,
       totals.itbis,
+      totals.descuento,
       totals.total,
       client_nombre?.trim(),
       client_rnc?.trim() || null,

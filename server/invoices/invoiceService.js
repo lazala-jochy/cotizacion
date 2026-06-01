@@ -4,7 +4,7 @@ const { ensureLegacyFiscalRangeMirror } = require('./fiscalLegacyMirror');
 const fiscalDocumentTypeRepo = require('./fiscalDocumentTypeRepository');
 const invoiceRepo = require('./invoiceRepository');
 const auditRepo = require('./invoiceAuditRepository');
-const { calcTotals } = require('./invoiceTotals');
+const { calcTotals, validateDescuento } = require('./invoiceTotals');
 const { parseFiscalNumber } = require('./fiscalNumber');
 const {
   formatFiscalNumber,
@@ -341,6 +341,15 @@ function createManualInvoice(userId, userNombre, body) {
   assertClientTaxIdForType(body, docType);
 
   const applyItbis = body.apply_itbis !== false;
+  const itemsSubtotal = body.items.reduce(
+    (s, i) => s + Number(i.cantidad) * Number(i.precio_unitario),
+    0
+  );
+  const discCheck = validateDescuento(itemsSubtotal, body.descuento ?? 0);
+  if (!discCheck.ok) {
+    throw new InvoiceError(discCheck.error, 'INVALID_DISCOUNT');
+  }
+
   const totals = calcTotals(
     body.items,
     applyItbis,
@@ -409,6 +418,15 @@ function updateInvoice(id, userId, userNombre, body) {
   }
 
   const applyItbis = body.apply_itbis !== false;
+  const itemsSubtotal = body.items.reduce(
+    (s, i) => s + Number(i.cantidad) * Number(i.precio_unitario),
+    0
+  );
+  const discCheck = validateDescuento(itemsSubtotal, body.descuento ?? existing.descuento);
+  if (!discCheck.ok) {
+    throw new InvoiceError(discCheck.error, 'INVALID_DISCOUNT');
+  }
+
   const totals = calcTotals(
     body.items,
     applyItbis,
@@ -484,6 +502,13 @@ function annulInvoice(id, userId, userNombre, reason) {
     motivo: reason || null,
     fiscal_number: existing.fiscal_number,
   });
+
+  try {
+    const dgiiService = require('../dgii/dgiiService');
+    dgiiService.syncCancelledFromAnnul(userId, id, reason);
+  } catch (err) {
+    console.warn('[dgii] sync cancelled invoice:', err.message);
+  }
 
   return invoiceRepo.getById(id, userId);
 }

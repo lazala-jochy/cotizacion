@@ -130,6 +130,12 @@ export default function InvoiceForm() {
       return;
     }
 
+    const disc = Number(descuento) || 0;
+    if (disc > totals.subtotal + 0.009) {
+      setError('El descuento no puede ser mayor al subtotal.');
+      return;
+    }
+
     const payload = {
       fiscal_document_type_id: fiscalDocumentTypeId ? Number(fiscalDocumentTypeId) : undefined,
       fiscal_number: fiscalNumber.trim(),
@@ -266,6 +272,7 @@ export default function InvoiceForm() {
               <input
                 type="number"
                 min={0}
+                max={totals.subtotal || undefined}
                 step="0.01"
                 value={descuento}
                 onChange={(e) => setDescuento(e.target.value)}

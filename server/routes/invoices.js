@@ -37,7 +37,8 @@ function handleInvoiceError(err, res) {
       :       err.code === 'FISCAL_RANGE' ||
         err.code === 'INVALID_FISCAL' ||
         err.code === 'FISCAL_DOCUMENT_TYPE' ||
-        err.code === 'CLIENT_TAX_ID' ?
+        err.code === 'CLIENT_TAX_ID' ||
+        err.code === 'INVALID_DISCOUNT' ?
         400
       : 400;
     return res.status(status).json({ error: err.message, code: err.code });

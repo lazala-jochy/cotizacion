@@ -33,6 +33,7 @@ export default function QuoteForm() {
   const [ejecutivo, setEjecutivo] = useState(() => user?.nombre || '');
   const [formaPago, setFormaPago] = useState(FORMA_PAGO_OPTIONS[0]);
   const [notas, setNotas] = useState('');
+  const [descuento, setDescuento] = useState(0);
   const [locked, setLocked] = useState(false);
   const [taxMode, setTaxMode] = useState('gravado_auto');
   const [itbisRate, setItbisRate] = useState(ITBIS_RATE_DEFAULT);
@@ -68,6 +69,7 @@ export default function QuoteForm() {
         setEjecutivo(q.ejecutivo || user?.nombre || '');
         setFormaPago(q.forma_pago || FORMA_PAGO_OPTIONS[0]);
         setNotas(q.notas || '');
+        setDescuento(q.descuento || 0);
         setLocked(!canEditQuoteContent(q.estado));
         const hasItbis = q.itbis > 0;
         const manual = q.itbis_manual === 1 || q.itbis_manual === true;
@@ -102,21 +104,24 @@ export default function QuoteForm() {
       (s, i) => s + (Number(i.cantidad) || 0) * (Number(i.precio_unitario) || 0),
       0
     );
+    const disc = Math.max(0, Math.min(subtotal, Number(descuento) || 0));
+    const base = Math.max(0, subtotal - disc);
     const isExento = taxMode === 'exento';
     const itbisManual = taxMode === 'gravado_manual';
     const applyItbis = !isExento;
     const pct = applyItbis ? (itbisManual ? Number(itbisRate) || 0 : ITBIS_RATE_DEFAULT) : 0;
-    const itbis = applyItbis ? subtotal * (pct / 100) : 0;
+    const itbis = applyItbis ? base * (pct / 100) : 0;
     return {
       subtotal,
+      descuento: disc,
       itbis,
-      total: subtotal + itbis,
+      total: base + itbis,
       itbisPercent: pct,
       isExento,
-      subtotalExento: isExento ? subtotal : 0,
-      subtotalGravado: applyItbis ? subtotal : 0,
+      subtotalExento: isExento ? base : 0,
+      subtotalGravado: applyItbis ? base : 0,
     };
-  }, [items, taxMode, itbisRate]);
+  }, [items, taxMode, itbisRate, descuento]);
 
   const updateItem = (idx, field, value) => {
     setItems((prev) => prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item)));
@@ -129,6 +134,12 @@ export default function QuoteForm() {
     e.preventDefault();
     setError('');
 
+    const disc = Number(descuento) || 0;
+    if (disc > totals.subtotal + 0.009) {
+      setError('El descuento no puede ser mayor al subtotal.');
+      return;
+    }
+
     try {
       const payload = {
         numero: isEdit ? undefined : numero,
@@ -137,6 +148,7 @@ export default function QuoteForm() {
         ejecutivo: ejecutivo.trim(),
         forma_pago: formaPago,
         notas,
+        descuento: Number(descuento) || 0,
         apply_itbis: taxMode !== 'exento',
         itbis_manual: taxMode === 'gravado_manual',
         itbis_rate:
@@ -367,11 +379,34 @@ export default function QuoteForm() {
                 </label>
               </div>
             </div>
+            <label className="quote-discount-field">
+              Descuento (opcional, RD$)
+              <input
+                type="number"
+                min="0"
+                max={totals.subtotal || undefined}
+                step="0.01"
+                value={descuento}
+                onChange={(e) => setDescuento(e.target.value)}
+                placeholder="0"
+              />
+              {Number(descuento) > totals.subtotal + 0.009 && (
+                <span className="field-hint alert-warn">
+                  No puede superar el subtotal ({formatMoney(totals.subtotal)}).
+                </span>
+              )}
+            </label>
             <div className="totals-rows">
               <div>
                 <span>Subtotal</span>
                 <strong>{formatMoney(totals.subtotal)}</strong>
               </div>
+              {totals.descuento > 0 && (
+                <div>
+                  <span>Descuento</span>
+                  <strong>−{formatMoney(totals.descuento)}</strong>
+                </div>
+              )}
               {totals.isExento ? (
                 <div>
                   <span>Subtotal exento</span>

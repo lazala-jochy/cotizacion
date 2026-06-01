@@ -1143,6 +1143,15 @@ a.cell-ellipsis:hover {
   background: var(--bg-elevated);
 }
 
+.dgii-error-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.dgii-error-list li {
+  margin: 0.25rem 0;
+}
+
 .page-tab--active {
   color: var(--accent);
   border-bottom-color: var(--accent);

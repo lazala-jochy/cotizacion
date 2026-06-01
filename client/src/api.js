@@ -104,6 +104,49 @@ export const api = {
     sendEmail: (id, body) =>
       request(`/api/invoices/${id}/send-email`, { method: 'POST', body: JSON.stringify(body) }),
   },
+  dgii: {
+    catalogs: () => request('/api/dgii/catalogs'),
+    listReports: (params = {}) => {
+      const q = new URLSearchParams();
+      if (params.report_type) q.set('report_type', params.report_type);
+      const qs = q.toString();
+      return request(`/api/dgii/reports${qs ? `?${qs}` : ''}`);
+    },
+    downloadReport: async (id, filename) => {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/api/dgii/reports/${id}/download`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Error al descargar');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || `dgii-${id}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    preview607: (period) => request(`/api/dgii/607/preview?period=${encodeURIComponent(period)}`),
+    export607: (period) =>
+      request('/api/dgii/607/export', { method: 'POST', body: JSON.stringify({ period }) }),
+    preview608: (period) => request(`/api/dgii/608/preview?period=${encodeURIComponent(period)}`),
+    export608: (period) =>
+      request('/api/dgii/608/export', { method: 'POST', body: JSON.stringify({ period }) }),
+    preview606: (period) => request(`/api/dgii/606/preview?period=${encodeURIComponent(period)}`),
+    export606: (period) =>
+      request('/api/dgii/606/export', { method: 'POST', body: JSON.stringify({ period }) }),
+    listPurchases: (period) =>
+      request(`/api/dgii/606/purchases?period=${encodeURIComponent(period)}`),
+    createPurchase: (body) =>
+      request('/api/dgii/606/purchases', { method: 'POST', body: JSON.stringify(body) }),
+    deletePurchase: (id) => request(`/api/dgii/606/purchases/${id}`, { method: 'DELETE' }),
+    listSuppliers: () => request('/api/dgii/606/suppliers'),
+    createSupplier: (body) =>
+      request('/api/dgii/606/suppliers', { method: 'POST', body: JSON.stringify(body) }),
+  },
   quotes: {
     list: () => request('/api/quotes'),
     get: (id) => request(`/api/quotes/${id}`),
