@@ -267,6 +267,7 @@ function mapQuoteToInvoicePayload(quote, fiscalAllocation, overrides = {}) {
       descripcion: item.descripcion,
       cantidad: item.cantidad,
       precio_unitario: item.precio_unitario,
+      costo_unitario: item.costo_unitario || 0,
       total: item.total,
       orden: idx,
     })),

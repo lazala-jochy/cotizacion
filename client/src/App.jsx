@@ -21,6 +21,11 @@ const DgiiFormat607 = lazy(() => import('./pages/dgii/DgiiFormat607'));
 const DgiiFormat608 = lazy(() => import('./pages/dgii/DgiiFormat608'));
 const DgiiFormat606 = lazy(() => import('./pages/dgii/DgiiFormat606'));
 const DgiiReportsHistory = lazy(() => import('./pages/dgii/DgiiReportsHistory'));
+const FinanzasLayout = lazy(() => import('./pages/finance/FinanzasLayout'));
+const ExpensesPage = lazy(() => import('./pages/finance/ExpensesPage'));
+const ExpenseCategoriesPage = lazy(() => import('./pages/finance/ExpenseCategoriesPage'));
+const ExpenseReportPage = lazy(() => import('./pages/finance/ExpenseReportPage'));
+const IncomeStatementPage = lazy(() => import('./pages/finance/IncomeStatementPage'));
 
 function PageLoading() {
   return (
@@ -124,6 +129,48 @@ export default function App() {
             element={
               <Suspense fallback={<PageLoading />}>
                 <DgiiReportsHistory />
+              </Suspense>
+            }
+          />
+        </Route>
+        <Route
+          path="finanzas"
+          element={
+            <Suspense fallback={<PageLoading />}>
+              <FinanzasLayout />
+            </Suspense>
+          }
+        >
+          <Route index element={<Navigate to="/finanzas/gastos" replace />} />
+          <Route
+            path="gastos"
+            element={
+              <Suspense fallback={<PageLoading />}>
+                <ExpensesPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="categorias"
+            element={
+              <Suspense fallback={<PageLoading />}>
+                <ExpenseCategoriesPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="reporte"
+            element={
+              <Suspense fallback={<PageLoading />}>
+                <ExpenseReportPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="resultados"
+            element={
+              <Suspense fallback={<PageLoading />}>
+                <IncomeStatementPage />
               </Suspense>
             }
           />

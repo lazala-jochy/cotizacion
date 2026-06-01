@@ -111,6 +111,12 @@ export function topClientsByMonto(quotes, limit = 6) {
     }));
 }
 
+/** Estilos de ejes legibles sobre fondos oscuros (--chart-axis en CSS). */
+export const CHART_AXIS_TICK = {
+  fill: '#c5d2e3',
+  fontSize: 12,
+};
+
 export const CHART_COLORS = {
   primary: '#3b82f6',
   secondary: '#6366f1',
@@ -118,6 +124,7 @@ export const CHART_COLORS = {
   warning: '#eab308',
   danger: '#ef4444',
   muted: '#64748b',
+  axis: '#c5d2e3',
   grid: 'rgba(148, 163, 184, 0.12)',
   estado: {
     pagada: '#22c55e',

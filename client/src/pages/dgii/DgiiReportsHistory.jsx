@@ -33,7 +33,6 @@ export default function DgiiReportsHistory() {
   return (
     <section className="panel quotes-panel">
       <h2 className="panel-title">Historial de reportes</h2>
-      <p className="muted panel-desc">Archivos TXT generados y guardados localmente.</p>
 
       <div className="quotes-filters-bar">
         <label className="quotes-filter-field">

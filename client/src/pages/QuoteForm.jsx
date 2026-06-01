@@ -12,7 +12,7 @@ const FORMA_PAGO_OPTIONS = [
   'Transferencia',
 ];
 
-const emptyItem = { descripcion: '', cantidad: 1, precio_unitario: 0 };
+const emptyItem = { descripcion: '', cantidad: 1, precio_unitario: 0, costo_unitario: 0 };
 const ITBIS_RATE_DEFAULT = 18;
 
 function formatMoney(n) {
@@ -91,6 +91,7 @@ export default function QuoteForm() {
                 descripcion: i.descripcion,
                 cantidad: i.cantidad,
                 precio_unitario: i.precio_unitario,
+                costo_unitario: i.costo_unitario || 0,
               }))
             : [{ ...emptyItem }]
         );
@@ -276,7 +277,8 @@ export default function QuoteForm() {
               <tr>
                 <th>Descripción</th>
                 <th>Cant.</th>
-                <th>Precio unit.</th>
+                <th>Precio venta</th>
+                <th>Costo unit.</th>
                 <th>Total</th>
                 <th></th>
               </tr>
@@ -310,6 +312,16 @@ export default function QuoteForm() {
                         step="0.01"
                         value={item.precio_unitario}
                         onChange={(e) => updateItem(idx, 'precio_unitario', e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.costo_unitario ?? 0}
+                        onChange={(e) => updateItem(idx, 'costo_unitario', e.target.value)}
+                        title="Costo de compra o producción"
                       />
                     </td>
                     <td className="line-total">{formatMoney(lineTotal)}</td>

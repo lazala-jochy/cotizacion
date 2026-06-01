@@ -7,6 +7,8 @@ import QuoteWorkflow from '../components/QuoteWorkflow';
 import QuoteDocument from '../components/QuoteDocument';
 import QuoteSendEmailModal from '../components/QuoteSendEmailModal';
 import QuoteConvertToInvoiceButton from '../components/QuoteConvertToInvoiceButton';
+import QuoteExpensesSection from '../components/finance/QuoteExpensesSection';
+import ProfitabilityPanel from '../components/finance/ProfitabilityPanel';
 
 export default function QuoteView() {
   const { id } = useParams();
@@ -23,6 +25,10 @@ export default function QuoteView() {
         setEmisor(e);
       })
       .catch((e) => setError(e.message));
+
+  const refreshProfitability = () => {
+    api.quotes.get(id).then(setQuote).catch(() => {});
+  };
 
   useEffect(() => {
     load();
@@ -127,6 +133,14 @@ export default function QuoteView() {
       )}
 
       <QuoteWorkflow quote={quote} onUpdate={setQuote} />
+
+      <ProfitabilityPanel profitability={quote.profitability} title="Rentabilidad de la cotización" />
+
+      <QuoteExpensesSection
+        quoteId={id}
+        clientId={quote.client_id}
+        onChanged={refreshProfitability}
+      />
 
       <QuoteDocument quote={quote} emisor={emisor} />
     </div>

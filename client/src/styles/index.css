@@ -5,6 +5,8 @@
   --border: #2f3d4f;
   --text: #e8edf4;
   --text-muted: #8b9cb3;
+  --muted: var(--text-muted);
+  --chart-axis: #c5d2e3;
   --accent: #3b82f6;
   --accent-hover: #2563eb;
   --success: #22c55e;
@@ -1143,6 +1145,159 @@ a.cell-ellipsis:hover {
   background: var(--bg-elevated);
 }
 
+.profitability-panel {
+  margin-bottom: 1.25rem;
+}
+
+.profitability-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem 1.25rem;
+  margin: 0;
+}
+
+.profitability-grid dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0 0 0.15rem;
+}
+
+.profitability-grid dd {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.profitability-highlight dd {
+  font-size: 1.05rem;
+}
+
+.profit-positive {
+  color: var(--success, #22c55e);
+}
+
+.profit-negative {
+  color: var(--danger);
+}
+
+.profit-neutral {
+  color: var(--text);
+}
+
+.income-statement-dl {
+  margin: 0;
+  max-width: 28rem;
+}
+
+.income-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.income-line--deduct dd {
+  color: var(--muted);
+}
+
+.income-line--total {
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-bottom: none;
+  padding-top: 0.75rem;
+}
+
+.profitability-total-line {
+  margin-top: 0.75rem;
+}
+
+.expense-attachment-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.expense-attachment-preview {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+}
+
+.expense-attachment-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.expense-attachment-filename {
+  font-size: 0.85rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expense-attachment-thumb-btn {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.expense-attachment-thumb {
+  display: block;
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.expense-attachment-pdf-hint {
+  display: block;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  font-size: 0.9rem;
+  color: var(--accent);
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.expense-attachment-pdf-hint:hover {
+  border-color: var(--accent);
+}
+
+.expense-attachment-viewer {
+  min-height: 200px;
+}
+
+.expense-attachment-viewer-img {
+  display: block;
+  max-width: 100%;
+  max-height: min(70vh, 640px);
+  margin: 0 auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.expense-attachment-viewer-pdf {
+  width: 100%;
+  height: min(70vh, 640px);
+  border: none;
+  border-radius: 8px;
+  background: #fff;
+}
+
 .dgii-error-list {
   margin: 0.5rem 0 0;
   padding-left: 1.25rem;
@@ -1150,6 +1305,14 @@ a.cell-ellipsis:hover {
 
 .dgii-error-list li {
   margin: 0.25rem 0;
+}
+
+.dgii-nav-intro {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  max-width: 36rem;
 }
 
 .page-tab--active {
@@ -3174,12 +3337,31 @@ a.cell-ellipsis:hover {
   font-size: 0.85rem !important;
 }
 
+/* Recharts — legibilidad en tema oscuro */
+.report-chart-panel .recharts-cartesian-axis-tick-value,
+.report-chart-panel .recharts-cartesian-axis-tick text,
+.report-chart-panel .recharts-polar-angle-axis-tick-value {
+  fill: var(--chart-axis) !important;
+}
+
+.report-chart-panel .recharts-cartesian-axis-line,
+.report-chart-panel .recharts-cartesian-grid line {
+  stroke: var(--border);
+}
+
+.report-chart-legend-text,
 .recharts-legend-item-text {
-  color: var(--text-muted) !important;
+  color: var(--chart-axis) !important;
+  fill: var(--chart-axis) !important;
+  font-size: 0.85rem !important;
 }
 
 .recharts-default-legend {
   padding-top: 0.5rem !important;
+}
+
+.recharts-tooltip-wrapper {
+  outline: none;
 }
 
 /* Template Designer — galería de plantillas PDF */

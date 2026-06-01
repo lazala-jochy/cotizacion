@@ -85,7 +85,10 @@ export default function DgiiFormat606() {
     try {
       const result = await api.dgii.export606(period);
       setPreview(result.preview);
-      setSuccess(`Archivo generado: ${result.filename}`);
+      if (result.report?.id) {
+        await api.dgii.downloadReport(result.report.id, result.filename);
+      }
+      setSuccess(`Archivo descargado: ${result.filename}`);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -123,9 +126,6 @@ export default function DgiiFormat606() {
     <>
       <section className="panel">
         <h2 className="panel-title">Compras — Formato 606</h2>
-        <p className="muted panel-desc">
-          Registre las compras con NCF de proveedor para el período y genere el archivo TXT.
-        </p>
 
         <DgiiPeriodField year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
 
@@ -140,7 +140,7 @@ export default function DgiiFormat606() {
             type="button"
             className="btn-ghost"
             onClick={handleExport}
-            disabled={exporting || !preview || (preview.errors?.length > 0)}
+            disabled={exporting || loading || !period}
           >
             {exporting ? 'Exportando…' : 'Exportar TXT'}
           </button>

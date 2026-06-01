@@ -44,7 +44,10 @@ export default function DgiiFormat607() {
     try {
       const result = await api.dgii.export607(period);
       setPreview(result.preview);
-      setSuccess(`Archivo generado: ${result.filename}`);
+      if (result.report?.id) {
+        await api.dgii.downloadReport(result.report.id, result.filename);
+      }
+      setSuccess(`Archivo descargado: ${result.filename}`);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -56,10 +59,6 @@ export default function DgiiFormat607() {
     <>
       <section className="panel">
         <h2 className="panel-title">Ventas — Formato 607</h2>
-        <p className="muted panel-desc">
-          Consolida las facturas emitidas del período (excluye anuladas). Valide la vista previa antes de
-          exportar el TXT.
-        </p>
 
         <DgiiPeriodField year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
 
@@ -71,8 +70,7 @@ export default function DgiiFormat607() {
             type="button"
             className="btn-ghost"
             onClick={handleExport}
-            disabled={exporting || !preview || (preview.errors?.length > 0)}
-            title={preview?.errors?.length ? 'Corrija los errores antes de exportar' : ''}
+            disabled={exporting || loading || !period}
           >
             {exporting ? 'Exportando…' : 'Exportar TXT'}
           </button>

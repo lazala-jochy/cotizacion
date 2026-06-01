@@ -104,6 +104,69 @@ export const api = {
     sendEmail: (id, body) =>
       request(`/api/invoices/${id}/send-email`, { method: 'POST', body: JSON.stringify(body) }),
   },
+  expenses: {
+    meta: () => request('/api/expenses/meta'),
+    dashboard: () => request('/api/expenses/dashboard'),
+    categories: () => request('/api/expenses/categories'),
+    createCategory: (body) =>
+      request('/api/expenses/categories', { method: 'POST', body: JSON.stringify(body) }),
+    updateCategory: (id, body) =>
+      request(`/api/expenses/categories/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    deleteCategory: (id) => request(`/api/expenses/categories/${id}`, { method: 'DELETE' }),
+    list: (params = {}) => {
+      const q = new URLSearchParams();
+      Object.entries(params).forEach(([k, v]) => {
+        if (v != null && v !== '') q.set(k, v);
+      });
+      const qs = q.toString();
+      return request(`/api/expenses${qs ? `?${qs}` : ''}`);
+    },
+    get: (id) => request(`/api/expenses/${id}`),
+    create: (body) => request('/api/expenses', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id, body) =>
+      request(`/api/expenses/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    remove: (id) => request(`/api/expenses/${id}`, { method: 'DELETE' }),
+    reportSummary: (params = {}) => {
+      const q = new URLSearchParams();
+      Object.entries(params).forEach(([k, v]) => {
+        if (v != null && v !== '') q.set(k, v);
+      });
+      return request(`/api/expenses/reports/summary?${q}`);
+    },
+    incomeStatement: (params) => {
+      const q = new URLSearchParams(params);
+      return request(`/api/expenses/reports/income-statement?${q}`);
+    },
+    exportReport: async (params = {}) => {
+      const q = new URLSearchParams();
+      Object.entries(params).forEach(([k, v]) => {
+        if (v != null && v !== '') q.set(k, v);
+      });
+      const format = params.format || 'csv';
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/api/expenses/reports/export?${q}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Error al exportar');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `gastos-${Date.now()}.${format === 'pdf' ? 'html' : 'csv'}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    projects: () => request('/api/expenses/projects'),
+    createProject: (body) =>
+      request('/api/expenses/projects', { method: 'POST', body: JSON.stringify(body) }),
+  },
+  finance: {
+    quoteProfitability: (quoteId) => request(`/api/finance/quotes/${quoteId}/profitability`),
+    invoiceProfitability: (invoiceId) => request(`/api/finance/invoices/${invoiceId}/profitability`),
+  },
   dgii: {
     catalogs: () => request('/api/dgii/catalogs'),
     listReports: (params = {}) => {

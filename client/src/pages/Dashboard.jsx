@@ -1,10 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { api } from '../api';
+import { formatMoney } from '../utils/formatMoney';
+import ReportTooltip from '../components/reports/ReportTooltip';
+import { CHART_AXIS_TICK, CHART_COLORS } from '../utils/reportStats';
 
 export default function Dashboard() {
   const [emisor, setEmisor] = useState(null);
   const [stats, setStats] = useState({ quotes: 0 });
+  const [finance, setFinance] = useState(null);
   const emisorConfigured = emisor?.nombre?.trim();
 
   useEffect(() => {
@@ -13,7 +26,18 @@ export default function Dashboard() {
       .list()
       .then((quotes) => setStats({ quotes: quotes.length }))
       .catch(console.error);
+    api.expenses
+      .dashboard()
+      .then(setFinance)
+      .catch(() => setFinance(null));
   }, []);
+
+  const chartData = finance
+    ? [
+        { name: 'Ingresos', value: finance.expensesVsRevenue?.revenue || 0 },
+        { name: 'Gastos', value: finance.expensesVsRevenue?.expenses || 0 },
+      ]
+    : [];
 
   return (
     <div className="page">
@@ -32,7 +56,76 @@ export default function Dashboard() {
           <span className="stat-value">{stats.quotes}</span>
           <span className="stat-label">Cotizaciones</span>
         </div>
+        {finance && (
+          <>
+            <div className="stat-card">
+              <span className="stat-value">{formatMoney(finance.expensesMonth)}</span>
+              <span className="stat-label">Gastos del mes</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-value">{formatMoney(finance.expensesYear)}</span>
+              <span className="stat-label">Gastos del año</span>
+            </div>
+            <div className="stat-card">
+              <span
+                className={`stat-value ${finance.netProfitMonth >= 0 ? 'profit-positive' : 'profit-negative'}`}
+              >
+                {formatMoney(finance.netProfitMonth)}
+              </span>
+              <span className="stat-label">Utilidad operativa (mes)</span>
+            </div>
+          </>
+        )}
       </div>
+
+      {finance?.topCategories?.length > 0 && (
+        <section className="panel report-chart-panel">
+          <h2 className="panel-title">Top categorías de gasto (mes)</h2>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart
+              data={finance.topCategories.map((c) => ({
+                name: c.name,
+                total: c.total,
+              }))}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
+              <XAxis
+                dataKey="name"
+                tick={CHART_AXIS_TICK}
+                axisLine={false}
+                tickLine={false}
+                interval={0}
+                angle={-18}
+                textAnchor="end"
+                height={56}
+              />
+              <YAxis
+                tick={CHART_AXIS_TICK}
+                axisLine={false}
+                tickLine={false}
+                width={52}
+              />
+              <Tooltip content={<ReportTooltip formatter={formatMoney} />} />
+              <Bar dataKey="total" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </section>
+      )}
+
+      {chartData.some((d) => d.value > 0) && (
+        <section className="panel report-chart-panel">
+          <h2 className="panel-title">Ingresos vs gastos (mes)</h2>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
+              <XAxis dataKey="name" tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} />
+              <YAxis tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} width={52} />
+              <Tooltip content={<ReportTooltip formatter={formatMoney} />} />
+              <Bar dataKey="value" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </section>
+      )}
 
       <div className="cards-row">
         <Link to="/cotizaciones/nueva" className="action-card">
@@ -42,6 +135,14 @@ export default function Dashboard() {
         <Link to="/cotizaciones" className="action-card">
           <h3>Ver cotizaciones</h3>
           <p>Consulta y administra todas tus cotizaciones.</p>
+        </Link>
+        <Link to="/finanzas/gastos" className="action-card">
+          <h3>Gastos</h3>
+          <p>Registra y vincula gastos a cotizaciones y facturas.</p>
+        </Link>
+        <Link to="/finanzas/resultados" className="action-card">
+          <h3>Estado de resultados</h3>
+          <p>Ingresos, costos y utilidad operativa.</p>
         </Link>
         <Link to="/plantillas" className="action-card">
           <h3>Diseñador de plantillas</h3>

@@ -97,7 +97,13 @@ router.post('/from-quote/:quoteId', (req, res) => {
 router.get('/:id', (req, res) => {
   const invoice = invoiceRepo.getById(Number(req.params.id), req.user.id);
   if (!invoice) return res.status(404).json({ error: 'Factura no encontrada' });
-  res.json(invoice);
+  const expenseService = require('../expenses/expenseService');
+  const prof = expenseService.getInvoiceProfitability(invoice.id, req.user.id);
+  res.json({
+    ...invoice,
+    expenses: prof?.expenses || [],
+    profitability: prof?.profitability || null,
+  });
 });
 
 router.get('/:id/audit', (req, res) => {

@@ -1,7 +1,14 @@
-const db = require('../db');
+/** Carga perezosa para evitar dependencia circular si db.js aún no exportó la instancia. */
+function getDb() {
+  const db = require('../db');
+  if (typeof db.prepare !== 'function') {
+    throw new Error('Base de datos no inicializada.');
+  }
+  return db;
+}
 
 function insertReport(userId, reportType, period, filePath, recordCount) {
-  const result = db
+  const result = getDb()
     .prepare(
       `INSERT INTO dgii_reports (user_id, report_type, period, file_path, record_count, updated_at)
        VALUES (?, ?, ?, ?, ?, datetime('now'))`
@@ -11,7 +18,7 @@ function insertReport(userId, reportType, period, filePath, recordCount) {
 }
 
 function getReportById(id, userId) {
-  return db
+  return getDb()
     .prepare('SELECT * FROM dgii_reports WHERE id = ? AND user_id = ?')
     .get(id, userId);
 }
@@ -24,11 +31,11 @@ function listReports(userId, filters = {}) {
     params.push(filters.report_type);
   }
   sql += ' ORDER BY generated_at DESC LIMIT 100';
-  return db.prepare(sql).all(...params);
+  return getDb().prepare(sql).all(...params);
 }
 
 function upsertCancelledInvoice(userId, invoiceId, cancelReason, cancelledAt) {
-  db.prepare(
+  getDb().prepare(
     `INSERT INTO cancelled_invoices (user_id, invoice_id, cancel_reason, cancelled_at, updated_at)
      VALUES (?, ?, ?, ?, datetime('now'))
      ON CONFLICT(invoice_id) DO UPDATE SET
@@ -39,17 +46,17 @@ function upsertCancelledInvoice(userId, invoiceId, cancelReason, cancelledAt) {
 }
 
 function listSuppliers(userId) {
-  return db
+  return getDb()
     .prepare('SELECT * FROM dgii_suppliers WHERE user_id = ? ORDER BY nombre')
     .all(userId);
 }
 
 function getSupplier(id, userId) {
-  return db.prepare('SELECT * FROM dgii_suppliers WHERE id = ? AND user_id = ?').get(id, userId);
+  return getDb().prepare('SELECT * FROM dgii_suppliers WHERE id = ? AND user_id = ?').get(id, userId);
 }
 
 function createSupplier(userId, data) {
-  const result = db
+  const result = getDb()
     .prepare(
       `INSERT INTO dgii_suppliers (user_id, nombre, rnc, cedula, tipo_identificacion, email, telefono, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`
@@ -69,7 +76,7 @@ function createSupplier(userId, data) {
 function listPurchases(userId, period) {
   const { periodDateRange } = require('./utils/validatePeriod');
   const { start, end } = periodDateRange(period);
-  return db
+  return getDb()
     .prepare(
       `SELECT p.*, s.nombre AS supplier_nombre
        FROM dgii_purchases p
@@ -81,11 +88,11 @@ function listPurchases(userId, period) {
 }
 
 function getPurchase(id, userId) {
-  return db.prepare('SELECT * FROM dgii_purchases WHERE id = ? AND user_id = ?').get(id, userId);
+  return getDb().prepare('SELECT * FROM dgii_purchases WHERE id = ? AND user_id = ?').get(id, userId);
 }
 
 function createPurchase(userId, data) {
-  const result = db
+  const result = getDb()
     .prepare(
       `INSERT INTO dgii_purchases (
         user_id, supplier_id, ncf, ncf_modificado, tipo_bienes_servicios, tipo_identificacion,
@@ -115,7 +122,7 @@ function createPurchase(userId, data) {
 }
 
 function removePurchase(id, userId) {
-  const r = db.prepare('DELETE FROM dgii_purchases WHERE id = ? AND user_id = ?').run(id, userId);
+  const r = getDb().prepare('DELETE FROM dgii_purchases WHERE id = ? AND user_id = ?').run(id, userId);
   return r.changes > 0;
 }
 

@@ -7,6 +7,8 @@ import InvoiceDocument from '../components/InvoiceDocument';
 import InvoiceSendEmailModal from '../components/InvoiceSendEmailModal';
 import InvoiceAnnulModal from '../components/InvoiceAnnulModal';
 import ConfirmModal from '../components/ConfirmModal';
+import InvoiceExpensesSection from '../components/finance/InvoiceExpensesSection';
+import ProfitabilityPanel from '../components/finance/ProfitabilityPanel';
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(n || 0);
@@ -224,6 +226,13 @@ export default function InvoiceView() {
           )}
         </dl>
       </section>
+
+      <ProfitabilityPanel profitability={invoice.profitability} title="Rentabilidad de la factura" />
+
+      <InvoiceExpensesSection
+        invoiceId={id}
+        onChanged={() => api.invoices.get(id).then(setInvoice)}
+      />
 
       <InvoiceDocument invoice={invoice} />
 

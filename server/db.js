@@ -169,13 +169,8 @@ migrateInvoicingSchema(db);
 const { migrateDgiiSchema } = require('./dgii/migrateDgiiSchema');
 migrateDgiiSchema(db);
 
-try {
-  const { backfillCancelledInvoices } = require('./dgii/dgiiService');
-  const dgiiUsers = db.prepare('SELECT id FROM users').all();
-  for (const u of dgiiUsers) backfillCancelledInvoices(u.id);
-} catch (err) {
-  console.warn('[dgii] backfill cancelled:', err.message);
-}
+const { migrateExpensesSchema } = require('./expenses/migrateExpensesSchema');
+migrateExpensesSchema(db);
 
 const { migrateLegacyEstados } = require('./quoteWorkflow');
 migrateLegacyEstados(db);

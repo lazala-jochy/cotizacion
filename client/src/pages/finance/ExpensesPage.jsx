@@ -1,0 +1,216 @@
+import { useCallback, useEffect, useState } from 'react';
+import { api } from '../../api';
+import { formatMoney } from '../../utils/formatMoney';
+import ExpenseFormModal from '../../components/finance/ExpenseFormModal';
+import ExpenseRowActions from '../../components/finance/ExpenseRowActions';
+import ExpenseAttachmentViewer from '../../components/finance/ExpenseAttachmentViewer';
+import ConfirmModal from '../../components/ConfirmModal';
+import { getAttachmentSource } from '../../utils/expenseAttachment';
+
+export default function ExpensesPage() {
+  const [expenses, setExpenses] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [viewAttachment, setViewAttachment] = useState(null);
+  const [filters, setFilters] = useState({ from: '', to: '', category_id: '' });
+
+  const load = useCallback(() => {
+    setLoading(true);
+    const params = {};
+    if (filters.from) params.from = filters.from;
+    if (filters.to) params.to = filters.to;
+    if (filters.category_id) params.category_id = filters.category_id;
+    api.expenses
+      .list(params)
+      .then(setExpenses)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [filters]);
+
+  useEffect(() => {
+    api.expenses.categories().then(setCategories).catch(() => {});
+    load();
+  }, [load]);
+
+  const total = expenses.reduce((s, e) => s + Number(e.amount), 0);
+
+  const openCreate = () => {
+    setEditTarget(null);
+    setModalOpen(true);
+  };
+
+  const openEdit = async (expense) => {
+    try {
+      const full = await api.expenses.get(expense.id);
+      setEditTarget(full);
+      setModalOpen(true);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const openViewAttachment = async (expense) => {
+    try {
+      const full = await api.expenses.get(expense.id);
+      const src = getAttachmentSource(full);
+      if (src) setViewAttachment(src);
+      else setError('Este gasto no tiene adjunto.');
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteBusy(true);
+    try {
+      await api.expenses.remove(deleteTarget.id);
+      setDeleteTarget(null);
+      load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <section className="panel">
+        <div className="panel-header-row">
+          <h2 className="panel-title">Gastos</h2>
+          <button type="button" className="btn-primary btn-sm" onClick={openCreate}>
+            + Nuevo gasto
+          </button>
+        </div>
+
+        <div className="quotes-filters-bar">
+          <label className="quotes-filter-field">
+            <span className="quotes-filter-label">Desde</span>
+            <input
+              type="date"
+              className="quotes-filter-input"
+              value={filters.from}
+              onChange={(e) => setFilters({ ...filters, from: e.target.value })}
+            />
+          </label>
+          <label className="quotes-filter-field">
+            <span className="quotes-filter-label">Hasta</span>
+            <input
+              type="date"
+              className="quotes-filter-input"
+              value={filters.to}
+              onChange={(e) => setFilters({ ...filters, to: e.target.value })}
+            />
+          </label>
+          <label className="quotes-filter-field">
+            <span className="quotes-filter-label">Categoría</span>
+            <select
+              className="quotes-filter-select"
+              value={filters.category_id}
+              onChange={(e) => setFilters({ ...filters, category_id: e.target.value })}
+            >
+              <option value="">Todas</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <p className="muted">
+          Total filtrado: <strong>{formatMoney(total)}</strong> · {expenses.length} registros
+        </p>
+      </section>
+
+      {error && <div className="alert alert-error">{error}</div>}
+      {loading && <p className="muted">Cargando…</p>}
+
+      {!loading && (
+        <section className="panel quotes-panel">
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Categoría</th>
+                  <th>Descripción</th>
+                  <th>Cotización</th>
+                  <th>Factura</th>
+                  <th className="num">Monto</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {expenses.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="muted">
+                      No hay gastos con estos filtros.
+                    </td>
+                  </tr>
+                )}
+                {expenses.map((e) => (
+                  <tr key={e.id}>
+                    <td>{e.expense_date}</td>
+                    <td>{e.category_name}</td>
+                    <td>{e.description}</td>
+                    <td>{e.quote_numero || '—'}</td>
+                    <td>{e.invoice_fiscal_number || '—'}</td>
+                    <td className="num">{formatMoney(e.amount)}</td>
+                    <td>
+                      <ExpenseRowActions
+                        hasAttachment={Boolean(e.has_attachment)}
+                        onViewAttachment={() => openViewAttachment(e)}
+                        onEdit={() => openEdit(e)}
+                        onDelete={() => setDeleteTarget(e)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      <ExpenseFormModal
+        open={modalOpen}
+        expense={editTarget}
+        onClose={() => setModalOpen(false)}
+        onSaved={() => {
+          setModalOpen(false);
+          setEditTarget(null);
+          load();
+        }}
+      />
+
+      <ExpenseAttachmentViewer
+        open={Boolean(viewAttachment)}
+        onClose={() => setViewAttachment(null)}
+        attachment={viewAttachment}
+      />
+
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        onClose={() => !deleteBusy && setDeleteTarget(null)}
+        title="Eliminar gasto"
+        subtitle={deleteTarget?.description}
+        confirmLabel={deleteBusy ? 'Eliminando…' : 'Eliminar'}
+        onConfirm={handleConfirmDelete}
+        busy={deleteBusy}
+        confirmVariant="danger"
+      >
+        <p className="app-modal-message">
+          Se eliminará el gasto <strong>{deleteTarget?.description}</strong> de forma permanente.
+        </p>
+      </ConfirmModal>
+    </>
+  );
+}

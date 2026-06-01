@@ -111,8 +111,8 @@ function insertInvoiceWithItems(invoiceRow, items) {
   );
 
   const insertItem = db.prepare(
-    `INSERT INTO invoice_items (invoice_id, descripcion, cantidad, precio_unitario, total, orden)
-     VALUES (?, ?, ?, ?, ?, ?)`
+    `INSERT INTO invoice_items (invoice_id, descripcion, cantidad, precio_unitario, costo_unitario, total, orden)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
   );
 
   const run = db.transaction(() => {
@@ -165,11 +165,13 @@ function insertInvoiceWithItems(invoiceRow, items) {
       const qty = Number(item.cantidad) || 0;
       const unit = Number(item.precio_unitario) || 0;
       const lineTotal = item.total != null ? Number(item.total) : qty * unit;
+      const cost = Math.max(0, Number(item.costo_unitario) || 0);
       insertItem.run(
         invoiceId,
         item.descripcion,
         qty,
         unit,
+        cost,
         lineTotal,
         item.orden ?? idx
       );
@@ -267,7 +269,8 @@ function updateInvoiceWithItems(id, userId, invoicePatch, items) {
       const qty = Number(item.cantidad) || 0;
       const unit = Number(item.precio_unitario) || 0;
       const lineTotal = item.total != null ? Number(item.total) : qty * unit;
-      insertItem.run(id, item.descripcion, qty, unit, lineTotal, item.orden ?? idx);
+      const cost = Math.max(0, Number(item.costo_unitario) || 0);
+      insertItem.run(id, item.descripcion, qty, unit, cost, lineTotal, item.orden ?? idx);
     });
   });
 

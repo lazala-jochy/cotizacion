@@ -26,14 +26,21 @@ function getEmitterRnc(userId) {
   return row?.rnc?.trim() || '';
 }
 
-function assertNoBlockingErrors(errors) {
-  const blocking = errors.filter((e) => e.invoiceId || e.purchaseId || e.error);
-  if (blocking.length) {
-    const msg = blocking
+function assertNoBlockingErrors(errors, recordCount = 0) {
+  const global = (errors || []).filter((e) => !e.invoiceId && !e.purchaseId);
+  if (global.length) {
+    const msg = global
       .slice(0, 5)
       .map((e) => e.error)
       .join(' ');
     throw new DgiiError(msg || 'Hay errores de validación.', 'VALIDATION');
+  }
+  if (recordCount === 0 && (errors || []).length > 0) {
+    const msg = errors
+      .slice(0, 5)
+      .map((e) => e.error)
+      .join(' ');
+    throw new DgiiError(msg || 'No hay registros válidos para exportar.', 'VALIDATION');
   }
 }
 
@@ -49,7 +56,7 @@ function preview607(userId, period) {
 
 function export607(userId, period) {
   const preview = preview607(userId, period);
-  assertNoBlockingErrors(preview.errors);
+  assertNoBlockingErrors(preview.errors, preview.recordCount);
   const txt = build607.build607Txt(preview);
   const filePath = writeTxtFile(userId, '607', preview.period, txt);
   const report = dgiiRepo.insertReport(
@@ -74,7 +81,7 @@ function preview608(userId, period) {
 
 function export608(userId, period) {
   const preview = preview608(userId, period);
-  assertNoBlockingErrors(preview.errors);
+  assertNoBlockingErrors(preview.errors, preview.recordCount);
   const txt = build608.build608Txt(preview);
   const filePath = writeTxtFile(userId, '608', preview.period, txt);
   const report = dgiiRepo.insertReport(
@@ -99,7 +106,7 @@ function preview606(userId, period) {
 
 function export606(userId, period) {
   const preview = preview606(userId, period);
-  assertNoBlockingErrors(preview.errors);
+  assertNoBlockingErrors(preview.errors, preview.recordCount);
   const txt = build606.build606Txt(preview);
   const filePath = writeTxtFile(userId, '606', preview.period, txt);
   const report = dgiiRepo.insertReport(

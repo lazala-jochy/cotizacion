@@ -1,0 +1,348 @@
+import { useEffect, useRef, useState } from 'react';
+import { api } from '../../api';
+import AppModal from '../AppModal';
+import ExpenseAttachmentField from './ExpenseAttachmentField';
+import { getAttachmentSource } from '../../utils/expenseAttachment';
+
+const EMPTY_DEFAULTS = {};
+
+const emptyForm = {
+  expense_date: new Date().toISOString().slice(0, 10),
+  category_id: '',
+  description: '',
+  amount: '',
+  payment_method: 'Efectivo',
+  reference_number: '',
+  notes: '',
+  quote_id: null,
+  invoice_id: null,
+  client_id: null,
+  project_id: null,
+};
+
+function quoteOptionLabel(q) {
+  const client = q.client_nombre?.trim() || 'Sin cliente';
+  return `${q.numero} — ${client}`;
+}
+
+function invoiceOptionLabel(inv) {
+  const client = inv.client_nombre?.trim() || 'Sin cliente';
+  return `${inv.fiscal_number || inv.numero || `#${inv.id}`} — ${client}`;
+}
+
+export default function ExpenseFormModal({
+  open,
+  onClose,
+  onSaved,
+  expense,
+  defaults = EMPTY_DEFAULTS,
+  lockQuote = false,
+  lockInvoice = false,
+}) {
+  const [form, setForm] = useState(emptyForm);
+  const [categories, setCategories] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [quotes, setQuotes] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [attachment, setAttachment] = useState(null);
+  const [existingAttachment, setExistingAttachment] = useState(null);
+  const [clearAttachment, setClearAttachment] = useState(false);
+  const defaultsRef = useRef(defaults);
+  defaultsRef.current = defaults;
+
+  useEffect(() => {
+    if (!open) return;
+    Promise.all([
+      api.expenses.categories(),
+      api.expenses.meta(),
+      api.expenses.projects(),
+      api.quotes.list(),
+      api.invoices.list(),
+    ])
+      .then(([cats, meta, projs, quoteList, invoiceList]) => {
+        setCategories(cats);
+        setProjects(projs);
+        setPaymentMethods(meta.paymentMethods || []);
+        setQuotes(
+          [...quoteList].sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')))
+        );
+        setInvoices(
+          [...invoiceList].sort((a, b) =>
+            String(b.fecha_emision || '').localeCompare(String(a.fecha_emision || ''))
+          )
+        );
+      })
+      .catch(() => {});
+  }, [open]);
+
+  // Inicializar el formulario solo al abrir el modal (no en cada tecla).
+  useEffect(() => {
+    if (!open) return;
+    const d = defaultsRef.current;
+    if (expense) {
+      setForm({
+        expense_date: expense.expense_date,
+        category_id: String(expense.category_id),
+        description: expense.description,
+        amount: String(expense.amount),
+        payment_method: expense.payment_method || 'Efectivo',
+        reference_number: expense.reference_number || '',
+        notes: expense.notes || '',
+        quote_id: expense.quote_id,
+        invoice_id: expense.invoice_id,
+        client_id: expense.client_id,
+        project_id: expense.project_id,
+      });
+    } else {
+      setForm({
+        ...emptyForm,
+        expense_date: new Date().toISOString().slice(0, 10),
+        quote_id: d.quote_id ?? null,
+        invoice_id: d.invoice_id ?? null,
+        client_id: d.client_id ?? null,
+        project_id: d.project_id ?? null,
+        category_id: '',
+      });
+    }
+    setAttachment(null);
+    setClearAttachment(false);
+    if (expense && getAttachmentSource(expense)) {
+      setExistingAttachment({
+        attachment_name: expense.attachment_name,
+        attachment_mime: expense.attachment_mime,
+        attachment_data: expense.attachment_data,
+      });
+    } else {
+      setExistingAttachment(null);
+    }
+    setError('');
+  }, [open, expense?.id]);
+
+  const handleQuoteChange = (e) => {
+    const quoteId = e.target.value ? Number(e.target.value) : null;
+    const quote = quotes.find((q) => q.id === quoteId);
+    setForm((prev) => ({
+      ...prev,
+      quote_id: quoteId,
+      client_id: quote?.client_id ?? prev.client_id,
+    }));
+  };
+
+  const handleInvoiceChange = (e) => {
+    const invoiceId = e.target.value ? Number(e.target.value) : null;
+    const inv = invoiceId ? invoices.find((i) => i.id === invoiceId) : null;
+    setForm((prev) => ({
+      ...prev,
+      invoice_id: invoiceId,
+      client_id: inv?.client_id ?? prev.client_id,
+      ...(inv?.quote_id != null ? { quote_id: inv.quote_id } : {}),
+    }));
+  };
+
+  const handleFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowed = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!allowed.includes(file.type)) {
+      setError('Use PDF, JPG o PNG.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Archivo demasiado grande (máx. 2 MB).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAttachment({
+        attachment_name: file.name,
+        attachment_mime: file.type,
+        attachment_data: reader.result,
+      });
+      setClearAttachment(false);
+      setError('');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      const body = {
+        ...form,
+        category_id: Number(form.category_id),
+        amount: Number(form.amount),
+        quote_id: form.quote_id || null,
+        invoice_id: form.invoice_id || null,
+        client_id: form.client_id || null,
+        project_id: form.project_id || null,
+        ...(attachment || {}),
+        clear_attachment: clearAttachment,
+      };
+      if (expense?.id) {
+        await api.expenses.update(expense.id, body);
+      } else {
+        await api.expenses.create(body);
+      }
+      onSaved?.();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <AppModal
+      open={open}
+      onClose={() => !busy && onClose()}
+      title={expense ? 'Editar gasto' : 'Registrar gasto'}
+      size="md"
+      footer={
+        <div className="app-modal-actions">
+          <button type="button" className="btn-ghost" onClick={onClose} disabled={busy}>
+            Cancelar
+          </button>
+          <button type="submit" form="expense-form" className="btn-primary" disabled={busy}>
+            {busy ? 'Guardando…' : 'Guardar'}
+          </button>
+        </div>
+      }
+    >
+      {error && <div className="alert alert-error">{error}</div>}
+      <form id="expense-form" className="form-grid" onSubmit={handleSubmit}>
+        <label>
+          Fecha
+          <input
+            type="date"
+            required
+            value={form.expense_date}
+            onChange={(e) => setForm({ ...form, expense_date: e.target.value })}
+          />
+        </label>
+        <label>
+          Categoría
+          <select
+            required
+            value={form.category_id}
+            onChange={(e) => setForm({ ...form, category_id: e.target.value })}
+          >
+            <option value="">Seleccionar…</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="span-2">
+          Descripción
+          <input
+            required
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+        </label>
+        <label>
+          Monto (RD$)
+          <input
+            type="number"
+            min="0.01"
+            step="0.01"
+            required
+            value={form.amount}
+            onChange={(e) => setForm({ ...form, amount: e.target.value })}
+          />
+        </label>
+        <label>
+          Método de pago
+          <select
+            value={form.payment_method}
+            onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
+          >
+            {paymentMethods.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Cotización
+          <select
+            value={form.quote_id || ''}
+            onChange={handleQuoteChange}
+            disabled={lockQuote}
+          >
+            <option value="">Ninguna</option>
+            {quotes.map((q) => (
+              <option key={q.id} value={q.id}>
+                {quoteOptionLabel(q)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Factura
+          <select
+            value={form.invoice_id || ''}
+            onChange={handleInvoiceChange}
+            disabled={lockInvoice}
+          >
+            <option value="">Ninguna</option>
+            {invoices.map((inv) => (
+              <option key={inv.id} value={inv.id}>
+                {invoiceOptionLabel(inv)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Proyecto
+          <select
+            value={form.project_id || ''}
+            onChange={(e) =>
+              setForm({ ...form, project_id: e.target.value ? Number(e.target.value) : null })
+            }
+          >
+            <option value="">Ninguno</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Referencia
+          <input
+            value={form.reference_number}
+            onChange={(e) => setForm({ ...form, reference_number: e.target.value })}
+          />
+        </label>
+        <ExpenseAttachmentField
+          attachment={attachment}
+          existing={clearAttachment ? null : existingAttachment}
+          onFileChange={handleFile}
+          onClear={() => {
+            setAttachment(null);
+            setExistingAttachment(null);
+            setClearAttachment(true);
+          }}
+        />
+        <label className="span-2">
+          Notas
+          <textarea
+            rows={2}
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          />
+        </label>
+      </form>
+    </AppModal>
+  );
+}

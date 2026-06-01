@@ -4,6 +4,8 @@ const path = require('path');
 const { PORT } = require('./config');
 
 require('./db');
+const { runDgiiStartupTasks } = require('./dgii/startup');
+runDgiiStartupTasks();
 
 const authRoutes = require('./routes/auth');
 const clientsRoutes = require('./routes/clients');
@@ -11,6 +13,8 @@ const quotesRoutes = require('./routes/quotes');
 const invoicesRoutes = require('./routes/invoices');
 const fiscalRoutes = require('./routes/fiscal');
 const dgiiRoutes = require('./routes/dgii');
+const expensesRoutes = require('./routes/expenses');
+const financeRoutes = require('./routes/finance');
 const emisorRoutes = require('./routes/emisor');
 const templatesRoutes = require('./routes/templates');
 const publicRoutes = require('./routes/public');
@@ -32,6 +36,8 @@ app.use('/api/quotes', quotesRoutes);
 app.use('/api/invoices', invoicesRoutes);
 app.use('/api/fiscal', fiscalRoutes);
 app.use('/api/dgii', dgiiRoutes);
+app.use('/api/expenses', expensesRoutes);
+app.use('/api/finance', financeRoutes);
 
 const distPath = path.join(__dirname, '..', 'dist');
 app.use(express.static(distPath));

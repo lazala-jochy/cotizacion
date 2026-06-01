@@ -24,6 +24,7 @@ const {
   validateDescuento,
   ITBIS_RATE_DEFAULT_PERCENT,
 } = require('../invoices/invoiceTotals');
+const expenseService = require('../expenses/expenseService');
 
 function itemsSubtotal(items) {
   return items.reduce((s, i) => s + Number(i.cantidad) * Number(i.precio_unitario), 0);
@@ -64,7 +65,13 @@ function getQuoteFull(id, userId) {
   const quote = getQuoteWithItems(id, userId);
   if (!quote) return null;
   const payments = getPayments(id);
-  return enrichQuote(fillQuoteDocumentFields(quote, userId), payments);
+  const full = enrichQuote(fillQuoteDocumentFields(quote, userId), payments);
+  const prof = expenseService.getQuoteProfitability(id, userId);
+  if (prof) {
+    full.expenses = prof.expenses;
+    full.profitability = prof.profitability;
+  }
+  return full;
 }
 
 function recalcQuoteAfterPayments(quoteId, userId) {
@@ -358,6 +365,7 @@ router.post('/', (req, res) => {
     descripcion: String(item.descripcion || '').trim(),
     cantidad: Number(item.cantidad) || 0,
     precio_unitario: Number(item.precio_unitario) || 0,
+    costo_unitario: Math.max(0, Number(item.costo_unitario) || 0),
     orden: idx,
   }));
 
@@ -418,12 +426,20 @@ router.post('/', (req, res) => {
 
     const quoteId = result.lastInsertRowid;
     const insertItem = db.prepare(
-      `INSERT INTO quote_items (quote_id, descripcion, cantidad, precio_unitario, total, orden)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO quote_items (quote_id, descripcion, cantidad, precio_unitario, costo_unitario, total, orden)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
     );
     for (const item of normalizedItems) {
       const lineTotal = item.cantidad * item.precio_unitario;
-      insertItem.run(quoteId, item.descripcion, item.cantidad, item.precio_unitario, lineTotal, item.orden);
+      insertItem.run(
+        quoteId,
+        item.descripcion,
+        item.cantidad,
+        item.precio_unitario,
+        item.costo_unitario,
+        lineTotal,
+        item.orden
+      );
     }
     return quoteId;
   });
@@ -475,6 +491,7 @@ router.put('/:id', (req, res) => {
     descripcion: String(item.descripcion || '').trim(),
     cantidad: Number(item.cantidad) || 0,
     precio_unitario: Number(item.precio_unitario) || 0,
+    costo_unitario: Math.max(0, Number(item.costo_unitario) || 0),
     orden: idx,
   }));
 
@@ -525,8 +542,8 @@ router.put('/:id', (req, res) => {
     );
     db.prepare('DELETE FROM quote_items WHERE quote_id = ?').run(req.params.id);
     const insertItem = db.prepare(
-      `INSERT INTO quote_items (quote_id, descripcion, cantidad, precio_unitario, total, orden)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO quote_items (quote_id, descripcion, cantidad, precio_unitario, costo_unitario, total, orden)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
     );
     for (const item of normalizedItems) {
       const lineTotal = item.cantidad * item.precio_unitario;
@@ -535,6 +552,7 @@ router.put('/:id', (req, res) => {
         item.descripcion,
         item.cantidad,
         item.precio_unitario,
+        item.costo_unitario,
         lineTotal,
         item.orden
       );

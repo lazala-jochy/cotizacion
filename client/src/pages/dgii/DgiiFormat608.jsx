@@ -46,7 +46,10 @@ export default function DgiiFormat608() {
     try {
       const result = await api.dgii.export608(period);
       setPreview(result.preview);
-      setSuccess(`Archivo generado: ${result.filename}`);
+      if (result.report?.id) {
+        await api.dgii.downloadReport(result.report.id, result.filename);
+      }
+      setSuccess(`Archivo descargado: ${result.filename}`);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -58,10 +61,6 @@ export default function DgiiFormat608() {
     <>
       <section className="panel">
         <h2 className="panel-title">Comprobantes anulados — Formato 608</h2>
-        <p className="muted panel-desc">
-          Incluye facturas marcadas como anuladas en el período. Al anular una factura, seleccione el motivo
-          DGII (códigos 01–10).
-        </p>
 
         <DgiiPeriodField year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
 
@@ -73,7 +72,7 @@ export default function DgiiFormat608() {
             type="button"
             className="btn-ghost"
             onClick={handleExport}
-            disabled={exporting || !preview || (preview.errors?.length > 0)}
+            disabled={exporting || loading || !period}
           >
             {exporting ? 'Exportando…' : 'Exportar TXT'}
           </button>

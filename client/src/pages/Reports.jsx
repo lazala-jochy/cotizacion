@@ -18,6 +18,7 @@ import { api } from '../api';
 import ReportTooltip from '../components/reports/ReportTooltip';
 import {
   CHART_COLORS,
+  CHART_AXIS_TICK,
   computeKpis,
   estadoColor,
   filterQuotesByMonths,
@@ -177,13 +178,13 @@ export default function Reports() {
                         <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
                         <XAxis
                           dataKey="label"
-                          tick={{ fill: '#8b9cb3', fontSize: 12 }}
+                          tick={CHART_AXIS_TICK}
                           axisLine={false}
                           tickLine={false}
                         />
                         <YAxis
                           tickFormatter={formatMoneyShort}
-                          tick={{ fill: '#8b9cb3', fontSize: 12 }}
+                          tick={CHART_AXIS_TICK}
                           axisLine={false}
                           tickLine={false}
                           width={48}
@@ -273,13 +274,13 @@ export default function Reports() {
                         <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
                         <XAxis
                           dataKey="label"
-                          tick={{ fill: '#8b9cb3', fontSize: 11 }}
+                          tick={CHART_AXIS_TICK}
                           axisLine={false}
                           tickLine={false}
                         />
                         <YAxis
                           allowDecimals={false}
-                          tick={{ fill: '#8b9cb3', fontSize: 12 }}
+                          tick={CHART_AXIS_TICK}
                           axisLine={false}
                           tickLine={false}
                           width={32}
@@ -319,7 +320,7 @@ export default function Reports() {
                         <XAxis
                           type="number"
                           tickFormatter={formatMoneyShort}
-                          tick={{ fill: '#8b9cb3', fontSize: 12 }}
+                          tick={CHART_AXIS_TICK}
                           axisLine={false}
                           tickLine={false}
                         />

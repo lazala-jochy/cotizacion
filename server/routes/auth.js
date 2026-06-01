@@ -58,6 +58,9 @@ router.post('/register', (req, res) => {
 
   templateRepo.ensureDefaultTemplate(userId);
 
+  const { ensureDefaultCategories } = require('../expenses/migrateExpensesSchema');
+  ensureDefaultCategories(db, userId);
+
   const user = { id: userId, nombre: nombre.trim(), email: email.trim().toLowerCase() };
   const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
   res.status(201).json({ user, token });
