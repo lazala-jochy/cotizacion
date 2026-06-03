@@ -139,6 +139,7 @@ export default function QuoteView() {
       <QuoteExpensesSection
         quoteId={id}
         clientId={quote.client_id}
+        clientRnc={quote.client_rnc}
         onChanged={refreshProfitability}
       />
 

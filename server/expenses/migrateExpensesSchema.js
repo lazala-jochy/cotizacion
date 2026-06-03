@@ -91,6 +91,16 @@ function migrateExpensesSchema(db) {
     db.exec('ALTER TABLE invoice_items ADD COLUMN costo_unitario REAL NOT NULL DEFAULT 0');
   }
 
+  const expenseCols = db.prepare('PRAGMA table_info(expenses)').all();
+  if (expenseCols.length) {
+    if (!expenseCols.some((c) => c.name === 'rnc')) {
+      db.exec('ALTER TABLE expenses ADD COLUMN rnc TEXT');
+    }
+    if (!expenseCols.some((c) => c.name === 'ncf')) {
+      db.exec('ALTER TABLE expenses ADD COLUMN ncf TEXT');
+    }
+  }
+
   const users = db.prepare('SELECT id FROM users').all();
   const insertCat = db.prepare(
     `INSERT OR IGNORE INTO expense_categories (user_id, name, updated_at) VALUES (?, ?, datetime('now'))`

@@ -138,8 +138,8 @@ export default function ExpensesPage() {
                   <th>Fecha</th>
                   <th>Categoría</th>
                   <th>Descripción</th>
-                  <th>Cotización</th>
-                  <th>Factura</th>
+                  <th>RNC</th>
+                  <th>NCF</th>
                   <th className="num">Monto</th>
                   <th />
                 </tr>
@@ -157,8 +157,8 @@ export default function ExpensesPage() {
                     <td>{e.expense_date}</td>
                     <td>{e.category_name}</td>
                     <td>{e.description}</td>
-                    <td>{e.quote_numero || '—'}</td>
-                    <td>{e.invoice_fiscal_number || '—'}</td>
+                    <td>{e.rnc || '—'}</td>
+                    <td>{e.ncf || '—'}</td>
                     <td className="num">{formatMoney(e.amount)}</td>
                     <td>
                       <ExpenseRowActions

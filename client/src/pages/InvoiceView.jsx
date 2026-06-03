@@ -231,6 +231,9 @@ export default function InvoiceView() {
 
       <InvoiceExpensesSection
         invoiceId={id}
+        clientId={invoice.client_id}
+        clientRnc={invoice.client_rnc}
+        fiscalNumber={invoice.fiscal_number}
         onChanged={() => api.invoices.get(id).then(setInvoice)}
       />
 

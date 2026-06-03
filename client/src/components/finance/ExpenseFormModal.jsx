@@ -14,36 +14,16 @@ const emptyForm = {
   payment_method: 'Efectivo',
   reference_number: '',
   notes: '',
+  rnc: '',
+  ncf: '',
   quote_id: null,
   invoice_id: null,
   client_id: null,
-  project_id: null,
 };
 
-function quoteOptionLabel(q) {
-  const client = q.client_nombre?.trim() || 'Sin cliente';
-  return `${q.numero} — ${client}`;
-}
-
-function invoiceOptionLabel(inv) {
-  const client = inv.client_nombre?.trim() || 'Sin cliente';
-  return `${inv.fiscal_number || inv.numero || `#${inv.id}`} — ${client}`;
-}
-
-export default function ExpenseFormModal({
-  open,
-  onClose,
-  onSaved,
-  expense,
-  defaults = EMPTY_DEFAULTS,
-  lockQuote = false,
-  lockInvoice = false,
-}) {
+export default function ExpenseFormModal({ open, onClose, onSaved, expense, defaults = EMPTY_DEFAULTS }) {
   const [form, setForm] = useState(emptyForm);
   const [categories, setCategories] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [quotes, setQuotes] = useState([]);
-  const [invoices, setInvoices] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -55,30 +35,14 @@ export default function ExpenseFormModal({
 
   useEffect(() => {
     if (!open) return;
-    Promise.all([
-      api.expenses.categories(),
-      api.expenses.meta(),
-      api.expenses.projects(),
-      api.quotes.list(),
-      api.invoices.list(),
-    ])
-      .then(([cats, meta, projs, quoteList, invoiceList]) => {
+    Promise.all([api.expenses.categories(), api.expenses.meta()])
+      .then(([cats, meta]) => {
         setCategories(cats);
-        setProjects(projs);
         setPaymentMethods(meta.paymentMethods || []);
-        setQuotes(
-          [...quoteList].sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')))
-        );
-        setInvoices(
-          [...invoiceList].sort((a, b) =>
-            String(b.fecha_emision || '').localeCompare(String(a.fecha_emision || ''))
-          )
-        );
       })
       .catch(() => {});
   }, [open]);
 
-  // Inicializar el formulario solo al abrir el modal (no en cada tecla).
   useEffect(() => {
     if (!open) return;
     const d = defaultsRef.current;
@@ -91,19 +55,21 @@ export default function ExpenseFormModal({
         payment_method: expense.payment_method || 'Efectivo',
         reference_number: expense.reference_number || '',
         notes: expense.notes || '',
+        rnc: expense.rnc || '',
+        ncf: expense.ncf || '',
         quote_id: expense.quote_id,
         invoice_id: expense.invoice_id,
         client_id: expense.client_id,
-        project_id: expense.project_id,
       });
     } else {
       setForm({
         ...emptyForm,
         expense_date: new Date().toISOString().slice(0, 10),
+        rnc: d.rnc ?? '',
+        ncf: d.ncf ?? '',
         quote_id: d.quote_id ?? null,
         invoice_id: d.invoice_id ?? null,
         client_id: d.client_id ?? null,
-        project_id: d.project_id ?? null,
         category_id: '',
       });
     }
@@ -120,27 +86,6 @@ export default function ExpenseFormModal({
     }
     setError('');
   }, [open, expense?.id]);
-
-  const handleQuoteChange = (e) => {
-    const quoteId = e.target.value ? Number(e.target.value) : null;
-    const quote = quotes.find((q) => q.id === quoteId);
-    setForm((prev) => ({
-      ...prev,
-      quote_id: quoteId,
-      client_id: quote?.client_id ?? prev.client_id,
-    }));
-  };
-
-  const handleInvoiceChange = (e) => {
-    const invoiceId = e.target.value ? Number(e.target.value) : null;
-    const inv = invoiceId ? invoices.find((i) => i.id === invoiceId) : null;
-    setForm((prev) => ({
-      ...prev,
-      invoice_id: invoiceId,
-      client_id: inv?.client_id ?? prev.client_id,
-      ...(inv?.quote_id != null ? { quote_id: inv.quote_id } : {}),
-    }));
-  };
 
   const handleFile = (e) => {
     const file = e.target.files?.[0];
@@ -176,10 +121,12 @@ export default function ExpenseFormModal({
         ...form,
         category_id: Number(form.category_id),
         amount: Number(form.amount),
+        rnc: form.rnc.trim() || null,
+        ncf: form.ncf.trim() || null,
         quote_id: form.quote_id || null,
         invoice_id: form.invoice_id || null,
         client_id: form.client_id || null,
-        project_id: form.project_id || null,
+        project_id: expense?.project_id ?? null,
         ...(attachment || {}),
         clear_attachment: clearAttachment,
       };
@@ -272,50 +219,22 @@ export default function ExpenseFormModal({
           </select>
         </label>
         <label>
-          Cotización
-          <select
-            value={form.quote_id || ''}
-            onChange={handleQuoteChange}
-            disabled={lockQuote}
-          >
-            <option value="">Ninguna</option>
-            {quotes.map((q) => (
-              <option key={q.id} value={q.id}>
-                {quoteOptionLabel(q)}
-              </option>
-            ))}
-          </select>
+          RNC
+          <input
+            value={form.rnc}
+            onChange={(e) => setForm({ ...form, rnc: e.target.value })}
+            placeholder="Ej. 101234567"
+            autoComplete="off"
+          />
         </label>
         <label>
-          Factura
-          <select
-            value={form.invoice_id || ''}
-            onChange={handleInvoiceChange}
-            disabled={lockInvoice}
-          >
-            <option value="">Ninguna</option>
-            {invoices.map((inv) => (
-              <option key={inv.id} value={inv.id}>
-                {invoiceOptionLabel(inv)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Proyecto
-          <select
-            value={form.project_id || ''}
-            onChange={(e) =>
-              setForm({ ...form, project_id: e.target.value ? Number(e.target.value) : null })
-            }
-          >
-            <option value="">Ninguno</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+          NCF
+          <input
+            value={form.ncf}
+            onChange={(e) => setForm({ ...form, ncf: e.target.value.toUpperCase() })}
+            placeholder="Ej. B0100000126"
+            autoComplete="off"
+          />
         </label>
         <label>
           Referencia

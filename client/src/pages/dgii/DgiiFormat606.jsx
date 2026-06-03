@@ -31,7 +31,8 @@ export default function DgiiFormat606() {
   const defaults = defaultPeriodParts();
   const [year, setYear] = useState(defaults.year);
   const [month, setMonth] = useState(defaults.month);
-  const [purchases, setPurchases] = useState([]);
+  const [entries, setEntries] = useState([]);
+  const [pendingExpenses, setPendingExpenses] = useState(0);
   const [goodsTypes, setGoodsTypes] = useState([]);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -49,19 +50,21 @@ export default function DgiiFormat606() {
     api.dgii.catalogs().then((c) => setGoodsTypes(c.purchaseGoodsTypes || [])).catch(() => {});
   }, []);
 
-  const loadPurchases = useCallback(async () => {
+  const loadEntries = useCallback(async () => {
     if (!period) return;
     try {
-      const list = await api.dgii.listPurchases(period);
-      setPurchases(list);
+      const data = await api.dgii.listPurchases(period);
+      setEntries(data.entries || []);
+      setPendingExpenses(data.pendingExpenses || 0);
     } catch {
-      setPurchases([]);
+      setEntries([]);
+      setPendingExpenses(0);
     }
   }, [period]);
 
   useEffect(() => {
-    loadPurchases();
-  }, [loadPurchases]);
+    loadEntries();
+  }, [loadEntries]);
 
   const loadPreview = async () => {
     setError('');
@@ -104,7 +107,7 @@ export default function DgiiFormat606() {
       await api.dgii.createPurchase(form);
       setModalOpen(false);
       setForm(emptyPurchase);
-      await loadPurchases();
+      await loadEntries();
       setSuccess('Compra registrada.');
     } catch (err) {
       setFormError(err.message);
@@ -116,7 +119,7 @@ export default function DgiiFormat606() {
   const handleDeletePurchase = async (id) => {
     try {
       await api.dgii.deletePurchase(id);
-      await loadPurchases();
+      await loadEntries();
     } catch (err) {
       setError(err.message);
     }
@@ -126,6 +129,10 @@ export default function DgiiFormat606() {
     <>
       <section className="panel">
         <h2 className="panel-title">Compras — Formato 606</h2>
+        <p className="muted panel-desc">
+          Los gastos de Finanzas con RNC y NCF del proveedor se incluyen automáticamente al generar el
+          archivo. Complete esos datos en cada gasto para que aparezcan aquí.
+        </p>
 
         <DgiiPeriodField year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
 
@@ -152,13 +159,18 @@ export default function DgiiFormat606() {
 
       <section className="panel quotes-panel">
         <h3 className="panel-subtitle">Compras del período</h3>
+        {pendingExpenses > 0 && (
+          <p className="muted">
+            {pendingExpenses} gasto(s) en Finanzas sin RNC o NCF — no se incluirán en el 606 hasta
+            completarlos.
+          </p>
+        )}
         <div className="table-wrap">
           <table className="data-table">
             <thead>
               <tr>
-                <th>NCF</th>
-                <th>Proveedor</th>
                 <th>RNC/Cédula</th>
+                <th>NCF</th>
                 <th>Fecha</th>
                 <th className="num">Monto</th>
                 <th className="num">ITBIS</th>
@@ -166,32 +178,35 @@ export default function DgiiFormat606() {
               </tr>
             </thead>
             <tbody>
-              {purchases.length === 0 && (
+              {entries.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="muted">
-                    No hay compras registradas para este período.
+                  <td colSpan={6} className="muted">
+                    No hay compras ni gastos listos para este período (RNC + NCF).
                   </td>
                 </tr>
               )}
-              {purchases.map((p) => (
-                <tr key={p.id}>
+              {entries.map((p) => (
+                <tr key={`${p.source}-${p.id}`}>
+                  <td>{p.supplier_rnc || '—'}</td>
                   <td>
                     <code>{p.ncf}</code>
                   </td>
-                  <td>{p.supplier_nombre || '—'}</td>
-                  <td>{p.supplier_rnc || p.supplier_cedula || '—'}</td>
                   <td>{p.fecha_comprobante}</td>
                   <td className="num">{formatMoney(p.monto_facturado)}</td>
                   <td className="num">{formatMoney(p.itbis_facturado)}</td>
                   <td>
-                    <button
-                      type="button"
-                      className="btn-icon-danger btn-sm"
-                      onClick={() => handleDeletePurchase(p.id)}
-                      title="Eliminar compra"
-                    >
-                      Eliminar
-                    </button>
+                    {p.canDelete ? (
+                      <button
+                        type="button"
+                        className="btn-icon-danger btn-sm"
+                        onClick={() => handleDeletePurchase(p.id)}
+                        title="Eliminar compra"
+                      >
+                        Eliminar
+                      </button>
+                    ) : (
+                      <span className="muted">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -204,6 +219,12 @@ export default function DgiiFormat606() {
         <section className="panel quotes-panel">
           <p className="muted">
             Registros para exportación: <strong>{preview.recordCount}</strong>
+            {preview.expenseCount != null && (
+              <>
+                {' '}
+                ({preview.expenseCount} desde gastos, {preview.purchaseCount} manuales)
+              </>
+            )}
           </p>
           {preview.errors?.length > 0 && (
             <div className="alert alert-error">

@@ -10,10 +10,10 @@ export default function ExpenseListTable({
   onEdit,
   onDelete,
   onViewAttachment,
-  showQuote = false,
-  showInvoice = false,
+  showRnc = false,
+  showNcf = false,
 }) {
-  const colCount = 4 + (showQuote ? 1 : 0) + (showInvoice ? 1 : 0) + 1;
+  const colCount = 4 + (showRnc ? 1 : 0) + (showNcf ? 1 : 0) + 1;
 
   return (
     <div className="table-wrap">
@@ -23,8 +23,8 @@ export default function ExpenseListTable({
             <th>Fecha</th>
             <th>Categoría</th>
             <th>Descripción</th>
-            {showQuote && <th>Cotización</th>}
-            {showInvoice && <th>Factura</th>}
+            {showRnc && <th>RNC</th>}
+            {showNcf && <th>NCF</th>}
             <th className="num">Monto</th>
             <th />
           </tr>
@@ -42,8 +42,8 @@ export default function ExpenseListTable({
               <td>{e.expense_date}</td>
               <td>{e.category_name}</td>
               <td>{e.description}</td>
-              {showQuote && <td>{e.quote_numero || '—'}</td>}
-              {showInvoice && <td>{e.invoice_fiscal_number || '—'}</td>}
+              {showRnc && <td>{e.rnc || '—'}</td>}
+              {showNcf && <td>{e.ncf || '—'}</td>}
               <td className="num">{formatMoney(e.amount)}</td>
               <td>
                 <ExpenseRowActions

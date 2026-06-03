@@ -52,6 +52,30 @@ describe('build608Txt', () => {
   });
 });
 
+describe('build606 expense rows', () => {
+  test('convierte gasto con RNC y NCF a fila 606', () => {
+    const { expenseTo606Row } = require('../server/dgii/builders/build606');
+    const seen = new Set();
+    const result = expenseTo606Row(
+      {
+        id: 1,
+        ncf: 'B0100000099',
+        rnc: '130862346',
+        expense_date: '2025-03-10',
+        amount: 1180,
+        description: 'Materiales',
+        category_name: 'Materiales',
+      },
+      seen
+    );
+    assert.ok(result.row);
+    assert.equal(result.row.ncf, 'B01000000099');
+    assert.equal(result.row.source, 'expense');
+    assert.equal(result.row.montoFacturado, 1000);
+    assert.equal(result.row.itbisFacturado, 180);
+  });
+});
+
 describe('build606Txt', () => {
   test('genera líneas de compras', () => {
     const build606 = require('../server/dgii/builders/build606');

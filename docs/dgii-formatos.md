@@ -63,7 +63,12 @@ Al **anular una factura** en la app se solicita el código DGII; se sincroniza a
 
 **Qué reporta:** Compras de bienes y servicios con NCF de proveedores.
 
-**Fuente en la app:** Registros manuales en `dgii_purchases` (proveedores opcionales en `dgii_suppliers`).
+**Fuente en la app:**
+
+- **Gastos** en Finanzas del período que tengan **RNC** y **NCF** del proveedor (se incluyen automáticamente en la vista previa y el TXT).
+- Compras manuales adicionales en `dgii_purchases` (proveedores opcionales en `dgii_suppliers`).
+
+El monto del gasto se desglosa en base gravable e ITBIS (18 %) para el archivo. Los gastos sin RNC o NCF no entran al 606 hasta completarlos en Finanzas.
 
 **Campos principales:**
 

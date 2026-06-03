@@ -7,7 +7,7 @@ import ExpenseAttachmentViewer from './ExpenseAttachmentViewer';
 import ConfirmModal from '../ConfirmModal';
 import { useExpenseListActions } from '../../hooks/useExpenseListActions';
 
-export default function QuoteExpensesSection({ quoteId, clientId, onChanged }) {
+export default function QuoteExpensesSection({ quoteId, clientId, clientRnc, onChanged }) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,6 +49,8 @@ export default function QuoteExpensesSection({ quoteId, clientId, onChanged }) {
           <ExpenseListTable
             expenses={expenses}
             emptyMessage="Sin gastos vinculados a esta cotización."
+            showRnc
+            showNcf
             onEdit={actions.openEdit}
             onDelete={actions.setDeleteTarget}
             onViewAttachment={actions.openViewAttachment}
@@ -64,8 +66,11 @@ export default function QuoteExpensesSection({ quoteId, clientId, onChanged }) {
         expense={actions.editTarget}
         onClose={actions.closeModal}
         onSaved={actions.handleSaved}
-        defaults={{ quote_id: Number(quoteId), client_id: clientId || null }}
-        lockQuote
+        defaults={{
+          quote_id: Number(quoteId),
+          client_id: clientId || null,
+          rnc: clientRnc || '',
+        }}
       />
 
       <ExpenseAttachmentViewer

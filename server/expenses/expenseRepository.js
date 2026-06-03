@@ -79,6 +79,7 @@ function buildExpenseFilters(userId, filters) {
       CASE WHEN e.attachment_data IS NOT NULL AND length(e.attachment_data) > 0 THEN 1 ELSE 0 END AS has_attachment,
       e.created_by, e.created_at, e.updated_at,
       c.name AS category_name,
+      e.rnc, e.ncf,
       q.numero AS quote_numero, i.fiscal_number AS invoice_fiscal_number,
       cl.nombre AS client_nombre, p.name AS project_name
     FROM expenses e
@@ -144,9 +145,9 @@ function insertExpense(userId, data, createdBy) {
     .prepare(
       `INSERT INTO expenses (
         user_id, category_id, quote_id, invoice_id, client_id, project_id,
-        expense_date, description, reference_number, amount, payment_method, notes,
+        rnc, ncf, expense_date, description, reference_number, amount, payment_method, notes,
         attachment_name, attachment_mime, attachment_data, created_by, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
     )
     .run(
       userId,
@@ -155,6 +156,8 @@ function insertExpense(userId, data, createdBy) {
       data.invoice_id ?? null,
       data.client_id ?? null,
       data.project_id ?? null,
+      data.rnc?.trim() || null,
+      data.ncf?.trim() || null,
       data.expense_date,
       data.description.trim(),
       data.reference_number?.trim() || null,
@@ -191,7 +194,7 @@ function updateExpense(id, userId, data) {
   db.prepare(
     `UPDATE expenses SET
       category_id = ?, quote_id = ?, invoice_id = ?, client_id = ?, project_id = ?,
-      expense_date = ?, description = ?, reference_number = ?, amount = ?,
+      rnc = ?, ncf = ?, expense_date = ?, description = ?, reference_number = ?, amount = ?,
       payment_method = ?, notes = ?,
       attachment_name = ?, attachment_mime = ?, attachment_data = ?,
       updated_at = datetime('now')
@@ -202,6 +205,8 @@ function updateExpense(id, userId, data) {
     data.invoice_id ?? null,
     data.client_id ?? null,
     data.project_id ?? null,
+    data.rnc?.trim() || null,
+    data.ncf?.trim() || null,
     data.expense_date,
     data.description.trim(),
     data.reference_number?.trim() || null,

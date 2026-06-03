@@ -157,6 +157,8 @@ router.put('/:id', (req, res) => {
       invoice_id: req.body.invoice_id !== undefined ? req.body.invoice_id : existing.invoice_id,
       client_id: req.body.client_id !== undefined ? req.body.client_id : existing.client_id,
       project_id: req.body.project_id !== undefined ? req.body.project_id : existing.project_id,
+      rnc: req.body.rnc !== undefined ? req.body.rnc : existing.rnc,
+      ncf: req.body.ncf !== undefined ? req.body.ncf : existing.ncf,
       expense_date: req.body.expense_date ?? existing.expense_date,
       description: req.body.description ?? existing.description,
       reference_number: req.body.reference_number ?? existing.reference_number,

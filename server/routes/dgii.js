@@ -111,7 +111,8 @@ router.post('/606/export', (req, res) => {
 router.get('/606/purchases', (req, res) => {
   const p = validatePeriod(req.query.period);
   if (!p.ok) return res.status(400).json({ error: p.error });
-  res.json(dgiiRepo.listPurchases(req.user.id, p.period));
+  const build606 = require('../dgii/builders/build606');
+  res.json(build606.list606PeriodEntries(req.user.id, p.period));
 });
 
 router.post('/606/purchases', (req, res) => {

@@ -7,7 +7,13 @@ import ExpenseAttachmentViewer from './ExpenseAttachmentViewer';
 import ConfirmModal from '../ConfirmModal';
 import { useExpenseListActions } from '../../hooks/useExpenseListActions';
 
-export default function InvoiceExpensesSection({ invoiceId, clientId, onChanged }) {
+export default function InvoiceExpensesSection({
+  invoiceId,
+  clientId,
+  clientRnc,
+  fiscalNumber,
+  onChanged,
+}) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,6 +55,8 @@ export default function InvoiceExpensesSection({ invoiceId, clientId, onChanged 
           <ExpenseListTable
             expenses={expenses}
             emptyMessage="Sin gastos vinculados a esta factura."
+            showRnc
+            showNcf
             onEdit={actions.openEdit}
             onDelete={actions.setDeleteTarget}
             onViewAttachment={actions.openViewAttachment}
@@ -64,8 +72,12 @@ export default function InvoiceExpensesSection({ invoiceId, clientId, onChanged 
         expense={actions.editTarget}
         onClose={actions.closeModal}
         onSaved={actions.handleSaved}
-        defaults={{ invoice_id: Number(invoiceId), client_id: clientId || null }}
-        lockInvoice
+        defaults={{
+          invoice_id: Number(invoiceId),
+          client_id: clientId || null,
+          rnc: clientRnc || '',
+          ncf: fiscalNumber || '',
+        }}
       />
 
       <ExpenseAttachmentViewer
