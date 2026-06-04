@@ -1,23 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../../api';
-import AppModal from '../../components/AppModal';
 import DgiiPeriodField, { buildPeriod, defaultPeriodParts } from '../../components/dgii/DgiiPeriodField';
-
-const emptyPurchase = {
-  ncf: '',
-  supplier_rnc: '',
-  supplier_cedula: '',
-  tipo_identificacion: '1',
-  tipo_bienes_servicios: '02',
-  fecha_comprobante: '',
-  fecha_pago: '',
-  monto_facturado: '',
-  itbis_facturado: '',
-  itbis_retenido: '',
-  isr_retenido: '',
-  forma_pago: '',
-  notas: '',
-};
+import DgiiTxtPreview from '../../components/dgii/DgiiTxtPreview';
+import { formatDgiiPeriodLabel } from '../../utils/dgiiPeriod';
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-DO', {
@@ -27,46 +13,32 @@ function formatMoney(n) {
   }).format(n || 0);
 }
 
+function formatPreviewError(err) {
+  if (err.expenseId) return `Gasto #${err.expenseId}: ${err.error}`;
+  if (err.purchaseId) return `Compra manual #${err.purchaseId}: ${err.error}`;
+  return err.error;
+}
+
 export default function DgiiFormat606() {
   const defaults = defaultPeriodParts();
   const [year, setYear] = useState(defaults.year);
   const [month, setMonth] = useState(defaults.month);
-  const [entries, setEntries] = useState([]);
-  const [pendingExpenses, setPendingExpenses] = useState(0);
-  const [goodsTypes, setGoodsTypes] = useState([]);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState(emptyPurchase);
-  const [formBusy, setFormBusy] = useState(false);
-  const [formError, setFormError] = useState('');
 
   const period = buildPeriod(year, month);
 
   useEffect(() => {
-    api.dgii.catalogs().then((c) => setGoodsTypes(c.purchaseGoodsTypes || [])).catch(() => {});
-  }, []);
-
-  const loadEntries = useCallback(async () => {
-    if (!period) return;
-    try {
-      const data = await api.dgii.listPurchases(period);
-      setEntries(data.entries || []);
-      setPendingExpenses(data.pendingExpenses || 0);
-    } catch {
-      setEntries([]);
-      setPendingExpenses(0);
-    }
+    setPreview(null);
+    setError('');
+    setSuccess('');
   }, [period]);
 
-  useEffect(() => {
-    loadEntries();
-  }, [loadEntries]);
-
   const loadPreview = async () => {
+    if (!period) return;
     setError('');
     setSuccess('');
     setLoading(true);
@@ -99,49 +71,24 @@ export default function DgiiFormat606() {
     }
   };
 
-  const handleSavePurchase = async (e) => {
-    e.preventDefault();
-    setFormError('');
-    setFormBusy(true);
-    try {
-      await api.dgii.createPurchase(form);
-      setModalOpen(false);
-      setForm(emptyPurchase);
-      await loadEntries();
-      setSuccess('Compra registrada.');
-    } catch (err) {
-      setFormError(err.message);
-    } finally {
-      setFormBusy(false);
-    }
-  };
-
-  const handleDeletePurchase = async (id) => {
-    try {
-      await api.dgii.deletePurchase(id);
-      await loadEntries();
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
   return (
     <>
       <section className="panel">
         <h2 className="panel-title">Compras — Formato 606</h2>
         <p className="muted panel-desc">
-          Los gastos de Finanzas con RNC y NCF del proveedor se incluyen automáticamente al generar el
-          archivo. Complete esos datos en cada gasto para que aparezcan aquí.
+          La <strong>vista previa</strong> muestra el archivo <strong>TXT</strong> que se exportará, con los
+          gastos de <strong>Compras</strong> del período que tengan RNC y NCF. Use{' '}
+          <Link to="/compras/gastos">Compras → Gastos</Link> para registrar o completar cada gasto.
         </p>
 
         <DgiiPeriodField year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
 
         <div className="form-actions" style={{ marginTop: '1rem' }}>
-          <button type="button" className="btn-ghost" onClick={() => setModalOpen(true)}>
-            + Registrar compra
-          </button>
+          <Link to="/compras/gastos" className="btn-ghost">
+            + Agregar compra
+          </Link>
           <button type="button" className="btn-primary" onClick={loadPreview} disabled={loading || !period}>
-            {loading ? 'Cargando…' : 'Vista previa'}
+            {loading ? 'Generando TXT…' : 'Vista previa'}
           </button>
           <button
             type="button"
@@ -157,215 +104,76 @@ export default function DgiiFormat606() {
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
-      <section className="panel quotes-panel">
-        <h3 className="panel-subtitle">Compras del período</h3>
-        {pendingExpenses > 0 && (
-          <p className="muted">
-            {pendingExpenses} gasto(s) en Finanzas sin RNC o NCF — no se incluirán en el 606 hasta
-            completarlos.
-          </p>
-        )}
-        <div className="table-wrap">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>RNC/Cédula</th>
-                <th>NCF</th>
-                <th>Fecha</th>
-                <th className="num">Monto</th>
-                <th className="num">ITBIS</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {entries.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="muted">
-                    No hay compras ni gastos listos para este período (RNC + NCF).
-                  </td>
-                </tr>
-              )}
-              {entries.map((p) => (
-                <tr key={`${p.source}-${p.id}`}>
-                  <td>{p.supplier_rnc || '—'}</td>
-                  <td>
-                    <code>{p.ncf}</code>
-                  </td>
-                  <td>{p.fecha_comprobante}</td>
-                  <td className="num">{formatMoney(p.monto_facturado)}</td>
-                  <td className="num">{formatMoney(p.itbis_facturado)}</td>
-                  <td>
-                    {p.canDelete ? (
-                      <button
-                        type="button"
-                        className="btn-icon-danger btn-sm"
-                        onClick={() => handleDeletePurchase(p.id)}
-                        title="Eliminar compra"
-                      >
-                        Eliminar
-                      </button>
-                    ) : (
-                      <span className="muted">—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {preview && (
-        <section className="panel quotes-panel">
-          <p className="muted">
-            Registros para exportación: <strong>{preview.recordCount}</strong>
-            {preview.expenseCount != null && (
-              <>
-                {' '}
-                ({preview.expenseCount} desde gastos, {preview.purchaseCount} manuales)
-              </>
-            )}
-          </p>
-          {preview.errors?.length > 0 && (
-            <div className="alert alert-error">
-              <ul className="dgii-error-list">
-                {preview.errors.map((err, i) => (
-                  <li key={i}>{err.error}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
+      {!preview && !loading && period && (
+        <p className="muted">
+          Seleccione el período y pulse <strong>Vista previa</strong> para ver el contenido del TXT.
+        </p>
       )}
 
-      <AppModal
-        open={modalOpen}
-        onClose={() => !formBusy && setModalOpen(false)}
-        title="Registrar compra"
-        size="md"
-        footer={
-          <div className="app-modal-actions">
-            <button type="button" className="btn-ghost" onClick={() => setModalOpen(false)} disabled={formBusy}>
-              Cancelar
-            </button>
-            <button type="submit" form="dgii-purchase-form" className="btn-primary" disabled={formBusy}>
-              {formBusy ? 'Guardando…' : 'Guardar'}
-            </button>
-          </div>
-        }
-      >
-        {formError && <div className="alert alert-error">{formError}</div>}
-        <form id="dgii-purchase-form" className="form-grid" onSubmit={handleSavePurchase}>
-          <label>
-            NCF proveedor
-            <input
-              required
-              value={form.ncf}
-              onChange={(e) => setForm({ ...form, ncf: e.target.value })}
-              placeholder="B0100000126"
+      {preview && (
+        <>
+          <section className="panel quotes-panel dgii-606-preview-panel">
+            <h3 className="panel-subtitle">
+              Vista previa TXT — {formatDgiiPeriodLabel(preview.period)}
+            </h3>
+            <p className="muted panel-desc">
+              RNC emisor: <code>{preview.emitterRnc || '—'}</code> · Registros:{' '}
+              <strong>{preview.recordCount}</strong>
+              {preview.expenseCount > 0 && (
+                <>
+                  {' '}
+                  · {preview.expenseCount} gasto(s) de Compras
+                  {preview.purchaseCount > 0 ? `, ${preview.purchaseCount} manual(es) antiguo(s)` : ''}
+                </>
+              )}
+            </p>
+
+            <DgiiTxtPreview
+              content={preview.txt}
+              emptyMessage="No hay gastos con RNC y NCF en este período. Regístrelos en Compras y vuelva a cargar la vista previa."
             />
-          </label>
-          <label>
-            Tipo identificación
-            <select
-              value={form.tipo_identificacion}
-              onChange={(e) => setForm({ ...form, tipo_identificacion: e.target.value })}
-            >
-              <option value="1">RNC</option>
-              <option value="2">Cédula</option>
-            </select>
-          </label>
-          <label>
-            RNC
-            <input
-              value={form.supplier_rnc}
-              onChange={(e) => setForm({ ...form, supplier_rnc: e.target.value })}
-            />
-          </label>
-          <label>
-            Cédula
-            <input
-              value={form.supplier_cedula}
-              onChange={(e) => setForm({ ...form, supplier_cedula: e.target.value })}
-            />
-          </label>
-          <label>
-            Tipo bien/servicio
-            <select
-              value={form.tipo_bienes_servicios}
-              onChange={(e) => setForm({ ...form, tipo_bienes_servicios: e.target.value })}
-            >
-              {goodsTypes.map((g) => (
-                <option key={g.code} value={g.code}>
-                  {g.code} — {g.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Fecha comprobante
-            <input
-              type="date"
-              required
-              value={form.fecha_comprobante}
-              onChange={(e) => setForm({ ...form, fecha_comprobante: e.target.value })}
-            />
-          </label>
-          <label>
-            Fecha pago
-            <input
-              type="date"
-              value={form.fecha_pago}
-              onChange={(e) => setForm({ ...form, fecha_pago: e.target.value })}
-            />
-          </label>
-          <label>
-            Monto facturado
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              required
-              value={form.monto_facturado}
-              onChange={(e) => setForm({ ...form, monto_facturado: e.target.value })}
-            />
-          </label>
-          <label>
-            ITBIS facturado
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.itbis_facturado}
-              onChange={(e) => setForm({ ...form, itbis_facturado: e.target.value })}
-            />
-          </label>
-          <label>
-            ITBIS retenido
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.itbis_retenido}
-              onChange={(e) => setForm({ ...form, itbis_retenido: e.target.value })}
-            />
-          </label>
-          <label>
-            ISR retenido
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.isr_retenido}
-              onChange={(e) => setForm({ ...form, isr_retenido: e.target.value })}
-            />
-          </label>
-          <label className="span-2">
-            Notas
-            <input value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} />
-          </label>
-        </form>
-      </AppModal>
+
+            <p className="muted dgii-606-export-hint">
+              Totales en el archivo: base gravable{' '}
+              <strong>{formatMoney(preview.totals?.montoFacturado)}</strong> + ITBIS{' '}
+              <strong>{formatMoney(preview.totals?.itbisFacturado)}</strong> ={' '}
+              <strong>{formatMoney(preview.totals?.montoTotal)}</strong> pagado
+            </p>
+
+            {preview.pendingExpenses > 0 && (
+              <div className="alert alert-error">
+                <strong>
+                  {preview.pendingExpenses} gasto(s) en Compras sin RNC o NCF
+                </strong>{' '}
+                — no se incluyen en el 606. Complételos en{' '}
+                <Link to="/compras/gastos">Compras → Gastos</Link>.
+                {preview.pendingExpenseRows?.length > 0 && (
+                  <ul className="dgii-error-list" style={{ marginTop: '0.5rem' }}>
+                    {preview.pendingExpenseRows.slice(0, 10).map((g) => (
+                      <li key={g.id}>
+                        #{g.id} {g.expense_date} — {g.description}
+                        {!g.rnc?.trim() && ' (falta RNC)'}
+                        {!g.ncf?.trim() && ' (falta NCF)'}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {preview.errors?.length > 0 && (
+              <div className="alert alert-error">
+                <strong>Errores de validación ({preview.errors.length})</strong>
+                <ul className="dgii-error-list">
+                  {preview.errors.map((err, i) => (
+                    <li key={i}>{formatPreviewError(err)}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        </>
+      )}
     </>
   );
 }

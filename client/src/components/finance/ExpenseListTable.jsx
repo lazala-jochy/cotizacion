@@ -1,4 +1,5 @@
 import { formatMoney } from '../../utils/formatMoney';
+import { resolveExpenseItbis } from '../../utils/expenseItbis';
 import ExpenseRowActions from './ExpenseRowActions';
 
 /**
@@ -10,22 +11,23 @@ export default function ExpenseListTable({
   onEdit,
   onDelete,
   onViewAttachment,
-  showRnc = false,
-  showNcf = false,
+  showRnc = true,
+  showNcf = true,
 }) {
-  const colCount = 4 + (showRnc ? 1 : 0) + (showNcf ? 1 : 0) + 1;
+  const colCount = 5 + (showRnc ? 1 : 0) + (showNcf ? 1 : 0) + 1;
 
   return (
     <div className="table-wrap">
       <table className="data-table">
         <thead>
           <tr>
-            <th>Fecha</th>
-            <th>Categoría</th>
-            <th>Descripción</th>
             {showRnc && <th>RNC</th>}
             {showNcf && <th>NCF</th>}
+            <th>Descripción</th>
+            <th>Categoría</th>
+            <th>Fecha</th>
             <th className="num">Monto</th>
+            <th className="num">ITBIS</th>
             <th />
           </tr>
         </thead>
@@ -39,12 +41,13 @@ export default function ExpenseListTable({
           )}
           {expenses.map((e) => (
             <tr key={e.id}>
-              <td>{e.expense_date}</td>
-              <td>{e.category_name}</td>
-              <td>{e.description}</td>
               {showRnc && <td>{e.rnc || '—'}</td>}
-              {showNcf && <td>{e.ncf || '—'}</td>}
+              {showNcf && <td>{e.ncf ? <code>{e.ncf}</code> : '—'}</td>}
+              <td>{e.description}</td>
+              <td>{e.category_name}</td>
+              <td>{e.expense_date}</td>
               <td className="num">{formatMoney(e.amount)}</td>
+              <td className="num">{formatMoney(resolveExpenseItbis(e))}</td>
               <td>
                 <ExpenseRowActions
                   hasAttachment={Boolean(e.has_attachment)}

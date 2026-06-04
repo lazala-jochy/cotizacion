@@ -99,6 +99,9 @@ function migrateExpensesSchema(db) {
     if (!expenseCols.some((c) => c.name === 'ncf')) {
       db.exec('ALTER TABLE expenses ADD COLUMN ncf TEXT');
     }
+    if (!expenseCols.some((c) => c.name === 'itbis')) {
+      db.exec('ALTER TABLE expenses ADD COLUMN itbis REAL');
+    }
   }
 
   const users = db.prepare('SELECT id FROM users').all();

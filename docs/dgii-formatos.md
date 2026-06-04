@@ -32,7 +32,7 @@ Este módulo genera archivos de texto para cargar en la **Oficina Virtual (OFV)*
 **Flujo en la app:**
 
 1. Menú **DGII → Formato 607**
-2. Seleccionar año y mes → **Vista previa**
+2. Seleccionar año y mes → **Vista previa** (consulta facturas del período)
 3. Corregir errores (RNC del cliente, NCF, etc.)
 4. **Exportar TXT** → se guarda en historial y en disco local
 
@@ -65,10 +65,15 @@ Al **anular una factura** en la app se solicita el código DGII; se sincroniza a
 
 **Fuente en la app:**
 
-- **Gastos** en Finanzas del período que tengan **RNC** y **NCF** del proveedor (se incluyen automáticamente en la vista previa y el TXT).
-- Compras manuales adicionales en `dgii_purchases` (proveedores opcionales en `dgii_suppliers`).
+- **Gastos** en **Compras → Gastos** del período que tengan **RNC** y **NCF** del proveedor (se incluyen automáticamente en la vista previa y el TXT).
 
-El monto del gasto se desglosa en base gravable e ITBIS (18 %) para el archivo. Los gastos sin RNC o NCF no entran al 606 hasta completarlos en Finanzas.
+El monto del gasto se desglosa en base gravable e ITBIS (18 %) para el archivo. Los gastos sin RNC o NCF no entran al 606 hasta completarlos en Compras.
+
+**Flujo en la app:**
+
+1. Registre gastos en **Compras → Gastos** con RNC, NCF, monto e ITBIS del proveedor (o use **+ Agregar compra** en el formato 606).
+2. Menú **DGII → Formato 606** → seleccione período → **Vista previa** (muestra el TXT del archivo antes de exportar).
+3. Corrija errores o complete gastos pendientes → **Exportar TXT**.
 
 **Campos principales:**
 

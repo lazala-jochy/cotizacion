@@ -145,7 +145,7 @@ export default function Layout() {
           </NavLink>
           <NavLink to="/reportes">Reportes</NavLink>
           <NavLink to="/dgii">DGII</NavLink>
-          <NavLink to="/finanzas/gastos">Finanzas</NavLink>
+          <NavLink to="/compras/gastos">Compras</NavLink>
           <NavLink to="/plantillas">Plantillas</NavLink>
           <NavLink to="/configuracion">Empresa</NavLink>
         </nav>

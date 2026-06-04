@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api';
 import MonthYearFilterFields from '../../components/filters/MonthYearFilterFields';
-import { getYearOptionsFromItems, matchesDgiiPeriod } from '../../utils/dateRangeFilters';
+import { getDefaultYearMonth, getYearOptionsFromItems, matchesDgiiPeriod } from '../../utils/dateRangeFilters';
+
+const defaultMonthFilter = getDefaultYearMonth();
 
 const TYPE_LABELS = {
   '606': 'Compras (606)',
@@ -12,8 +14,8 @@ const TYPE_LABELS = {
 export default function DgiiReportsHistory() {
   const [reports, setReports] = useState([]);
   const [filter, setFilter] = useState('');
-  const [yearFilter, setYearFilter] = useState('');
-  const [monthFilter, setMonthFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState(defaultMonthFilter.year);
+  const [monthFilter, setMonthFilter] = useState(defaultMonthFilter.month);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 

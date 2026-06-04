@@ -2,16 +2,10 @@ const { periodDateRange } = require('../utils/validatePeriod');
 const { validateNcf } = require('../utils/validateNcf');
 const { resolveBuyerIdentification } = require('../utils/identifyTaxId');
 const { formatAmount, formatDateYmd, buildPipeFile } = require('../utils/generateTxt');
-
-const ITBIS_RATE = 0.18;
-
-function splitAmountWithItbis(total) {
-  const t = Number(total) || 0;
-  if (t <= 0) return { montoFacturado: 0, itbisFacturado: 0 };
-  const montoFacturado = Math.round((t / (1 + ITBIS_RATE)) * 100) / 100;
-  const itbisFacturado = Math.round((t - montoFacturado) * 100) / 100;
-  return { montoFacturado, itbisFacturado };
-}
+const {
+  splitAmountWithItbis,
+  resolveExpenseAmounts,
+} = require('../../expenses/expenseItbis');
 
 function listPurchasesFor606(userId, period) {
   const db = require('../../db');
@@ -33,7 +27,7 @@ function listExpensesFor606(userId, period, { requireTaxFields = true } = {}) {
   const db = require('../../db');
   const { start, end } = periodDateRange(period);
   let sql = `
-    SELECT e.id, e.expense_date, e.description, e.amount, e.rnc, e.ncf,
+    SELECT e.id, e.expense_date, e.description, e.amount, e.itbis, e.rnc, e.ncf,
       e.payment_method, c.name AS category_name
     FROM expenses e
     JOIN expense_categories c ON c.id = e.category_id
@@ -48,17 +42,46 @@ function listExpensesFor606(userId, period, { requireTaxFields = true } = {}) {
 }
 
 function countExpensesPending606(userId, period) {
+  return listExpensesPending606Details(userId, period).length;
+}
+
+/** Gastos del período en Compras que aún no tienen RNC o NCF para el 606. */
+function listExpensesPending606Details(userId, period) {
   const db = require('../../db');
   const { start, end } = periodDateRange(period);
-  const row = db
+  return db
     .prepare(
-      `SELECT COUNT(*) AS n FROM expenses
-       WHERE user_id = ?
-         AND expense_date >= ? AND expense_date <= ?
-         AND (trim(COALESCE(ncf, '')) = '' OR trim(COALESCE(rnc, '')) = '')`
+      `SELECT e.id, e.expense_date, e.description, e.amount, e.rnc, e.ncf, c.name AS category_name
+       FROM expenses e
+       JOIN expense_categories c ON c.id = e.category_id
+       WHERE e.user_id = ?
+         AND e.expense_date >= ? AND e.expense_date <= ?
+         AND (trim(COALESCE(e.ncf, '')) = '' OR trim(COALESCE(e.rnc, '')) = '')
+       ORDER BY e.expense_date DESC, e.id DESC`
     )
-    .get(userId, start, end);
-  return row?.n || 0;
+    .all(userId, start, end);
+}
+
+function rowToDisplayEntry(row) {
+  const montoBase = Number(row.montoFacturado) || 0;
+  const itbis = Number(row.itbisFacturado) || 0;
+  const montoTotal = Number(row.amountTotal) || montoBase + itbis;
+  return {
+    source: row.source,
+    id: row.expenseId || row.purchaseId,
+    expense_id: row.expenseId ?? null,
+    purchase_id: row.purchaseId ?? null,
+    supplier_rnc: row.idValue,
+    ncf: row.ncf,
+    description: row.supplierNombre || '',
+    category_name:
+      row.categoryName || row.category_name || (row.source === 'purchase' ? 'Compra manual' : '—'),
+    fecha_comprobante: row.fechaComprobante,
+    monto_total: montoTotal,
+    monto_base: montoBase,
+    itbis_facturado: itbis,
+    canDelete: row.source === 'purchase',
+  };
 }
 
 function purchaseTo606Row(p, seenNcf) {
@@ -89,7 +112,9 @@ function purchaseTo606Row(p, seenNcf) {
       ncfModificado: p.ncf_modificado || '',
       tipoIdentificacion: p.tipo_identificacion || '1',
       idValue,
-      supplierNombre: p.supplier_nombre || '',
+      supplierNombre: p.notas || p.supplier_nombre || 'Compra manual',
+      categoryName: 'Compra manual',
+      amountTotal: Number(p.monto_facturado) + Number(p.itbis_facturado),
       fechaComprobante: p.fecha_comprobante,
       fechaPago: p.fecha_pago || '',
       montoFacturado: Number(p.monto_facturado) || 0,
@@ -123,7 +148,7 @@ function expenseTo606Row(expense, seenNcf) {
       },
     };
   }
-  const { montoFacturado, itbisFacturado } = splitAmountWithItbis(expense.amount);
+  const { base: montoFacturado, itbis: itbisFacturado } = resolveExpenseAmounts(expense);
   if (montoFacturado <= 0) {
     return { error: { expenseId: expense.id, error: 'El monto del gasto debe ser mayor que cero.' } };
   }
@@ -137,7 +162,10 @@ function expenseTo606Row(expense, seenNcf) {
       ncfModificado: '',
       tipoIdentificacion: idRes.idType,
       idValue: idRes.idValue,
-      supplierNombre: expense.description || expense.category_name || '',
+      supplierNombre: expense.description || '',
+      categoryName: String(expense.category_name || '').trim(),
+      category_name: String(expense.category_name || '').trim(),
+      amountTotal: Number(expense.amount) || 0,
       fechaComprobante: expense.expense_date,
       fechaPago: expense.expense_date,
       montoFacturado,
@@ -170,56 +198,39 @@ function collect606Rows(userId, period) {
 
 function build606Preview(userId, period, emitterRnc) {
   const { rows, errors } = collect606Rows(userId, period);
+  const pendingExpenseRows = listExpensesPending606Details(userId, period);
 
-  return {
+  const preview = {
     period,
     emitterRnc: emitterRnc || '',
     recordCount: rows.length,
     expenseCount: rows.filter((r) => r.source === 'expense').length,
     purchaseCount: rows.filter((r) => r.source === 'purchase').length,
-    pendingExpenses: countExpensesPending606(userId, period),
+    pendingExpenses: pendingExpenseRows.length,
+    pendingExpenseRows,
+    financeSource: 'expenses',
     totals: {
       montoFacturado: rows.reduce((s, r) => s + r.montoFacturado, 0),
       itbisFacturado: rows.reduce((s, r) => s + r.itbisFacturado, 0),
+      montoTotal: rows.reduce(
+        (s, r) => s + (Number(r.amountTotal) || r.montoFacturado + r.itbisFacturado),
+        0
+      ),
     },
     rows,
+    entries: rows.map(rowToDisplayEntry),
     errors,
   };
+  preview.txt = build606Txt(preview);
+  return preview;
 }
 
 function list606PeriodEntries(userId, period) {
-  const purchases = listPurchasesFor606(userId, period).map((p) => ({
-    source: 'purchase',
-    id: p.id,
-    ncf: p.ncf,
-    supplier_nombre: p.supplier_nombre || '',
-    supplier_rnc: p.supplier_rnc || p.supplier_cedula || '',
-    fecha_comprobante: p.fecha_comprobante,
-    monto_facturado: Number(p.monto_facturado) || 0,
-    itbis_facturado: Number(p.itbis_facturado) || 0,
-    canDelete: true,
-  }));
-
-  const expenses = listExpensesFor606(userId, period).map((e) => {
-    const { montoFacturado, itbisFacturado } = splitAmountWithItbis(e.amount);
-    return {
-      source: 'expense',
-      id: e.id,
-      ncf: e.ncf,
-      supplier_nombre: e.description || e.category_name || 'Gasto',
-      supplier_rnc: e.rnc,
-      fecha_comprobante: e.expense_date,
-      monto_facturado: montoFacturado,
-      itbis_facturado: itbisFacturado,
-      canDelete: false,
-    };
-  });
-
+  const preview = build606Preview(userId, period, '');
   return {
-    entries: [...purchases, ...expenses].sort((a, b) =>
-      String(a.fecha_comprobante).localeCompare(String(b.fecha_comprobante))
-    ),
-    pendingExpenses: countExpensesPending606(userId, period),
+    entries: preview.entries,
+    pendingExpenses: preview.pendingExpenses,
+    pendingExpenseRows: preview.pendingExpenseRows,
   };
 }
 
@@ -254,6 +265,8 @@ module.exports = {
   build606Preview,
   build606Txt,
   list606PeriodEntries,
+  listExpensesPending606Details,
+  rowToDisplayEntry,
   purchaseTo606Row,
   expenseTo606Row,
 };

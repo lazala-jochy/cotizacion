@@ -91,7 +91,7 @@ Utilidad operativa = Ingresos − Costos − Gastos
 
 ### Registrar un gasto
 
-1. Menú **Finanzas → Gastos** → **+ Nuevo gasto**.
+1. Menú **Compras → Gastos** → **+ Nuevo gasto**.
 2. Complete fecha, categoría, descripción y monto.
 3. Opcional: adjunte recibo (PDF/JPG/PNG) y referencia de pago.
 
@@ -106,11 +106,11 @@ En **Nueva/Editar cotización**, columna **Costo unit.** por ítem. Con precio d
 
 ### Estado de resultados
 
-**Finanzas → Estado de resultados** → rango de fechas → **Generar**.
+**Compras → Estado de resultados** → rango de fechas → **Generar**.
 
 ### Exportar
 
-**Finanzas → Reporte de gastos** → filtros → **Exportar CSV** (abre en Excel) o **Exportar HTML/PDF** (imprimir desde el navegador).
+**Compras → Reporte de gastos** → filtros → **Exportar CSV** (abre en Excel) o **Exportar HTML/PDF** (imprimir desde el navegador).
 
 ### Fórmulas implementadas
 

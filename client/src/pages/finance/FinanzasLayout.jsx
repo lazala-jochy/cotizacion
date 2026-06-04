@@ -1,10 +1,10 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
 const TABS = [
-  { to: '/finanzas/gastos', label: 'Gastos' },
-  { to: '/finanzas/categorias', label: 'Categorías' },
-  { to: '/finanzas/reporte', label: 'Reporte de gastos' },
-  { to: '/finanzas/resultados', label: 'Estado de resultados' },
+  { to: '/compras/gastos', label: 'Gastos' },
+  { to: '/compras/categorias', label: 'Categorías' },
+  { to: '/compras/reporte', label: 'Reporte de gastos' },
+  { to: '/compras/resultados', label: 'Estado de resultados' },
 ];
 
 export default function FinanzasLayout() {
@@ -12,12 +12,12 @@ export default function FinanzasLayout() {
     <div className="page">
       <header className="page-header">
         <div>
-          <h1>Finanzas</h1>
-          <p>Gastos, rentabilidad y estado de resultados</p>
+          <h1>Compras</h1>
+          <p>Gastos, categorías y estado de resultados</p>
         </div>
       </header>
 
-      <nav className="page-tabs" aria-label="Finanzas">
+      <nav className="page-tabs" aria-label="Compras">
         {TABS.map((tab) => (
           <NavLink
             key={tab.to}

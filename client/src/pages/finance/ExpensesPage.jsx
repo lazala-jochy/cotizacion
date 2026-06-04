@@ -8,6 +8,7 @@ import ConfirmModal from '../../components/ConfirmModal';
 import { getAttachmentSource } from '../../utils/expenseAttachment';
 import MonthYearFilterFields from '../../components/filters/MonthYearFilterFields';
 import { dateRangeFromYearMonth, getDefaultYearMonth } from '../../utils/dateRangeFilters';
+import { resolveExpenseItbis } from '../../utils/expenseItbis';
 
 const defaultPeriod = getDefaultYearMonth();
 
@@ -45,6 +46,7 @@ export default function ExpensesPage() {
   }, [load]);
 
   const total = expenses.reduce((s, e) => s + Number(e.amount), 0);
+  const totalItbis = expenses.reduce((s, e) => s + resolveExpenseItbis(e), 0);
 
   const openCreate = () => {
     setEditTarget(null);
@@ -122,7 +124,8 @@ export default function ExpensesPage() {
         </div>
 
         <p className="muted">
-          Total filtrado: <strong>{formatMoney(total)}</strong> · {expenses.length} registros
+          Total filtrado: <strong>{formatMoney(total)}</strong> · ITBIS:{' '}
+          <strong>{formatMoney(totalItbis)}</strong> · {expenses.length} registros
         </p>
       </section>
 
@@ -135,31 +138,33 @@ export default function ExpensesPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Fecha</th>
-                  <th>Categoría</th>
-                  <th>Descripción</th>
                   <th>RNC</th>
                   <th>NCF</th>
+                  <th>Descripción</th>
+                  <th>Categoría</th>
+                  <th>Fecha</th>
                   <th className="num">Monto</th>
+                  <th className="num">ITBIS</th>
                   <th />
                 </tr>
               </thead>
               <tbody>
                 {expenses.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="muted">
+                    <td colSpan={8} className="muted">
                       No hay gastos con estos filtros.
                     </td>
                   </tr>
                 )}
                 {expenses.map((e) => (
                   <tr key={e.id}>
-                    <td>{e.expense_date}</td>
-                    <td>{e.category_name}</td>
-                    <td>{e.description}</td>
                     <td>{e.rnc || '—'}</td>
-                    <td>{e.ncf || '—'}</td>
+                    <td>{e.ncf ? <code>{e.ncf}</code> : '—'}</td>
+                    <td>{e.description}</td>
+                    <td>{e.category_name}</td>
+                    <td>{e.expense_date}</td>
                     <td className="num">{formatMoney(e.amount)}</td>
+                    <td className="num">{formatMoney(resolveExpenseItbis(e))}</td>
                     <td>
                       <ExpenseRowActions
                         hasAttachment={Boolean(e.has_attachment)}

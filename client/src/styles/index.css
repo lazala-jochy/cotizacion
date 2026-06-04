@@ -964,29 +964,67 @@ a.cell-ellipsis:hover {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
+  min-width: 0;
 }
 
 .stat-card {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.25rem;
+  padding: 1.15rem 0.85rem;
   text-align: center;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .stat-value {
   display: block;
-  font-size: 2rem;
+  font-size: clamp(1.1rem, 4vw, 1.85rem);
   font-weight: 700;
+  line-height: 1.25;
   color: var(--accent);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-label {
+  display: block;
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  margin-top: 0.35rem;
+  overflow-wrap: anywhere;
+}
+
+.chart-responsive-wrap {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.dashboard-page .panel {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dashboard-page .panel-title {
+  overflow-wrap: anywhere;
+  padding: 0 1.25rem;
+  padding-top: 1rem;
+}
+
+.dashboard-page .report-chart-panel .panel-title {
+  margin-bottom: 0;
+}
+
+.dashboard-page .report-chart-panel {
+  padding-bottom: 0.5rem;
 }
 
 .cards-row {
@@ -1337,6 +1375,36 @@ a.cell-ellipsis:hover {
 }
 
 /* Cotizaciones — tabla con filtros y paginación */
+.dgii-txt-preview-wrap {
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 8px);
+  background: var(--bg-elevated, rgba(0, 0, 0, 0.2));
+  overflow: auto;
+  max-height: min(70vh, 520px);
+}
+
+.dgii-txt-preview {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre;
+  word-break: break-all;
+  color: var(--text);
+}
+
+.dgii-txt-preview-empty {
+  margin-top: 1rem;
+}
+
+.dgii-606-export-hint {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
 .quotes-panel {
   padding: 0;
   overflow: hidden;
@@ -3094,17 +3162,39 @@ a.cell-ellipsis:hover {
   }
 }
 
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat-value {
+    font-size: clamp(1rem, 4.5vw, 1.5rem);
+  }
+}
+
 @media (max-width: 520px) {
   .main-content {
     padding: 1rem 0.75rem;
   }
 
   .stats-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    padding: 1rem 1rem;
+  }
+
+  .stat-value {
+    font-size: clamp(1.15rem, 5vw, 1.65rem);
   }
 
   .cards-row {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-page .report-chart-panel .recharts-wrapper {
+    max-width: 100% !important;
   }
 
   .emisor-dl {

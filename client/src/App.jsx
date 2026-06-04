@@ -1,5 +1,11 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+
+function LegacyFinanzasRedirect() {
+  const { pathname, search, hash } = useLocation();
+  const to = pathname.replace(/^\/finanzas/, '/compras') || '/compras/gastos';
+  return <Navigate to={`${to}${search}${hash}`} replace />;
+}
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -133,15 +139,16 @@ export default function App() {
             }
           />
         </Route>
+        <Route path="finanzas/*" element={<LegacyFinanzasRedirect />} />
         <Route
-          path="finanzas"
+          path="compras"
           element={
             <Suspense fallback={<PageLoading />}>
               <FinanzasLayout />
             </Suspense>
           }
         >
-          <Route index element={<Navigate to="/finanzas/gastos" replace />} />
+          <Route index element={<Navigate to="/compras/gastos" replace />} />
           <Route
             path="gastos"
             element={

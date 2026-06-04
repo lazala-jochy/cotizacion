@@ -3,6 +3,7 @@ import { api } from '../../api';
 import AppModal from '../AppModal';
 import ExpenseAttachmentField from './ExpenseAttachmentField';
 import { getAttachmentSource } from '../../utils/expenseAttachment';
+import { formatItbisInput, splitAmountWithItbis } from '../../utils/expenseItbis';
 
 const EMPTY_DEFAULTS = {};
 
@@ -11,6 +12,7 @@ const emptyForm = {
   category_id: '',
   description: '',
   amount: '',
+  itbis: '',
   payment_method: 'Efectivo',
   reference_number: '',
   notes: '',
@@ -30,6 +32,7 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
   const [attachment, setAttachment] = useState(null);
   const [existingAttachment, setExistingAttachment] = useState(null);
   const [clearAttachment, setClearAttachment] = useState(false);
+  const itbisManualRef = useRef(false);
   const defaultsRef = useRef(defaults);
   defaultsRef.current = defaults;
 
@@ -46,12 +49,15 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
   useEffect(() => {
     if (!open) return;
     const d = defaultsRef.current;
+    itbisManualRef.current = false;
     if (expense) {
+      itbisManualRef.current = expense.itbis != null && expense.itbis !== '';
       setForm({
         expense_date: expense.expense_date,
         category_id: String(expense.category_id),
         description: expense.description,
         amount: String(expense.amount),
+        itbis: formatItbisInput(expense.amount, expense.itbis),
         payment_method: expense.payment_method || 'Efectivo',
         reference_number: expense.reference_number || '',
         notes: expense.notes || '',
@@ -87,6 +93,20 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
     setError('');
   }, [open, expense?.id]);
 
+  const handleAmountChange = (value) => {
+    if (!itbisManualRef.current) {
+      const { itbis } = splitAmountWithItbis(value);
+      setForm((prev) => ({ ...prev, amount: value, itbis: value ? String(itbis) : '' }));
+    } else {
+      setForm((prev) => ({ ...prev, amount: value }));
+    }
+  };
+
+  const handleItbisChange = (value) => {
+    itbisManualRef.current = true;
+    setForm((prev) => ({ ...prev, itbis: value }));
+  };
+
   const handleFile = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -117,10 +137,16 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
     setBusy(true);
     setError('');
     try {
+      const amount = Number(form.amount);
+      let itbisVal = form.itbis !== '' ? Number(form.itbis) : null;
+      if (itbisVal == null || Number.isNaN(itbisVal)) {
+        itbisVal = splitAmountWithItbis(amount).itbis;
+      }
       const body = {
         ...form,
         category_id: Number(form.category_id),
-        amount: Number(form.amount),
+        amount,
+        itbis: itbisVal,
         rnc: form.rnc.trim() || null,
         ncf: form.ncf.trim() || null,
         quote_id: form.quote_id || null,
@@ -163,12 +189,29 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
       {error && <div className="alert alert-error">{error}</div>}
       <form id="expense-form" className="form-grid" onSubmit={handleSubmit}>
         <label>
-          Fecha
+          RNC
           <input
-            type="date"
+            value={form.rnc}
+            onChange={(e) => setForm({ ...form, rnc: e.target.value })}
+            placeholder="Ej. 101234567"
+            autoComplete="off"
+          />
+        </label>
+        <label>
+          NCF
+          <input
+            value={form.ncf}
+            onChange={(e) => setForm({ ...form, ncf: e.target.value.toUpperCase() })}
+            placeholder="Ej. B0100000126"
+            autoComplete="off"
+          />
+        </label>
+        <label className="span-2">
+          Descripción
+          <input
             required
-            value={form.expense_date}
-            onChange={(e) => setForm({ ...form, expense_date: e.target.value })}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
         </label>
         <label>
@@ -186,23 +229,34 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
             ))}
           </select>
         </label>
-        <label className="span-2">
-          Descripción
+        <label>
+          Fecha
           <input
+            type="date"
             required
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            value={form.expense_date}
+            onChange={(e) => setForm({ ...form, expense_date: e.target.value })}
           />
         </label>
         <label>
-          Monto (RD$)
+          Monto total (RD$)
           <input
             type="number"
             min="0.01"
             step="0.01"
             required
             value={form.amount}
-            onChange={(e) => setForm({ ...form, amount: e.target.value })}
+            onChange={(e) => handleAmountChange(e.target.value)}
+          />
+        </label>
+        <label>
+          ITBIS (RD$)
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={form.itbis}
+            onChange={(e) => handleItbisChange(e.target.value)}
           />
         </label>
         <label>
@@ -217,24 +271,6 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
               </option>
             ))}
           </select>
-        </label>
-        <label>
-          RNC
-          <input
-            value={form.rnc}
-            onChange={(e) => setForm({ ...form, rnc: e.target.value })}
-            placeholder="Ej. 101234567"
-            autoComplete="off"
-          />
-        </label>
-        <label>
-          NCF
-          <input
-            value={form.ncf}
-            onChange={(e) => setForm({ ...form, ncf: e.target.value.toUpperCase() })}
-            placeholder="Ej. B0100000126"
-            autoComplete="off"
-          />
         </label>
         <label>
           Referencia

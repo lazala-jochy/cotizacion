@@ -163,6 +163,7 @@ router.put('/:id', (req, res) => {
       description: req.body.description ?? existing.description,
       reference_number: req.body.reference_number ?? existing.reference_number,
       amount: req.body.amount ?? existing.amount,
+      itbis: req.body.itbis !== undefined ? req.body.itbis : existing.itbis,
       payment_method: req.body.payment_method ?? existing.payment_method,
       notes: req.body.notes ?? existing.notes,
       attachment_name: req.body.attachment_name,

@@ -102,5 +102,21 @@ describe('build606Txt', () => {
     const txt = build606.build606Txt(preview);
     assert.ok(txt.includes('130000001'));
     assert.ok(txt.includes('B0100000099'));
+    assert.ok(txt.includes('131880681|202503|1'));
+  });
+});
+
+describe('build606Preview txt', () => {
+  test('incluye campo txt igual al export', () => {
+    const build606 = require('../server/dgii/builders/build606');
+    const preview = {
+      emitterRnc: '131880681',
+      period: '202503',
+      recordCount: 0,
+      rows: [],
+      errors: [],
+    };
+    preview.txt = build606.build606Txt(preview);
+    assert.ok(preview.txt.startsWith('131880681|202503|0'));
   });
 });

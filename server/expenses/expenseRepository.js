@@ -74,7 +74,7 @@ function createProject(userId, data) {
 function buildExpenseFilters(userId, filters) {
   let sql = `
     SELECT e.id, e.user_id, e.category_id, e.quote_id, e.invoice_id, e.client_id, e.project_id,
-      e.expense_date, e.description, e.reference_number, e.amount, e.payment_method, e.notes,
+      e.expense_date, e.description, e.reference_number, e.amount, e.itbis, e.payment_method, e.notes,
       e.attachment_name, e.attachment_mime,
       CASE WHEN e.attachment_data IS NOT NULL AND length(e.attachment_data) > 0 THEN 1 ELSE 0 END AS has_attachment,
       e.created_by, e.created_at, e.updated_at,
@@ -145,9 +145,9 @@ function insertExpense(userId, data, createdBy) {
     .prepare(
       `INSERT INTO expenses (
         user_id, category_id, quote_id, invoice_id, client_id, project_id,
-        rnc, ncf, expense_date, description, reference_number, amount, payment_method, notes,
+        rnc, ncf, expense_date, description, reference_number, amount, itbis, payment_method, notes,
         attachment_name, attachment_mime, attachment_data, created_by, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
     )
     .run(
       userId,
@@ -162,6 +162,7 @@ function insertExpense(userId, data, createdBy) {
       data.description.trim(),
       data.reference_number?.trim() || null,
       Number(data.amount),
+      data.itbis != null && data.itbis !== '' ? Number(data.itbis) : null,
       data.payment_method?.trim() || null,
       data.notes?.trim() || null,
       data.attachment_name || null,
@@ -194,7 +195,7 @@ function updateExpense(id, userId, data) {
   db.prepare(
     `UPDATE expenses SET
       category_id = ?, quote_id = ?, invoice_id = ?, client_id = ?, project_id = ?,
-      rnc = ?, ncf = ?, expense_date = ?, description = ?, reference_number = ?, amount = ?,
+      rnc = ?, ncf = ?,       expense_date = ?, description = ?, reference_number = ?, amount = ?, itbis = ?,
       payment_method = ?, notes = ?,
       attachment_name = ?, attachment_mime = ?, attachment_data = ?,
       updated_at = datetime('now')
@@ -211,6 +212,7 @@ function updateExpense(id, userId, data) {
     data.description.trim(),
     data.reference_number?.trim() || null,
     Number(data.amount),
+    data.itbis != null && data.itbis !== '' ? Number(data.itbis) : null,
     data.payment_method?.trim() || null,
     data.notes?.trim() || null,
     attachmentName,

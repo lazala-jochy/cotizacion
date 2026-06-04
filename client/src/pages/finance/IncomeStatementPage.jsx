@@ -20,7 +20,7 @@ const defaultPeriod = getDefaultYearMonth();
 
 export default function IncomeStatementPage() {
   const [yearFilter, setYearFilter] = useState(defaultPeriod.year);
-  const [monthFilter, setMonthFilter] = useState('');
+  const [monthFilter, setMonthFilter] = useState(defaultPeriod.month);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

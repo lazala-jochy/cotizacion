@@ -32,6 +32,16 @@ function validateExpensePayload(body, { partial = false } = {}) {
       throw new ExpenseValidationError('El monto debe ser mayor que cero.');
     }
   }
+  if (body.itbis !== undefined && body.itbis !== null && body.itbis !== '') {
+    const itbis = Number(body.itbis);
+    if (Number.isNaN(itbis) || itbis < 0) {
+      throw new ExpenseValidationError('El ITBIS debe ser cero o mayor.');
+    }
+    const amount = Number(body.amount);
+    if (!Number.isNaN(amount) && itbis > amount) {
+      throw new ExpenseValidationError('El ITBIS no puede ser mayor que el monto total.');
+    }
+  }
   if (body.attachment_data) {
     const mime = String(body.attachment_mime || '').toLowerCase();
     if (!ALLOWED_ATTACHMENT_MIMES.includes(mime)) {

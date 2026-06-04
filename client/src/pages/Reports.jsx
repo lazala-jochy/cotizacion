@@ -27,7 +27,9 @@ import {
   topClientsByMonto,
 } from '../utils/reportStats';
 import MonthYearFilterFields from '../components/filters/MonthYearFilterFields';
-import { getYearOptionsFromItems, matchesYearMonth } from '../utils/dateRangeFilters';
+import { getDefaultYearMonth, getYearOptionsFromItems, matchesYearMonth } from '../utils/dateRangeFilters';
+
+const defaultMonthFilter = getDefaultYearMonth();
 
 const PERIODS = [
   { value: 3, label: 'Últimos 3 meses' },
@@ -66,8 +68,8 @@ export default function Reports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [months, setMonths] = useState(6);
-  const [yearFilter, setYearFilter] = useState('');
-  const [monthFilter, setMonthFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState(defaultMonthFilter.year);
+  const [monthFilter, setMonthFilter] = useState(defaultMonthFilter.month);
 
   useEffect(() => {
     api.quotes

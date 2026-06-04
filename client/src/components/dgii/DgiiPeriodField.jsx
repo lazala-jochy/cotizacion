@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { getDefaultYearMonth } from '../../utils/dateRangeFilters';
 
 const MONTHS = [
   { value: '01', label: 'Enero' },
@@ -15,13 +16,9 @@ const MONTHS = [
   { value: '12', label: 'Diciembre' },
 ];
 
+/** Período DGII por defecto: mes calendario actual. */
 export function defaultPeriodParts() {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 1);
-  return {
-    year: String(d.getFullYear()),
-    month: String(d.getMonth() + 1).padStart(2, '0'),
-  };
+  return getDefaultYearMonth();
 }
 
 export function buildPeriod(year, month) {

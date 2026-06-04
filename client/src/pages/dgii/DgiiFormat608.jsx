@@ -61,6 +61,10 @@ export default function DgiiFormat608() {
     <>
       <section className="panel">
         <h2 className="panel-title">Comprobantes anulados — Formato 608</h2>
+        <p className="muted panel-desc">
+          La vista previa toma las <strong>facturas anuladas</strong> del período (módulo Facturas), no los
+          gastos de Compras.
+        </p>
 
         <DgiiPeriodField year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
 

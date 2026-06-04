@@ -59,6 +59,10 @@ export default function DgiiFormat607() {
     <>
       <section className="panel">
         <h2 className="panel-title">Ventas — Formato 607</h2>
+        <p className="muted panel-desc">
+          La vista previa toma las <strong>facturas emitidas</strong> del período (módulo Facturas), no los
+          gastos de Compras.
+        </p>
 
         <DgiiPeriodField year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
 

@@ -18,8 +18,10 @@ import {
   quoteMatchesListFilters,
 } from '../utils/quoteListFilters';
 import MonthYearFilterFields from '../components/filters/MonthYearFilterFields';
+import { getDefaultYearMonth } from '../utils/dateRangeFilters';
 
 const PAGE_SIZE_DEFAULT = 5;
+const defaultMonthFilter = getDefaultYearMonth();
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(n || 0);
@@ -52,8 +54,8 @@ export default function Quotes() {
 
   const [search, setSearch] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
-  const [yearFilter, setYearFilter] = useState('');
-  const [monthFilter, setMonthFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState(defaultMonthFilter.year);
+  const [monthFilter, setMonthFilter] = useState(defaultMonthFilter.month);
   const [montoFilter, setMontoFilter] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);

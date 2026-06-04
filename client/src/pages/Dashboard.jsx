@@ -10,7 +10,7 @@ import {
   YAxis,
 } from 'recharts';
 import { api } from '../api';
-import { formatMoney } from '../utils/formatMoney';
+import { formatMoney, formatMoneyCompact } from '../utils/formatMoney';
 import ReportTooltip from '../components/reports/ReportTooltip';
 import { CHART_AXIS_TICK, CHART_COLORS } from '../utils/reportStats';
 
@@ -39,8 +39,10 @@ export default function Dashboard() {
       ]
     : [];
 
+  const moneyTitle = (n) => formatMoney(n);
+
   return (
-    <div className="page">
+    <div className="page dashboard-page">
       <header className="page-header">
         <div>
           <h1>Inicio</h1>
@@ -59,18 +61,23 @@ export default function Dashboard() {
         {finance && (
           <>
             <div className="stat-card">
-              <span className="stat-value">{formatMoney(finance.expensesMonth)}</span>
+              <span className="stat-value" title={moneyTitle(finance.expensesMonth)}>
+                {formatMoneyCompact(finance.expensesMonth)}
+              </span>
               <span className="stat-label">Gastos del mes</span>
             </div>
             <div className="stat-card">
-              <span className="stat-value">{formatMoney(finance.expensesYear)}</span>
+              <span className="stat-value" title={moneyTitle(finance.expensesYear)}>
+                {formatMoneyCompact(finance.expensesYear)}
+              </span>
               <span className="stat-label">Gastos del año</span>
             </div>
             <div className="stat-card">
               <span
                 className={`stat-value ${finance.netProfitMonth >= 0 ? 'profit-positive' : 'profit-negative'}`}
+                title={moneyTitle(finance.netProfitMonth)}
               >
-                {formatMoney(finance.netProfitMonth)}
+                {formatMoneyCompact(finance.netProfitMonth)}
               </span>
               <span className="stat-label">Utilidad operativa (mes)</span>
             </div>
@@ -81,6 +88,7 @@ export default function Dashboard() {
       {finance?.topCategories?.length > 0 && (
         <section className="panel report-chart-panel">
           <h2 className="panel-title">Top categorías de gasto (mes)</h2>
+          <div className="chart-responsive-wrap">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart
               data={finance.topCategories.map((c) => ({
@@ -103,27 +111,37 @@ export default function Dashboard() {
                 tick={CHART_AXIS_TICK}
                 axisLine={false}
                 tickLine={false}
-                width={52}
+                width={56}
+                tickFormatter={(v) => formatMoneyCompact(v)}
               />
               <Tooltip content={<ReportTooltip formatter={formatMoney} />} />
               <Bar dataKey="total" fill="var(--accent)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+          </div>
         </section>
       )}
 
       {chartData.some((d) => d.value > 0) && (
         <section className="panel report-chart-panel">
           <h2 className="panel-title">Ingresos vs gastos (mes)</h2>
+          <div className="chart-responsive-wrap">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
               <XAxis dataKey="name" tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} />
-              <YAxis tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} width={52} />
+              <YAxis
+                tick={CHART_AXIS_TICK}
+                axisLine={false}
+                tickLine={false}
+                width={56}
+                tickFormatter={(v) => formatMoneyCompact(v)}
+              />
               <Tooltip content={<ReportTooltip formatter={formatMoney} />} />
               <Bar dataKey="value" fill="var(--accent)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+          </div>
         </section>
       )}
 
@@ -136,11 +154,11 @@ export default function Dashboard() {
           <h3>Ver cotizaciones</h3>
           <p>Consulta y administra todas tus cotizaciones.</p>
         </Link>
-        <Link to="/finanzas/gastos" className="action-card">
+        <Link to="/compras/gastos" className="action-card">
           <h3>Gastos</h3>
           <p>Registra y vincula gastos a cotizaciones y facturas.</p>
         </Link>
-        <Link to="/finanzas/resultados" className="action-card">
+        <Link to="/compras/resultados" className="action-card">
           <h3>Estado de resultados</h3>
           <p>Ingresos, costos y utilidad operativa.</p>
         </Link>
