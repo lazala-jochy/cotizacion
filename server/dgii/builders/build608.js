@@ -53,13 +53,15 @@ function build608Preview(userId, period, emitterRnc) {
     });
   }
 
-  return {
+  const preview = {
     period,
     emitterRnc: emitterRnc || '',
     recordCount: rows.length,
     rows,
     errors,
   };
+  preview.txt = build608Txt(preview);
+  return preview;
 }
 
 function build608DetailRow(row) {

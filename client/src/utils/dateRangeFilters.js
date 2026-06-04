@@ -50,6 +50,32 @@ export function dateRangeFromYearMonth(year, month) {
   return { from: `${y}-01-01`, to: `${y}-12-31` };
 }
 
+/** Rango para ingresos/gastos en Reportes (alineado a filtros de cotizaciones). */
+export function getReportFinanceRange(months, year, month) {
+  const today = new Date().toISOString().slice(0, 10);
+  let range = dateRangeFromYearMonth(year, month);
+
+  if (!year && !month) {
+    if (months > 0) {
+      const cutoff = new Date();
+      cutoff.setHours(12, 0, 0, 0);
+      cutoff.setMonth(cutoff.getMonth() - months);
+      range = { from: cutoff.toISOString().slice(0, 10), to: today };
+    } else {
+      range = { from: '2000-01-01', to: today };
+    }
+  } else if (months > 0 && range.from) {
+    const cutoff = new Date();
+    cutoff.setHours(12, 0, 0, 0);
+    cutoff.setMonth(cutoff.getMonth() - months);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    if (range.from < cutoffStr) range = { ...range, from: cutoffStr };
+    if (!range.to) range.to = today;
+  }
+
+  return range;
+}
+
 export function parseFilterDate(dateStr) {
   if (!dateStr) return null;
   const iso = String(dateStr).includes('T') ? dateStr : `${dateStr}T12:00:00`;

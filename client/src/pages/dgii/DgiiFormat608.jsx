@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../api';
 import DgiiPeriodField, { buildPeriod, defaultPeriodParts } from '../../components/dgii/DgiiPeriodField';
+import DgiiTxtPreview from '../../components/dgii/DgiiTxtPreview';
+import { formatDgiiPeriodLabel } from '../../utils/dgiiPeriod';
 
 export default function DgiiFormat608() {
   const defaults = defaultPeriodParts();
   const [year, setYear] = useState(defaults.year);
   const [month, setMonth] = useState(defaults.month);
-  const [reasons, setReasons] = useState([]);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -16,13 +17,10 @@ export default function DgiiFormat608() {
   const period = buildPeriod(year, month);
 
   useEffect(() => {
-    api.dgii
-      .catalogs()
-      .then((c) => setReasons(c.annulmentReasons || []))
-      .catch(() => {});
-  }, []);
-
-  const reasonLabel = (code) => reasons.find((r) => r.code === code)?.label || code;
+    setPreview(null);
+    setError('');
+    setSuccess('');
+  }, [period]);
 
   const loadPreview = useCallback(async () => {
     setError('');
@@ -62,15 +60,15 @@ export default function DgiiFormat608() {
       <section className="panel">
         <h2 className="panel-title">Comprobantes anulados — Formato 608</h2>
         <p className="muted panel-desc">
-          La vista previa toma las <strong>facturas anuladas</strong> del período (módulo Facturas), no los
-          gastos de Compras.
+          La <strong>vista previa</strong> muestra el archivo <strong>TXT</strong> que se exportará, con las
+          <strong> facturas anuladas</strong> del período (módulo Facturas).
         </p>
 
         <DgiiPeriodField year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
 
         <div className="form-actions" style={{ marginTop: '1rem' }}>
           <button type="button" className="btn-primary" onClick={loadPreview} disabled={loading || !period}>
-            {loading ? 'Cargando…' : 'Vista previa'}
+            {loading ? 'Generando TXT…' : 'Vista previa'}
           </button>
           <button
             type="button"
@@ -86,14 +84,30 @@ export default function DgiiFormat608() {
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
+      {!preview && !loading && period && (
+        <p className="muted">
+          Seleccione el período y pulse <strong>Vista previa</strong> para ver el contenido del TXT.
+        </p>
+      )}
+
       {preview && (
-        <section className="panel quotes-panel">
-          <p className="muted">
-            Período: <strong>{preview.period}</strong> · Registros: <strong>{preview.recordCount}</strong>
+        <section className="panel quotes-panel dgii-606-preview-panel">
+          <h3 className="panel-subtitle">
+            Vista previa TXT — {formatDgiiPeriodLabel(preview.period)}
+          </h3>
+          <p className="muted panel-desc">
+            RNC emisor: <code>{preview.emitterRnc || '—'}</code> · Registros:{' '}
+            <strong>{preview.recordCount}</strong>
           </p>
+
+          <DgiiTxtPreview
+            content={preview.txt}
+            emptyMessage="No hay comprobantes anulados en este período."
+          />
 
           {preview.errors?.length > 0 && (
             <div className="alert alert-error">
+              <strong>Errores de validación ({preview.errors.length})</strong>
               <ul className="dgii-error-list">
                 {preview.errors.map((err, i) => (
                   <li key={i}>
@@ -103,39 +117,6 @@ export default function DgiiFormat608() {
               </ul>
             </div>
           )}
-
-          <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>NCF</th>
-                  <th>Fecha anulación</th>
-                  <th>Motivo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {preview.rows?.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="muted">
-                      No hay comprobantes anulados en este período.
-                    </td>
-                  </tr>
-                )}
-                {preview.rows?.map((row) => (
-                  <tr key={row.invoiceId}>
-                    <td>
-                      <code>{row.fiscalNumber}</code>
-                    </td>
-                    <td>{row.cancelledAt}</td>
-                    <td>
-                      <span className="muted">{row.cancelReason}</span> —{' '}
-                      {reasonLabel(row.cancelReason)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </section>
       )}
     </>

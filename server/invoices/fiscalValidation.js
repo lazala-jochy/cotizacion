@@ -1,7 +1,7 @@
 const { formatFiscalNumber } = require('./fiscalNumber');
 
 const RANGE_EXHAUSTED_MSG =
-  'El rango fiscal autorizado ha sido agotado. Debe registrar un nuevo rango antes de emitir más facturas.';
+  'El rango fiscal autorizado ha sido agotado. Amplíe el número final en Empresa → Comprobantes fiscales o registre un rango nuevo.';
 
 function todayIsoDate() {
   return new Date().toISOString().slice(0, 10);

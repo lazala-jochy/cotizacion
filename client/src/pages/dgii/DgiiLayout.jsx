@@ -2,7 +2,6 @@ import { NavLink, Outlet } from 'react-router-dom';
 
 const TABS = [
   { to: '/dgii/607', label: '607 — Ventas' },
-  { to: '/dgii/608', label: '608 — Anulados' },
   { to: '/dgii/606', label: '606 — Compras' },
   { to: '/dgii/historial', label: 'Historial' },
 ];

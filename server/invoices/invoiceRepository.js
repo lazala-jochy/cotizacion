@@ -262,15 +262,23 @@ function updateInvoiceWithItems(id, userId, invoicePatch, items) {
     ).run(...params);
     db.prepare('DELETE FROM invoice_items WHERE invoice_id = ?').run(id);
     const insertItem = db.prepare(
-      `INSERT INTO invoice_items (invoice_id, descripcion, cantidad, precio_unitario, total, orden)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO invoice_items (invoice_id, descripcion, cantidad, precio_unitario, costo_unitario, total, orden)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
     );
     items.forEach((item, idx) => {
       const qty = Number(item.cantidad) || 0;
       const unit = Number(item.precio_unitario) || 0;
       const lineTotal = item.total != null ? Number(item.total) : qty * unit;
       const cost = Math.max(0, Number(item.costo_unitario) || 0);
-      insertItem.run(id, item.descripcion, qty, unit, cost, lineTotal, item.orden ?? idx);
+      insertItem.run(
+        id,
+        item.descripcion,
+        qty,
+        unit,
+        cost,
+        lineTotal,
+        item.orden ?? idx
+      );
     });
   });
 

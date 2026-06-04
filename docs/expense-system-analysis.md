@@ -102,7 +102,7 @@ Utilidad operativa = Ingresos − Costos − Gastos
 
 ### Costo de productos
 
-En **Nueva/Editar cotización**, columna **Costo unit.** por ítem. Con precio de venta y gastos asociados, el panel muestra utilidad bruta, neta y margen %.
+En **Nueva/Editar cotización**, columna **Costo unit.** por ítem (el total de la línea y el subtotal se calculan con ese valor).
 
 ### Estado de resultados
 

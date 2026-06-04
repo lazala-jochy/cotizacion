@@ -1,6 +1,7 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert');
 const { validateRnc } = require('../server/dgii/utils/validateRnc');
+const { resolveBuyerIdentification } = require('../server/dgii/utils/identifyTaxId');
 const { validateCedula } = require('../server/dgii/utils/validateCedula');
 const { validateNcf, validateAnnulmentReason } = require('../server/dgii/utils/validateNcf');
 const { validatePeriod } = require('../server/dgii/utils/validatePeriod');
@@ -16,6 +17,26 @@ describe('validateRnc', () => {
   test('rechaza RNC vacío', () => {
     const r = validateRnc('');
     assert.strictEqual(r.ok, false);
+  });
+});
+
+describe('resolveBuyerIdentification', () => {
+  test('B02: RNC inválido opcional no bloquea el 607', () => {
+    const r = resolveBuyerIdentification('123456789', false);
+    assert.strictEqual(r.ok, true);
+    assert.strictEqual(r.idValue, '');
+  });
+
+  test('B01: RNC inválido sigue siendo error', () => {
+    const r = resolveBuyerIdentification('123456789', true);
+    assert.strictEqual(r.ok, false);
+    assert.match(r.error, /RNC del cliente inválido/i);
+  });
+
+  test('acepta RNC válido', () => {
+    const r = resolveBuyerIdentification('131880681', true);
+    assert.strictEqual(r.ok, true);
+    assert.strictEqual(r.idValue, '131880681');
   });
 });
 

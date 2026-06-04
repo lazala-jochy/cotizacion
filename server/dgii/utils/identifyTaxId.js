@@ -44,10 +44,17 @@ function resolveBuyerIdentification(clientRnc, documentRequiresTaxId = false) {
 
   const digits = raw.replace(/\D/g, '');
   if (digits.length === 9) {
-    return { ok: false, error: 'RNC del cliente inválido.' };
+    if (documentRequiresTaxId) {
+      return { ok: false, error: 'RNC del cliente inválido.' };
+    }
+    // B02 y otros sin RNC obligatorio: no bloquear el 607 por un RNC opcional mal digitado
+    return { ok: true, idType: '', idValue: '', display: '' };
   }
   if (digits.length === 11) {
-    return { ok: false, error: 'Cédula del cliente inválida.' };
+    if (documentRequiresTaxId) {
+      return { ok: false, error: 'Cédula del cliente inválida.' };
+    }
+    return { ok: true, idType: '', idValue: '', display: '' };
   }
 
   return {

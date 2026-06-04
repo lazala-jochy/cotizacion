@@ -22,12 +22,18 @@ import {
   computeKpis,
   estadoColor,
   filterQuotesByMonths,
+  formatMonthLabel,
   groupByEstado,
   groupByMonth,
   topClientsByMonto,
 } from '../utils/reportStats';
 import MonthYearFilterFields from '../components/filters/MonthYearFilterFields';
-import { getDefaultYearMonth, getYearOptionsFromItems, matchesYearMonth } from '../utils/dateRangeFilters';
+import {
+  getDefaultYearMonth,
+  getReportFinanceRange,
+  getYearOptionsFromItems,
+  matchesYearMonth,
+} from '../utils/dateRangeFilters';
 
 const defaultMonthFilter = getDefaultYearMonth();
 
@@ -65,7 +71,10 @@ function ChartEmpty({ message }) {
 
 export default function Reports() {
   const [quotes, setQuotes] = useState([]);
+  const [finance, setFinance] = useState(null);
+  const [expenseSummary, setExpenseSummary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [financeLoading, setFinanceLoading] = useState(true);
   const [error, setError] = useState('');
   const [months, setMonths] = useState(6);
   const [yearFilter, setYearFilter] = useState(defaultMonthFilter.year);
@@ -78,6 +87,27 @@ export default function Reports() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const range = getReportFinanceRange(months, yearFilter, monthFilter);
+    if (!range.from || !range.to) {
+      setFinance(null);
+      setExpenseSummary(null);
+      setFinanceLoading(false);
+      return;
+    }
+    setFinanceLoading(true);
+    Promise.all([
+      api.expenses.incomeStatement(range),
+      api.expenses.reportSummary(range),
+    ])
+      .then(([stmt, summary]) => {
+        setFinance(stmt);
+        setExpenseSummary(summary);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setFinanceLoading(false));
+  }, [months, yearFilter, monthFilter]);
 
   const yearOptions = useMemo(
     () => getYearOptionsFromItems(quotes, (q) => q.fecha),
@@ -94,6 +124,24 @@ export default function Reports() {
   const byEstado = useMemo(() => groupByEstado(filtered), [filtered]);
   const topClients = useMemo(() => topClientsByMonto(filtered), [filtered]);
 
+  const financeMonthly = useMemo(
+    () =>
+      (finance?.monthlyComparison || []).map((row) => ({
+        ...row,
+        label: formatMonthLabel(row.month),
+      })),
+    [finance]
+  );
+
+  const expenseByCategory = useMemo(
+    () =>
+      (expenseSummary?.topCategories || []).map((c) => ({
+        name: c.name,
+        total: c.total,
+      })),
+    [expenseSummary]
+  );
+
   const periodLabel = PERIODS.find((p) => p.value === months)?.label || '';
 
   return (
@@ -101,7 +149,7 @@ export default function Reports() {
       <header className="page-header">
         <div>
           <h1>Reportes</h1>
-          <p>Resumen visual de tus cotizaciones y ventas</p>
+          <p>Ingresos, gastos y cotizaciones en el período seleccionado</p>
         </div>
         <div className="reports-period reports-header-filters">
           <label htmlFor="report-period">
@@ -132,11 +180,174 @@ export default function Reports() {
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      {loading ? (
+      {loading && financeLoading ? (
         <p className="muted reports-loading">Cargando reportes…</p>
       ) : (
         <>
-          <section className="reports-kpi-grid" aria-label="Indicadores principales">
+          <section className="reports-finance-section" aria-label="Ingresos y gastos">
+            <h2 className="reports-section-title">Ingresos y gastos</h2>
+            <p className="muted reports-section-desc">
+              Entrada por facturas emitidas y salida por gastos operativos registrados en Compras.
+            </p>
+            {financeLoading ? (
+              <p className="muted">Cargando ingresos y gastos…</p>
+            ) : finance ? (
+              <>
+                <div className="reports-kpi-grid reports-kpi-grid--finance">
+                  <article className="report-kpi report-kpi--success">
+                    <span className="report-kpi-label">Ingresos (entrada)</span>
+                    <strong className="report-kpi-value">{formatMoney(finance.revenue)}</strong>
+                    <span className="report-kpi-hint">
+                      {finance.invoiceCount} factura(s) · base gravable
+                    </span>
+                  </article>
+                  <article className="report-kpi report-kpi--danger">
+                    <span className="report-kpi-label">Gastos (salida)</span>
+                    <strong className="report-kpi-value">{formatMoney(finance.expenses)}</strong>
+                    <span className="report-kpi-hint">
+                      {finance.expenseCount} gasto(s) operativos
+                    </span>
+                  </article>
+                  <article
+                    className={`report-kpi ${
+                      finance.operatingProfit >= 0 ? 'report-kpi--success' : 'report-kpi--danger'
+                    }`}
+                  >
+                    <span className="report-kpi-label">Utilidad operativa</span>
+                    <strong className="report-kpi-value">{formatMoney(finance.operatingProfit)}</strong>
+                    <span className="report-kpi-hint">
+                      Ingresos − costo productos − gastos
+                    </span>
+                  </article>
+                </div>
+
+                <div className="reports-charts-grid reports-charts-grid--finance">
+                  <section className="panel report-chart-panel report-chart-panel--wide">
+                    <header className="report-chart-header">
+                      <div>
+                        <h3>Ingresos vs gastos</h3>
+                        <p className="muted">Comparación mensual</p>
+                      </div>
+                    </header>
+                    {financeMonthly.length === 0 ? (
+                      <ChartEmpty message="Sin facturas ni gastos en este período" />
+                    ) : (
+                      <div className="report-chart-body">
+                        <ResponsiveContainer width="100%" height={280}>
+                          <BarChart data={financeMonthly} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              stroke={CHART_COLORS.grid}
+                              vertical={false}
+                            />
+                            <XAxis
+                              dataKey="label"
+                              tick={CHART_AXIS_TICK}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <YAxis
+                              tickFormatter={formatMoneyShort}
+                              tick={CHART_AXIS_TICK}
+                              axisLine={false}
+                              tickLine={false}
+                              width={52}
+                            />
+                            <Tooltip
+                              content={(props) => (
+                                <ReportTooltip {...props} formatter={(v) => formatMoney(v)} />
+                              )}
+                            />
+                            <Legend
+                              formatter={(value) => (
+                                <span className="report-legend-text">{value}</span>
+                              )}
+                            />
+                            <Bar
+                              dataKey="revenue"
+                              name="Ingresos"
+                              fill={CHART_COLORS.success}
+                              radius={[6, 6, 0, 0]}
+                              maxBarSize={40}
+                            />
+                            <Bar
+                              dataKey="expenses"
+                              name="Gastos"
+                              fill={CHART_COLORS.danger}
+                              radius={[6, 6, 0, 0]}
+                              maxBarSize={40}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                  </section>
+
+                  {expenseByCategory.length > 0 && (
+                    <section className="panel report-chart-panel">
+                      <header className="report-chart-header">
+                        <div>
+                          <h3>Gastos por categoría</h3>
+                          <p className="muted">Top categorías del período</p>
+                        </div>
+                      </header>
+                      <div className="report-chart-body">
+                        <ResponsiveContainer
+                          width="100%"
+                          height={Math.max(200, expenseByCategory.length * 40)}
+                        >
+                          <BarChart
+                            data={expenseByCategory}
+                            layout="vertical"
+                            margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
+                          >
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              stroke={CHART_COLORS.grid}
+                              horizontal={false}
+                            />
+                            <XAxis
+                              type="number"
+                              tickFormatter={formatMoneyShort}
+                              tick={CHART_AXIS_TICK}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <YAxis
+                              type="category"
+                              dataKey="name"
+                              width={110}
+                              tick={{ fill: '#e8edf4', fontSize: 12 }}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <Tooltip
+                              content={(props) => (
+                                <ReportTooltip {...props} formatter={(v) => formatMoney(v)} />
+                              )}
+                            />
+                            <Bar
+                              dataKey="total"
+                              name="Gasto"
+                              fill={CHART_COLORS.danger}
+                              radius={[0, 6, 6, 0]}
+                              maxBarSize={28}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </section>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="muted">No hay datos de ingresos o gastos para el período.</p>
+            )}
+          </section>
+
+          <h2 className="reports-section-title">Cotizaciones</h2>
+
+          <section className="reports-kpi-grid" aria-label="Indicadores de cotizaciones">
             <article className="report-kpi report-kpi--primary">
               <span className="report-kpi-label">Total cotizado</span>
               <strong className="report-kpi-value">{formatMoney(kpis.totalMonto)}</strong>
@@ -177,7 +388,7 @@ export default function Reports() {
               <p className="muted">Crea cotizaciones para ver gráficos y tendencias aquí.</p>
             </section>
           ) : (
-            <div className="reports-charts-grid">
+            <div className="reports-charts-grid" aria-label="Gráficos de cotizaciones">
               <section className="panel report-chart-panel report-chart-panel--wide">
                 <header className="report-chart-header">
                   <div>

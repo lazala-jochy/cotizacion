@@ -61,7 +61,7 @@ function build607Preview(userId, period, emitterRnc) {
     });
   }
 
-  return {
+  const preview = {
     period,
     emitterRnc: emitterRnc || '',
     recordCount: details.length,
@@ -72,6 +72,8 @@ function build607Preview(userId, period, emitterRnc) {
     rows: details,
     errors,
   };
+  preview.txt = build607Txt(preview);
+  return preview;
 }
 
 /**

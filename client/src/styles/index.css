@@ -3297,6 +3297,33 @@ a.cell-ellipsis:hover {
   background: linear-gradient(90deg, var(--success), #4ade80);
 }
 
+.report-kpi--danger::before {
+  background: linear-gradient(90deg, var(--danger), #f87171);
+}
+
+.reports-finance-section {
+  margin-bottom: 2rem;
+}
+
+.reports-section-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+}
+
+.reports-section-desc {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+}
+
+.reports-kpi-grid--finance {
+  margin-bottom: 1rem;
+}
+
+.reports-charts-grid--finance {
+  margin-bottom: 0.5rem;
+}
+
 .report-kpi-label {
   font-size: 0.75rem;
   text-transform: uppercase;

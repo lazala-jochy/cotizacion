@@ -145,10 +145,14 @@ export default function FiscalSettingsSection() {
           <input
             type="number"
             min={0}
+            max={99999999}
             value={form.end_number}
             onChange={(e) => setForm({ ...form, end_number: e.target.value })}
             required
           />
+          <span className="field-hint muted">
+            Puede ampliar este valor si el rango se agota (máx. 99.999.999, 8 dígitos).
+          </span>
         </label>
         <label>
           Último número utilizado

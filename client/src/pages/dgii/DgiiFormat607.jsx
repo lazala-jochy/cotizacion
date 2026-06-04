@@ -1,6 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../api';
 import DgiiPeriodField, { buildPeriod, defaultPeriodParts } from '../../components/dgii/DgiiPeriodField';
+import DgiiTxtPreview from '../../components/dgii/DgiiTxtPreview';
+import { formatDgiiPeriodLabel } from '../../utils/dgiiPeriod';
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-DO', {
@@ -21,6 +23,12 @@ export default function DgiiFormat607() {
   const [success, setSuccess] = useState('');
 
   const period = buildPeriod(year, month);
+
+  useEffect(() => {
+    setPreview(null);
+    setError('');
+    setSuccess('');
+  }, [period]);
 
   const loadPreview = useCallback(async () => {
     setError('');
@@ -60,15 +68,15 @@ export default function DgiiFormat607() {
       <section className="panel">
         <h2 className="panel-title">Ventas — Formato 607</h2>
         <p className="muted panel-desc">
-          La vista previa toma las <strong>facturas emitidas</strong> del período (módulo Facturas), no los
-          gastos de Compras.
+          La <strong>vista previa</strong> muestra el archivo <strong>TXT</strong> que se exportará, con las
+          <strong> facturas emitidas</strong> del período (módulo Facturas).
         </p>
 
         <DgiiPeriodField year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
 
         <div className="form-actions" style={{ marginTop: '1rem' }}>
           <button type="button" className="btn-primary" onClick={loadPreview} disabled={loading || !period}>
-            {loading ? 'Cargando…' : 'Vista previa'}
+            {loading ? 'Generando TXT…' : 'Vista previa'}
           </button>
           <button
             type="button"
@@ -84,18 +92,32 @@ export default function DgiiFormat607() {
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
+      {!preview && !loading && period && (
+        <p className="muted">
+          Seleccione el período y pulse <strong>Vista previa</strong> para ver el contenido del TXT.
+        </p>
+      )}
+
       {preview && (
-        <section className="panel quotes-panel">
-          <div className="quotes-toolbar">
-            <p className="muted">
-              RNC emisor: <strong>{preview.emitterRnc || '—'}</strong> · Período:{' '}
-              <strong>{preview.period}</strong> · Registros: <strong>{preview.recordCount}</strong>
-            </p>
-            <p className="muted">
-              Total facturado: {formatMoney(preview.totals?.montoFacturado)} · ITBIS:{' '}
-              {formatMoney(preview.totals?.itbisFacturado)}
-            </p>
-          </div>
+        <section className="panel quotes-panel dgii-606-preview-panel">
+          <h3 className="panel-subtitle">
+            Vista previa TXT — {formatDgiiPeriodLabel(preview.period)}
+          </h3>
+          <p className="muted panel-desc">
+            RNC emisor: <code>{preview.emitterRnc || '—'}</code> · Registros:{' '}
+            <strong>{preview.recordCount}</strong>
+          </p>
+
+          <DgiiTxtPreview
+            content={preview.txt}
+            emptyMessage="No hay ventas en este período."
+          />
+
+          <p className="muted dgii-606-export-hint">
+            Totales en el archivo: facturado{' '}
+            <strong>{formatMoney(preview.totals?.montoFacturado)}</strong> · ITBIS{' '}
+            <strong>{formatMoney(preview.totals?.itbisFacturado)}</strong>
+          </p>
 
           {preview.errors?.length > 0 && (
             <div className="alert alert-error">
@@ -109,46 +131,6 @@ export default function DgiiFormat607() {
               </ul>
             </div>
           )}
-
-          <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>NCF</th>
-                  <th>Cliente</th>
-                  <th>ID</th>
-                  <th>Fecha</th>
-                  <th className="num">Monto</th>
-                  <th className="num">ITBIS</th>
-                  <th className="num">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {preview.rows?.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="muted">
-                      No hay ventas en este período.
-                    </td>
-                  </tr>
-                )}
-                {preview.rows?.map((row) => (
-                  <tr key={row.invoiceId}>
-                    <td>
-                      <code>{row.fiscalNumber}</code>
-                    </td>
-                    <td>{row.clientNombre}</td>
-                    <td>
-                      <span className="muted">{row.idType}</span> {row.idValue}
-                    </td>
-                    <td>{row.fechaComprobante}</td>
-                    <td className="num">{formatMoney(row.montoFacturado)}</td>
-                    <td className="num">{formatMoney(row.itbisFacturado)}</td>
-                    <td className="num">{formatMoney(row.total)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </section>
       )}
     </>

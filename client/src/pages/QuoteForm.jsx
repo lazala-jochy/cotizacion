@@ -90,8 +90,8 @@ export default function QuoteForm() {
             ? q.items.map((i) => ({
                 descripcion: i.descripcion,
                 cantidad: i.cantidad,
-                precio_unitario: i.precio_unitario,
-                costo_unitario: i.costo_unitario || 0,
+                precio_unitario: Number(i.costo_unitario) || Number(i.precio_unitario) || 0,
+                costo_unitario: Number(i.costo_unitario) || Number(i.precio_unitario) || 0,
               }))
             : [{ ...emptyItem }]
         );
@@ -102,7 +102,7 @@ export default function QuoteForm() {
 
   const totals = useMemo(() => {
     const subtotal = items.reduce(
-      (s, i) => s + (Number(i.cantidad) || 0) * (Number(i.precio_unitario) || 0),
+      (s, i) => s + (Number(i.cantidad) || 0) * (Number(i.costo_unitario) || 0),
       0
     );
     const disc = Math.max(0, Math.min(subtotal, Number(descuento) || 0));
@@ -125,7 +125,16 @@ export default function QuoteForm() {
   }, [items, taxMode, itbisRate, descuento]);
 
   const updateItem = (idx, field, value) => {
-    setItems((prev) => prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item)));
+    setItems((prev) =>
+      prev.map((item, i) => {
+        if (i !== idx) return item;
+        const next = { ...item, [field]: value };
+        if (field === 'costo_unitario') {
+          next.precio_unitario = value;
+        }
+        return next;
+      })
+    );
   };
 
   const addItem = () => setItems((prev) => [...prev, { ...emptyItem }]);
@@ -277,7 +286,6 @@ export default function QuoteForm() {
               <tr>
                 <th>Descripción</th>
                 <th>Cant.</th>
-                <th>Precio venta</th>
                 <th>Costo unit.</th>
                 <th>Total</th>
                 <th></th>
@@ -285,7 +293,7 @@ export default function QuoteForm() {
             </thead>
             <tbody>
               {items.map((item, idx) => {
-                const lineTotal = (Number(item.cantidad) || 0) * (Number(item.precio_unitario) || 0);
+                const lineTotal = (Number(item.cantidad) || 0) * (Number(item.costo_unitario) || 0);
                 return (
                   <tr key={idx}>
                     <td>
@@ -310,18 +318,9 @@ export default function QuoteForm() {
                         type="number"
                         min="0"
                         step="0.01"
-                        value={item.precio_unitario}
-                        onChange={(e) => updateItem(idx, 'precio_unitario', e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
                         value={item.costo_unitario ?? 0}
                         onChange={(e) => updateItem(idx, 'costo_unitario', e.target.value)}
-                        title="Costo de compra o producción"
+                        title="Costo unitario del ítem"
                       />
                     </td>
                     <td className="line-total">{formatMoney(lineTotal)}</td>

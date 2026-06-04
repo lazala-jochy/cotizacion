@@ -32,7 +32,7 @@ Este módulo genera archivos de texto para cargar en la **Oficina Virtual (OFV)*
 **Flujo en la app:**
 
 1. Menú **DGII → Formato 607**
-2. Seleccionar año y mes → **Vista previa** (consulta facturas del período)
+2. Seleccionar año y mes → **Vista previa** (muestra el TXT del archivo antes de exportar)
 3. Corregir errores (RNC del cliente, NCF, etc.)
 4. **Exportar TXT** → se guarda en historial y en disco local
 
