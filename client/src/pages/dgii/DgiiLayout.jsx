@@ -1,8 +1,8 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
 const TABS = [
-  { to: '/dgii/607', label: '607 — Ventas' },
-  { to: '/dgii/606', label: '606 — Compras' },
+  { to: '/dgii/606', label: '606' },
+  { to: '/dgii/607', label: '607' },
   { to: '/dgii/historial', label: 'Historial' },
 ];
 
@@ -11,10 +11,10 @@ export default function DgiiLayout() {
     <div className="page">
       <header className="page-header">
         <div>
-          <h1>DGII</h1>
+          <h1>606 / 607</h1>
           <p className="dgii-nav-intro">
-            Elija formato, período, <strong>Vista previa</strong> y <strong>Exportar TXT</strong>. Los
-            archivos quedan en Historial.
+            Compras (606) y ventas (607) — elija período, <strong>Vista previa</strong> y{' '}
+            <strong>Exportar TXT</strong>. Los archivos quedan en Historial.
           </p>
         </div>
       </header>

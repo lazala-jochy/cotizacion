@@ -74,7 +74,7 @@ export default function DgiiFormat606() {
   return (
     <>
       <section className="panel">
-        <h2 className="panel-title">Compras — Formato 606</h2>
+        <h2 className="panel-title">606 — Compras</h2>
         <p className="muted panel-desc">
           La <strong>vista previa</strong> muestra el archivo <strong>TXT</strong> que se exportará, con los
           gastos de <strong>Compras</strong> del período que tengan RNC y NCF. Use{' '}

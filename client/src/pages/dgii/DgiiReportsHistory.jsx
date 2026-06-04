@@ -6,9 +6,9 @@ import { getDefaultYearMonth, getYearOptionsFromItems, matchesDgiiPeriod } from 
 const defaultMonthFilter = getDefaultYearMonth();
 
 const TYPE_LABELS = {
-  '606': 'Compras (606)',
-  '607': 'Ventas (607)',
-  '608': 'Anulados (608)',
+  '606': '606',
+  '607': '607',
+  '608': '608',
 };
 
 export default function DgiiReportsHistory() {
@@ -67,9 +67,9 @@ export default function DgiiReportsHistory() {
           <span className="quotes-filter-label">Formato</span>
           <select className="quotes-filter-select" value={filter} onChange={(e) => setFilter(e.target.value)}>
             <option value="">Todos</option>
-            <option value="607">607 — Ventas</option>
-            <option value="608">608 — Anulados</option>
-            <option value="606">606 — Compras</option>
+            <option value="606">606</option>
+            <option value="607">607</option>
+            <option value="608">608</option>
           </select>
         </label>
       </div>

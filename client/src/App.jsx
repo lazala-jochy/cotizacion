@@ -104,7 +104,7 @@ export default function App() {
             </Suspense>
           }
         >
-          <Route index element={<Navigate to="/dgii/607" replace />} />
+          <Route index element={<Navigate to="/dgii/606" replace />} />
           <Route
             path="607"
             element={
@@ -113,7 +113,7 @@ export default function App() {
               </Suspense>
             }
           />
-          <Route path="608" element={<Navigate to="/dgii/607" replace />} />
+          <Route path="608" element={<Navigate to="/dgii/606" replace />} />
           <Route
             path="606"
             element={

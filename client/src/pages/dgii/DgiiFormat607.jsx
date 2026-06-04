@@ -66,7 +66,7 @@ export default function DgiiFormat607() {
   return (
     <>
       <section className="panel">
-        <h2 className="panel-title">Ventas — Formato 607</h2>
+        <h2 className="panel-title">607 — Ventas</h2>
         <p className="muted panel-desc">
           La <strong>vista previa</strong> muestra el archivo <strong>TXT</strong> que se exportará, con las
           <strong> facturas emitidas</strong> del período (módulo Facturas).
