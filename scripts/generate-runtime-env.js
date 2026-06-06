@@ -5,7 +5,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { parseEnvFile, envFilePath, projectRoot } = require('./load-env-file');
+const { parseEnvFile, envFilePath, projectRoot } = require('../server/load-env-file');
 
 const RUNTIME_KEYS = ['LICENSE_SERVER_URL', 'LICENSE_ENFORCE', 'BASE_URL', 'JWT_SECRET'];
 

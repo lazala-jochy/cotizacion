@@ -1,10 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-/**
- * Lee un archivo .env y devuelve un objeto clave → valor.
- * No modifica process.env.
- */
+/** Lee un archivo .env y devuelve un objeto clave → valor. */
 function parseEnvFile(filePath) {
   const out = {};
   if (!fs.existsSync(filePath)) return out;
@@ -36,16 +33,8 @@ function envFilePath() {
   return path.join(projectRoot(), '.env');
 }
 
-function applyEnvToProcess(envMap, { overwrite = false } = {}) {
-  for (const [key, val] of Object.entries(envMap)) {
-    if (!overwrite && key in process.env) continue;
-    process.env[key] = val;
-  }
-}
-
 module.exports = {
   parseEnvFile,
   projectRoot,
   envFilePath,
-  applyEnvToProcess,
 };

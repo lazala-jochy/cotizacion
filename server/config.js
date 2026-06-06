@@ -1,25 +1,19 @@
 const fs = require('fs');
 const path = require('path');
-const { parseEnvFile } = require('../scripts/load-env-file');
+const { parseEnvFile } = require('./load-env-file');
 
 const PORT = 3847;
 
 function readRuntimeEnvFile() {
-  const candidates = [
-    path.join(__dirname, 'runtime-env.json'),
-    path.join(__dirname, '..', 'server', 'runtime-env.json'),
-  ];
-  for (const filePath of candidates) {
-    if (!fs.existsSync(filePath)) continue;
-    try {
-      const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      const { generatedAt: _g, ...vars } = data;
-      return vars;
-    } catch {
-      /* intentar siguiente ruta */
-    }
+  const filePath = path.join(__dirname, 'runtime-env.json');
+  if (!fs.existsSync(filePath)) return {};
+  try {
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const { generatedAt: _g, ...vars } = data;
+    return vars;
+  } catch {
+    return {};
   }
-  return {};
 }
 
 function applyMergedEnv() {
