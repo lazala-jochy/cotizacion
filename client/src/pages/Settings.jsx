@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import FiscalSettingsSection from '../components/FiscalSettingsSection';
+import LicenseSettingsSection from '../components/LicenseSettingsSection';
 
 const emptyEmisor = {
   nombre: '',
@@ -204,6 +205,8 @@ export default function Settings() {
           </div>
         </form>
       </section>
+
+      <LicenseSettingsSection />
 
       <FiscalSettingsSection />
     </div>

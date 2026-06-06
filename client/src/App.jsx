@@ -1,20 +1,23 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
+import { useLicense } from './context/LicenseContext';
+import Layout from './components/Layout';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ActivateLicense from './pages/ActivateLicense';
+import Dashboard from './pages/Dashboard';
+import Quotes from './pages/Quotes';
+import QuoteForm from './pages/QuoteForm';
+import Settings from './pages/Settings';
+import Reports from './pages/Reports';
+import LicenseLoadingScreen from './components/LicenseLoadingScreen';
 
 function LegacyFinanzasRedirect() {
   const { pathname, search, hash } = useLocation();
   const to = pathname.replace(/^\/finanzas/, '/compras') || '/compras/gastos';
   return <Navigate to={`${to}${search}${hash}`} replace />;
 }
-import { useAuth } from './context/AuthContext';
-import Layout from './components/Layout';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Quotes from './pages/Quotes';
-import QuoteForm from './pages/QuoteForm';
-import Settings from './pages/Settings';
-import Reports from './pages/Reports';
 
 const QuoteView = lazy(() => import('./pages/QuoteView'));
 const Invoices = lazy(() => import('./pages/Invoices'));
@@ -40,9 +43,25 @@ function PageLoading() {
   );
 }
 
+function LicenseRoute({ children }) {
+  const { isLicensed, loading } = useLicense();
+  if (loading) {
+    return <LicenseLoadingScreen />;
+  }
+  return isLicensed ? children : <Navigate to="/activar" replace />;
+}
+
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? children : <Navigate to="/login" replace />;
+}
+
+function LicensedPrivateRoute({ children }) {
+  return (
+    <LicenseRoute>
+      <PrivateRoute>{children}</PrivateRoute>
+    </LicenseRoute>
+  );
 }
 
 function PublicRoute({ children }) {
@@ -53,27 +72,32 @@ function PublicRoute({ children }) {
 export default function App() {
   return (
     <Routes>
+      <Route path="/activar" element={<ActivateLicense />} />
       <Route
         path="/login"
         element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
+          <LicenseRoute>
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          </LicenseRoute>
         }
       />
       <Route
         path="/register"
         element={
-          <PublicRoute>
-            <Register />
-          </PublicRoute>
+          <LicenseRoute>
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          </LicenseRoute>
         }
       />
       <Route
         element={
-          <PrivateRoute>
+          <LicensedPrivateRoute>
             <Layout />
-          </PrivateRoute>
+          </LicensedPrivateRoute>
         }
       >
         <Route index element={<Dashboard />} />

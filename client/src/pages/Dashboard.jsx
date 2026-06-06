@@ -10,11 +10,59 @@ import {
   YAxis,
 } from 'recharts';
 import { api } from '../api';
+import { useLicense } from '../context/LicenseContext';
 import { formatMoney, formatMoneyCompact } from '../utils/formatMoney';
 import ReportTooltip from '../components/reports/ReportTooltip';
 import { CHART_AXIS_TICK, CHART_COLORS } from '../utils/reportStats';
 
+const ACTION_CARDS = [
+  {
+    module: 'cotizaciones',
+    to: '/cotizaciones/nueva',
+    title: 'Nueva cotización',
+    text: 'Crea una cotización con datos del cliente e ítems.',
+  },
+  {
+    module: 'cotizaciones',
+    to: '/cotizaciones',
+    title: 'Ver cotizaciones',
+    text: 'Consulta y administra todas tus cotizaciones.',
+  },
+  {
+    module: 'facturas',
+    to: '/facturas',
+    title: 'Facturas',
+    text: 'Emite y administra facturas fiscales.',
+  },
+  {
+    module: 'compras',
+    to: '/compras/gastos',
+    title: 'Gastos',
+    text: 'Registra y vincula gastos a cotizaciones y facturas.',
+  },
+  {
+    module: 'compras',
+    to: '/compras/resultados',
+    title: 'Estado de resultados',
+    text: 'Ingresos, costos y utilidad operativa.',
+  },
+  {
+    module: 'plantillas',
+    to: '/plantillas',
+    title: 'Diseñador de plantillas',
+    text: 'Diseña el PDF de tus cotizaciones con arrastrar y soltar.',
+  },
+  {
+    module: 'reportes',
+    to: '/reportes',
+    title: 'Reportes',
+    text: 'Gráficos de ventas, estados y clientes principales.',
+  },
+];
+
 export default function Dashboard() {
+  const { hasModule, license } = useLicense();
+  const licensedModules = license?.modules ?? [];
   const [emisor, setEmisor] = useState(null);
   const [stats, setStats] = useState({ quotes: 0 });
   const [finance, setFinance] = useState(null);
@@ -22,15 +70,19 @@ export default function Dashboard() {
 
   useEffect(() => {
     api.emisor.get().then(setEmisor).catch(console.error);
-    api.quotes
-      .list()
-      .then((quotes) => setStats({ quotes: quotes.length }))
-      .catch(console.error);
-    api.expenses
-      .dashboard()
-      .then(setFinance)
-      .catch(() => setFinance(null));
-  }, []);
+    if (hasModule('cotizaciones')) {
+      api.quotes
+        .list()
+        .then((quotes) => setStats({ quotes: quotes.length }))
+        .catch(console.error);
+    }
+    if (hasModule('compras') || hasModule('reportes')) {
+      api.expenses
+        .dashboard()
+        .then(setFinance)
+        .catch(() => setFinance(null));
+    }
+  }, [licensedModules.join('|')]);
 
   const chartData = finance
     ? [
@@ -48,17 +100,21 @@ export default function Dashboard() {
           <h1>Inicio</h1>
           <p>Gestiona cotizaciones con los datos del cliente en cada una</p>
         </div>
-        <Link to="/cotizaciones/nueva" className="btn-primary">
-          + Nueva cotización
-        </Link>
+        {hasModule('cotizaciones') && (
+          <Link to="/cotizaciones/nueva" className="btn-primary">
+            + Nueva cotización
+          </Link>
+        )}
       </header>
 
       <div className="stats-grid">
-        <div className="stat-card">
-          <span className="stat-value">{stats.quotes}</span>
-          <span className="stat-label">Cotizaciones</span>
-        </div>
-        {finance && (
+        {hasModule('cotizaciones') && (
+          <div className="stat-card">
+            <span className="stat-value">{stats.quotes}</span>
+            <span className="stat-label">Cotizaciones</span>
+          </div>
+        )}
+        {finance && (hasModule('compras') || hasModule('reportes')) && (
           <>
             <div className="stat-card">
               <span className="stat-value" title={moneyTitle(finance.expensesMonth)}>
@@ -85,7 +141,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      {finance?.topCategories?.length > 0 && (
+      {finance?.topCategories?.length > 0 && (hasModule('compras') || hasModule('reportes')) && (
         <section className="panel report-chart-panel">
           <h2 className="panel-title">Top categorías de gasto (mes)</h2>
           <div className="chart-responsive-wrap">
@@ -122,7 +178,7 @@ export default function Dashboard() {
         </section>
       )}
 
-      {chartData.some((d) => d.value > 0) && (
+      {chartData.some((d) => d.value > 0) && (hasModule('compras') || hasModule('reportes')) && (
         <section className="panel report-chart-panel">
           <h2 className="panel-title">Ingresos vs gastos (mes)</h2>
           <div className="chart-responsive-wrap">
@@ -146,30 +202,12 @@ export default function Dashboard() {
       )}
 
       <div className="cards-row">
-        <Link to="/cotizaciones/nueva" className="action-card">
-          <h3>Nueva cotización</h3>
-          <p>Crea una cotización con datos del cliente e ítems.</p>
-        </Link>
-        <Link to="/cotizaciones" className="action-card">
-          <h3>Ver cotizaciones</h3>
-          <p>Consulta y administra todas tus cotizaciones.</p>
-        </Link>
-        <Link to="/compras/gastos" className="action-card">
-          <h3>Gastos</h3>
-          <p>Registra y vincula gastos a cotizaciones y facturas.</p>
-        </Link>
-        <Link to="/compras/resultados" className="action-card">
-          <h3>Estado de resultados</h3>
-          <p>Ingresos, costos y utilidad operativa.</p>
-        </Link>
-        <Link to="/plantillas" className="action-card">
-          <h3>Diseñador de plantillas</h3>
-          <p>Diseña el PDF de tus cotizaciones con arrastrar y soltar.</p>
-        </Link>
-        <Link to="/reportes" className="action-card">
-          <h3>Reportes</h3>
-          <p>Gráficos de ventas, estados y clientes principales.</p>
-        </Link>
+        {ACTION_CARDS.filter((card) => hasModule(card.module)).map((card) => (
+          <Link key={card.to} to={card.to} className="action-card">
+            <h3>{card.title}</h3>
+            <p>{card.text}</p>
+          </Link>
+        ))}
       </div>
 
       {!emisorConfigured && (

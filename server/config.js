@@ -1,31 +1,40 @@
 const fs = require('fs');
 const path = require('path');
+const { parseEnvFile } = require('../scripts/load-env-file');
 
 const PORT = 3847;
 
-function loadEnvFile() {
-  const envPath = path.join(__dirname, '..', '.env');
-  if (!fs.existsSync(envPath)) return;
-  const content = fs.readFileSync(envPath, 'utf8');
-  for (const line of content.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eq = trimmed.indexOf('=');
-    if (eq <= 0) continue;
-    const key = trimmed.slice(0, eq).trim();
-    if (key in process.env) continue;
-    let val = trimmed.slice(eq + 1).trim();
-    if (
-      (val.startsWith('"') && val.endsWith('"')) ||
-      (val.startsWith("'") && val.endsWith("'"))
-    ) {
-      val = val.slice(1, -1);
+function readRuntimeEnvFile() {
+  const candidates = [
+    path.join(__dirname, 'runtime-env.json'),
+    path.join(__dirname, '..', 'server', 'runtime-env.json'),
+  ];
+  for (const filePath of candidates) {
+    if (!fs.existsSync(filePath)) continue;
+    try {
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      const { generatedAt: _g, ...vars } = data;
+      return vars;
+    } catch {
+      /* intentar siguiente ruta */
     }
+  }
+  return {};
+}
+
+function applyMergedEnv() {
+  const runtime = readRuntimeEnvFile();
+  const dotenv = parseEnvFile(path.join(__dirname, '..', '.env'));
+
+  // Prioridad: process.env (sistema) > .env local > runtime-env.json (build)
+  const merged = { ...runtime, ...dotenv };
+  for (const [key, val] of Object.entries(merged)) {
+    if (key in process.env) continue;
     process.env[key] = val;
   }
 }
 
-loadEnvFile();
+applyMergedEnv();
 
 const BASE_URL = (process.env.BASE_URL || `http://127.0.0.1:${PORT}`).replace(/\/$/, '');
 
@@ -35,10 +44,23 @@ function buildPdfUrl(pdfToken) {
   return `${BASE_URL}/api/public/pdf/${pdfToken}`;
 }
 
+/** Servicio externo — ver license-server/ */
+const LICENSE_SERVER_URL = (process.env.LICENSE_SERVER_URL || 'http://127.0.0.1:3948').replace(
+  /\/$/,
+  ''
+);
+/** Siempre restringir menú y API a los módulos devueltos por el license-server. */
+const LICENSE_ENFORCE =
+  process.env.LICENSE_ENFORCE !== undefined
+    ? process.env.LICENSE_ENFORCE === 'true' || process.env.LICENSE_ENFORCE === '1'
+    : true;
+
 module.exports = {
   PORT,
   JWT_SECRET: process.env.JWT_SECRET || 'cotizaciones-app-dev-secret-change-in-prod',
   JWT_EXPIRES: '7d',
   BASE_URL,
   buildPdfUrl,
+  LICENSE_SERVER_URL,
+  LICENSE_ENFORCE,
 };

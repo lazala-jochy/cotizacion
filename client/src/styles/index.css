@@ -939,6 +939,283 @@ a.cell-ellipsis:hover {
   margin-bottom: 0;
 }
 
+.license-status-card {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--bg-elevated, rgba(0, 0, 0, 0.15));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.license-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0;
+}
+
+.license-status-grid dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 0.15rem;
+}
+
+.license-status-grid dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+.license-key-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+}
+
+.license-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.license-badge--active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.license-module-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.license-module-chip {
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+}
+
+.license-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.license-form input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.03em;
+}
+
+.license-link {
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+  margin-bottom: 0.35rem;
+}
+
+.license-settings-hint {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+}
+
+.license-contact-note {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.license-loading-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: radial-gradient(ellipse at top, #1e3a5f 0%, var(--bg) 55%);
+}
+
+.license-panel-loading .license-loading-screen {
+  min-height: 280px;
+  border-radius: var(--radius);
+  background: rgba(15, 20, 25, 0.35);
+}
+
+.license-loading-card {
+  text-align: center;
+  max-width: 360px;
+  width: 100%;
+}
+
+.license-loading-spinner {
+  display: flex;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-bottom: 1.25rem;
+}
+
+.license-loading-spinner span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: license-pulse 1.2s ease-in-out infinite;
+}
+
+.license-loading-spinner span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.license-loading-spinner span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes license-pulse {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.65);
+    opacity: 0.45;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.license-loading-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.2rem;
+}
+
+.license-loading-message {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+}
+
+.license-loading-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.license-loading-step {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding-left: 1.1rem;
+  position: relative;
+}
+
+.license-loading-step::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.45rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.license-loading-step--active {
+  color: var(--text);
+}
+
+.license-loading-step--active::before {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.license-sync-actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.license-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.license-sync-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  max-width: 36rem;
+}
+
+.license-sync-log {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.license-sync-log h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.license-sync-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.license-sync-log-table th,
+.license-sync-log-table td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.license-sync-log-table th {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.license-sync-log-row--in_use td:nth-child(3),
+.license-sync-log-row--error td:nth-child(3),
+.license-sync-log-row--revoked td:nth-child(3) {
+  color: var(--danger, #dc2626);
+}
+
+.license-sync-log-row--ok td:nth-child(3) {
+  color: var(--success, #16a34a);
+}
+
+.license-dev-note {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.license-dev-note code {
+  font-size: 0.75rem;
+}
+
+.license-modules-hint {
+  margin-top: 1.25rem;
+  font-size: 0.85rem;
+}
+
+.license-modules-hint ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.25rem;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

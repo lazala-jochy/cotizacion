@@ -10,8 +10,14 @@ for arg in "$@"; do
   fi
 done
 
-node scripts/prepare-update-token.js $REQUIRE
-npm run build
+if [ -n "$REQUIRE" ]; then
+  node scripts/prepare-dist.js --require
+else
+  node scripts/prepare-dist.js
+fi
+
+npm run build:shared
+npx vite build
 
 echo ""
 echo "=== Windows (x64) ==="

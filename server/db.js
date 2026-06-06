@@ -175,6 +175,60 @@ migrateExpensesSchema(db);
 const { migrateLegacyEstados } = require('./quoteWorkflow');
 migrateLegacyEstados(db);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS app_license (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    product_key TEXT NOT NULL,
+    machine_id TEXT NOT NULL,
+    modules_json TEXT NOT NULL DEFAULT '[]',
+    customer_name TEXT,
+    expires_at TEXT,
+    last_license_sync TEXT,
+    activated_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+`);
+
+const licenseCols = db.prepare('PRAGMA table_info(app_license)').all();
+if (!licenseCols.some((c) => c.name === 'last_license_sync')) {
+  db.exec('ALTER TABLE app_license ADD COLUMN last_license_sync TEXT');
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS license_sync_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    synced_at TEXT NOT NULL DEFAULT (datetime('now')),
+    product_key TEXT NOT NULL,
+    machine_id TEXT NOT NULL,
+    modules_json TEXT NOT NULL DEFAULT '[]',
+    result TEXT NOT NULL,
+    message TEXT,
+    source TEXT
+  );
+`);
+if (licenseCols.some((c) => c.name === 'license_token')) {
+  db.exec(`
+    CREATE TABLE app_license_migrated (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      product_key TEXT NOT NULL,
+      machine_id TEXT NOT NULL,
+      modules_json TEXT NOT NULL DEFAULT '[]',
+      customer_name TEXT,
+      expires_at TEXT,
+      activated_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+    INSERT INTO app_license_migrated (
+      id, product_key, machine_id, modules_json, customer_name, expires_at, activated_at, updated_at
+    )
+    SELECT
+      id, product_key, machine_id, modules_json, customer_name, expires_at, activated_at, updated_at
+    FROM app_license;
+    DROP TABLE app_license;
+    ALTER TABLE app_license_migrated RENAME TO app_license;
+  `);
+}
+
 // Recalcular monto_pagado desde historial
 const paySum = db.prepare(`
   UPDATE quotes SET monto_pagado = COALESCE(

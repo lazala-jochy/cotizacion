@@ -5,7 +5,12 @@ const { PORT } = require('./config');
 
 require('./db');
 const { runDgiiStartupTasks } = require('./dgii/startup');
+const { startLicenseScheduler, runSyncIfNeeded } = require('./licensing/licenseScheduler');
 runDgiiStartupTasks();
+startLicenseScheduler();
+runSyncIfNeeded('startup').catch((err) => {
+  console.warn('[license] sincronización al iniciar:', err.message);
+});
 
 const authRoutes = require('./routes/auth');
 const clientsRoutes = require('./routes/clients');
@@ -18,16 +23,22 @@ const financeRoutes = require('./routes/finance');
 const emisorRoutes = require('./routes/emisor');
 const templatesRoutes = require('./routes/templates');
 const publicRoutes = require('./routes/public');
+const licenseRoutes = require('./routes/license');
+const { requireLicenseMiddleware } = require('./middleware/requireLicense');
+const { requireModuleMiddleware } = require('./middleware/requireModule');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+app.use(requireLicenseMiddleware);
+app.use(requireModuleMiddleware);
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, version: require('../package.json').version });
 });
 
 app.use('/api/public', publicRoutes);
+app.use('/api/license', licenseRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/emisor', emisorRoutes);
 app.use('/api/templates', templatesRoutes);

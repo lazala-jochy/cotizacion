@@ -23,6 +23,19 @@ async function request(path, options = {}) {
 
 export const api = {
   health: () => request('/api/health'),
+  license: {
+    status: () => request('/api/license/status'),
+    modules: () => request('/api/license/modules'),
+    activate: (productKey) =>
+      request('/api/license/activate', {
+        method: 'POST',
+        body: JSON.stringify({ productKey }),
+      }),
+    refresh: () => request('/api/license/refresh', { method: 'POST' }),
+    syncScheduled: () => request('/api/license/sync-scheduled', { method: 'POST' }),
+    syncLog: () => request('/api/license/sync-log'),
+    deactivate: () => request('/api/license/deactivate', { method: 'POST' }),
+  },
   emisor: {
     get: () => request('/api/emisor'),
     update: (body) => request('/api/emisor', { method: 'PUT', body: JSON.stringify(body) }),

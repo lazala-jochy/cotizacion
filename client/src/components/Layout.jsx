@@ -1,14 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLicense } from '../context/LicenseContext';
 import { api } from '../api';
+import { NAV_ITEMS } from '../licensing/modules';
 
 const idleUpdate = { status: 'idle', message: '' };
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const { hasModule, canAccessPath, isLicensed, loading: licenseLoading } = useLicense();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (!licenseLoading && !isLicensed) {
+      navigate('/activar', { replace: true });
+    }
+  }, [licenseLoading, isLicensed, navigate]);
+
+  useEffect(() => {
+    if (!canAccessPath(location.pathname)) {
+      navigate('/', { replace: true });
+    }
+  }, [location.pathname, canAccessPath, navigate]);
   const [updateStatus, setUpdateStatus] = useState(idleUpdate);
   const [appVersion, setAppVersion] = useState('');
   const [emisor, setEmisor] = useState(null);
@@ -131,23 +146,11 @@ export default function Layout() {
           </div>
         </div>
         <nav>
-          <NavLink to="/" end>
-            Inicio
-          </NavLink>
-          <NavLink to="/cotizaciones/nueva" end>
-            Nueva cotización
-          </NavLink>
-          <NavLink to="/cotizaciones" end>
-            Cotizaciones
-          </NavLink>
-          <NavLink to="/facturas" end>
-            Facturas
-          </NavLink>
-          <NavLink to="/reportes">Reportes</NavLink>
-          <NavLink to="/dgii">606/607</NavLink>
-          <NavLink to="/compras/gastos">Compras</NavLink>
-          <NavLink to="/plantillas">Plantillas</NavLink>
-          <NavLink to="/configuracion">Empresa</NavLink>
+          {NAV_ITEMS.filter((item) => !item.module || hasModule(item.module)).map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.end}>
+              {item.label}
+            </NavLink>
+          ))}
         </nav>
         <div className="sidebar-footer">
           <p className="user-name">{user?.nombre}</p>
