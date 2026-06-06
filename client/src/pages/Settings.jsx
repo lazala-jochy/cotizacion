@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import { useLicense } from '../context/LicenseContext';
 import FiscalSettingsSection from '../components/FiscalSettingsSection';
 import LicenseSettingsSection from '../components/LicenseSettingsSection';
 
@@ -19,6 +20,7 @@ const emptyEmisor = {
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
 export default function Settings() {
+  const { hasModule } = useLicense();
   const [form, setForm] = useState(emptyEmisor);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -83,9 +85,11 @@ export default function Settings() {
           <h1>Datos de la empresa</h1>
           <p>Razón social, logo, contacto y correo Gmail para envíos.</p>
         </div>
-        <Link to="/plantillas" className="btn-primary">
-          Diseñador de plantillas
-        </Link>
+        {hasModule('plantillas') && (
+          <Link to="/plantillas" className="btn-primary">
+            Diseñador de plantillas
+          </Link>
+        )}
       </header>
 
       {error && <div className="alert alert-error">{error}</div>}

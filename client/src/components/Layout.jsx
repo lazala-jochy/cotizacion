@@ -14,16 +14,11 @@ export default function Layout() {
   const location = useLocation();
 
   useEffect(() => {
-    if (!licenseLoading && !isLicensed) {
-      navigate('/activar', { replace: true });
-    }
-  }, [licenseLoading, isLicensed, navigate]);
-
-  useEffect(() => {
+    if (licenseLoading) return;
     if (!canAccessPath(location.pathname)) {
-      navigate('/', { replace: true });
+      navigate('/configuracion#licencia', { replace: true });
     }
-  }, [location.pathname, canAccessPath, navigate]);
+  }, [licenseLoading, location.pathname, canAccessPath, navigate]);
   const [updateStatus, setUpdateStatus] = useState(idleUpdate);
   const [appVersion, setAppVersion] = useState('');
   const [emisor, setEmisor] = useState(null);

@@ -11,7 +11,7 @@ import Quotes from './pages/Quotes';
 import QuoteForm from './pages/QuoteForm';
 import Settings from './pages/Settings';
 import Reports from './pages/Reports';
-import LicenseLoadingScreen from './components/LicenseLoadingScreen';
+import { moduleForClientPath } from './licensing/modules';
 
 function LegacyFinanzasRedirect() {
   const { pathname, search, hash } = useLocation();
@@ -43,30 +43,29 @@ function PageLoading() {
   );
 }
 
-function LicenseRoute({ children }) {
-  const { isLicensed, loading } = useLicense();
-  if (loading) {
-    return <LicenseLoadingScreen />;
-  }
-  return isLicensed ? children : <Navigate to="/activar" replace />;
-}
-
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
-function LicensedPrivateRoute({ children }) {
-  return (
-    <LicenseRoute>
-      <PrivateRoute>{children}</PrivateRoute>
-    </LicenseRoute>
-  );
-}
-
 function PublicRoute({ children }) {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? <Navigate to="/" replace /> : children;
+}
+
+/** Rutas de módulos licenciados (cotizaciones, facturas, etc.). */
+function LicensedModuleRoute({ children }) {
+  const { hasModule, loading } = useLicense();
+  const { pathname } = useLocation();
+  const moduleCode = moduleForClientPath(pathname);
+
+  if (loading) {
+    return <PageLoading />;
+  }
+  if (moduleCode && !hasModule(moduleCode)) {
+    return <Navigate to="/configuracion#licencia" replace />;
+  }
+  return children;
 }
 
 export default function App() {
@@ -76,28 +75,24 @@ export default function App() {
       <Route
         path="/login"
         element={
-          <LicenseRoute>
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          </LicenseRoute>
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
         }
       />
       <Route
         path="/register"
         element={
-          <LicenseRoute>
-            <PublicRoute>
-              <Register />
-            </PublicRoute>
-          </LicenseRoute>
+          <PublicRoute>
+            <Register />
+          </PublicRoute>
         }
       />
       <Route
         element={
-          <LicensedPrivateRoute>
+          <PrivateRoute>
             <Layout />
-          </LicensedPrivateRoute>
+          </PrivateRoute>
         }
       >
         <Route index element={<Dashboard />} />
@@ -106,26 +101,39 @@ export default function App() {
         <Route
           path="plantillas"
           element={
-            <Suspense fallback={<PageLoading />}>
-              <TemplateDesignerList />
-            </Suspense>
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <TemplateDesignerList />
+              </Suspense>
+            </LicensedModuleRoute>
           }
         />
         <Route
           path="plantillas/:id"
           element={
-            <Suspense fallback={<PageLoading />}>
-              <TemplateDesignerEditor />
-            </Suspense>
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <TemplateDesignerEditor />
+              </Suspense>
+            </LicensedModuleRoute>
           }
         />
-        <Route path="reportes" element={<Reports />} />
+        <Route
+          path="reportes"
+          element={
+            <LicensedModuleRoute>
+              <Reports />
+            </LicensedModuleRoute>
+          }
+        />
         <Route
           path="dgii"
           element={
-            <Suspense fallback={<PageLoading />}>
-              <DgiiLayout />
-            </Suspense>
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <DgiiLayout />
+              </Suspense>
+            </LicensedModuleRoute>
           }
         >
           <Route index element={<Navigate to="/dgii/606" replace />} />
@@ -159,9 +167,11 @@ export default function App() {
         <Route
           path="compras"
           element={
-            <Suspense fallback={<PageLoading />}>
-              <FinanzasLayout />
-            </Suspense>
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <FinanzasLayout />
+              </Suspense>
+            </LicensedModuleRoute>
           }
         >
           <Route index element={<Navigate to="/compras/gastos" replace />} />
@@ -198,51 +208,82 @@ export default function App() {
             }
           />
         </Route>
-        <Route path="cotizaciones" element={<Quotes />} />
-        <Route path="cotizaciones/nueva" element={<QuoteForm />} />
+        <Route
+          path="cotizaciones"
+          element={
+            <LicensedModuleRoute>
+              <Quotes />
+            </LicensedModuleRoute>
+          }
+        />
+        <Route
+          path="cotizaciones/nueva"
+          element={
+            <LicensedModuleRoute>
+              <QuoteForm />
+            </LicensedModuleRoute>
+          }
+        />
         <Route
           path="cotizaciones/:id"
           element={
-            <Suspense fallback={<PageLoading />}>
-              <QuoteView />
-            </Suspense>
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <QuoteView />
+              </Suspense>
+            </LicensedModuleRoute>
           }
         />
-        <Route path="cotizaciones/:id/editar" element={<QuoteForm />} />
+        <Route
+          path="cotizaciones/:id/editar"
+          element={
+            <LicensedModuleRoute>
+              <QuoteForm />
+            </LicensedModuleRoute>
+          }
+        />
         <Route
           path="facturas"
           element={
-            <Suspense fallback={<PageLoading />}>
-              <Invoices />
-            </Suspense>
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <Invoices />
+              </Suspense>
+            </LicensedModuleRoute>
           }
         />
         <Route
           path="facturas/nueva"
           element={
-            <Suspense fallback={<PageLoading />}>
-              <InvoiceForm />
-            </Suspense>
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <InvoiceForm />
+              </Suspense>
+            </LicensedModuleRoute>
           }
         />
         <Route
           path="facturas/:id"
           element={
-            <Suspense fallback={<PageLoading />}>
-              <InvoiceView />
-            </Suspense>
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <InvoiceView />
+              </Suspense>
+            </LicensedModuleRoute>
           }
         />
         <Route
           path="facturas/:id/editar"
           element={
-            <Suspense fallback={<PageLoading />}>
-              <InvoiceForm />
-            </Suspense>
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <InvoiceForm />
+              </Suspense>
+            </LicensedModuleRoute>
           }
         />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

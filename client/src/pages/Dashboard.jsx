@@ -61,7 +61,7 @@ const ACTION_CARDS = [
 ];
 
 export default function Dashboard() {
-  const { hasModule, license } = useLicense();
+  const { hasModule, license, isLicensed } = useLicense();
   const licensedModules = license?.modules ?? [];
   const [emisor, setEmisor] = useState(null);
   const [stats, setStats] = useState({ quotes: 0 });
@@ -106,6 +106,14 @@ export default function Dashboard() {
           </Link>
         )}
       </header>
+
+      {!isLicensed && (
+        <div className="alert alert-warn">
+          Active su licencia en{' '}
+          <Link to="/configuracion#licencia">Empresa → Licencia</Link> para usar cotizaciones,
+          facturas y los demás módulos.
+        </div>
+      )}
 
       <div className="stats-grid">
         {hasModule('cotizaciones') && (

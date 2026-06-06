@@ -1,6 +1,14 @@
 const { hasValidLicense } = require('../licensing/licenseService');
 
-const OPEN_API_PREFIXES = ['/api/license', '/api/public', '/api/health'];
+/** Sin licencia: auth, empresa, licencia y salud. El resto requiere product key activo. */
+const OPEN_API_PREFIXES = [
+  '/api/license',
+  '/api/public',
+  '/api/health',
+  '/api/auth',
+  '/api/emisor',
+  '/api/fiscal',
+];
 
 function requireLicenseMiddleware(req, res, next) {
   if (!req.path.startsWith('/api')) return next();

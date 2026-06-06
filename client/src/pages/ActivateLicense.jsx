@@ -12,7 +12,7 @@ export default function ActivateLicense() {
   const [submitting, setSubmitting] = useState(false);
 
   if (!licenseLoading && isLicensed) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   const handleSubmit = async (e) => {
@@ -21,7 +21,7 @@ export default function ActivateLicense() {
     setSubmitting(true);
     try {
       await activate(productKey.trim());
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
     } catch (err) {
       setError(err.message || 'No se pudo activar');
     } finally {
@@ -62,8 +62,11 @@ export default function ActivateLicense() {
         <LicenseContactNote className="muted license-settings-hint" />
 
         <p className="muted license-settings-hint">
-          También puede configurar la licencia después en{' '}
-          <Link to="/configuracion#licencia">Empresa → Licencia</Link>.
+          <Link to="/login">Iniciar sesión</Link>
+          {' · '}
+          <Link to="/register">Crear cuenta</Link>
+          {' · '}
+          <Link to="/configuracion#licencia">Empresa → Licencia</Link>
         </p>
       </div>
     </div>
