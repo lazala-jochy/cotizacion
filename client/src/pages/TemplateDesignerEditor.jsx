@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { buildPlaceholderContext } from '@template-designer/placeholders';
+import { normalizeTemplateDefinition } from '@template-designer/normalizeTemplateDefinition';
+import { renderTemplateDocumentHtml } from '@template-designer/renderTemplateHtml';
 import { api } from '../api';
 import HtmlPreview from '../components/HtmlPreview';
 import DesignerCanvas from '../features/template-designer/DesignerCanvas';
 import DesignerSidebar from '../features/template-designer/DesignerSidebar';
 import ElementPropertiesPanel from '../features/template-designer/ElementPropertiesPanel';
 import { createElement } from '../features/template-designer/utils';
+import { samplePreviewEmisor, samplePreviewQuote } from '../utils/templateSamplePreview';
 
 export default function TemplateDesignerEditor() {
   const { id } = useParams();
@@ -42,19 +46,41 @@ export default function TemplateDesignerEditor() {
   }, [id, invalidId, templateId]);
 
   const refreshPreview = useCallback(async () => {
-    if (!definition || !templateId) return;
+    if (!definition) return;
     setPreviewLoading(true);
     setError('');
     try {
-      const { html } = await api.templates.preview(templateId, { definition });
+      let emisor = samplePreviewEmisor();
+      try {
+        const row = await api.emisor.get();
+        emisor = {
+          nombre: row.nombre || emisor.nombre,
+          rnc: row.rnc || emisor.rnc,
+          direccion: row.direccion || emisor.direccion,
+          telefono: row.telefono || emisor.telefono,
+          email: row.email || emisor.email,
+          logo: row.logo || null,
+        };
+      } catch {
+        /* datos de ejemplo si no hay emisor */
+      }
+
+      const context = buildPlaceholderContext(samplePreviewQuote(), emisor);
+      const html = renderTemplateDocumentHtml(
+        normalizeTemplateDefinition(definition),
+        context,
+        'Vista previa'
+      );
       setPreviewHtml(html);
       setShowPreview(true);
     } catch (e) {
       setError(e.message || 'No se pudo generar la vista previa');
+      setShowPreview(false);
+      setPreviewHtml('');
     } finally {
       setPreviewLoading(false);
     }
-  }, [definition, templateId]);
+  }, [definition]);
 
   const updateElement = (elementId, patch) => {
     setDefinition((prev) => {
@@ -203,22 +229,33 @@ export default function TemplateDesignerEditor() {
       </div>
 
       {showPreview && previewHtml && (
-        <section className="panel td-preview-panel">
-          <div className="td-preview-panel-head">
-            <h2>Vista previa</h2>
-            <button
-              type="button"
-              className="btn-ghost btn-sm"
-              onClick={() => {
-                setShowPreview(false);
-                setPreviewHtml('');
-              }}
-            >
-              Ocultar
-            </button>
-          </div>
-          <HtmlPreview html={previewHtml} minHeight={520} />
-        </section>
+        <div className="td-preview-modal" role="dialog" aria-modal="true" aria-label="Vista previa PDF">
+          <button
+            type="button"
+            className="td-preview-modal-backdrop"
+            aria-label="Cerrar vista previa"
+            onClick={() => {
+              setShowPreview(false);
+              setPreviewHtml('');
+            }}
+          />
+          <section className="panel td-preview-modal-panel">
+            <div className="td-preview-panel-head">
+              <h2>Vista previa PDF</h2>
+              <button
+                type="button"
+                className="btn-ghost btn-sm"
+                onClick={() => {
+                  setShowPreview(false);
+                  setPreviewHtml('');
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
+            <HtmlPreview html={previewHtml} minHeight={520} />
+          </section>
+        </div>
       )}
     </div>
   );

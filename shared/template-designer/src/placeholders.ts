@@ -101,6 +101,10 @@ export function buildItemsTableHtml(
   </table>`;
 }
 
+function rawField(value?: string | null): string {
+  return String(value ?? '').trim();
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -133,35 +137,80 @@ export function buildPlaceholderContext(
       : '—'
     : `${validity} días`;
 
+  const companyNameRaw = rawField(emisor.nombre);
+  const companyRncRaw = rawField(emisor.rnc);
+  const companyAddressRaw = rawField(emisor.direccion);
+  const companyPhoneRaw = rawField(emisor.telefono);
+  const companyEmailRaw = rawField(emisor.email);
+  const clientNameRaw = rawField(quote.client_nombre);
+  const clientRncRaw = rawField(quote.client_rnc);
+  const clientAddressRaw = rawField(quote.client_direccion);
+  const clientPhoneRaw = rawField(quote.client_telefono);
+  const clientEmailRaw = rawField(quote.client_email);
+  const docNumberRaw = rawField(docNumber);
+  const fiscalNumberRaw = rawField(quote.fiscal_number || docNumber);
+  const dateRaw = formatDate(quote.fecha || '');
+  const subtotalRaw = formatMoney(subtotal);
+  const taxRaw = formatMoney(tax);
+  const discountRaw = disc > 0 ? formatMoney(disc) : '';
+  const totalRaw = formatMoney(total);
+  const notesRaw = rawField(quote.notas);
+  const ejecutivoRaw = rawField(quote.ejecutivo);
+  const formaPagoRaw = rawField(quote.forma_pago);
+  const estadoRaw = rawField(estadoText);
+
   return {
-    company_name: labeledField(PLACEHOLDER_FIELD_LABELS.company_name, emisor.nombre),
-    company_rnc: labeledField(PLACEHOLDER_FIELD_LABELS.company_rnc, emisor.rnc),
-    company_address: labeledField(PLACEHOLDER_FIELD_LABELS.company_address, emisor.direccion),
-    company_phone: labeledField(PLACEHOLDER_FIELD_LABELS.company_phone, emisor.telefono),
-    company_email: labeledField(PLACEHOLDER_FIELD_LABELS.company_email, emisor.email),
-    company_tax_info: labeledField(PLACEHOLDER_FIELD_LABELS.company_tax_info, emisor.rnc),
+    company_name: labeledField(PLACEHOLDER_FIELD_LABELS.company_name, companyNameRaw),
+    company_name_raw: companyNameRaw,
+    company_rnc: labeledField(PLACEHOLDER_FIELD_LABELS.company_rnc, companyRncRaw),
+    company_rnc_raw: companyRncRaw,
+    company_address: labeledField(PLACEHOLDER_FIELD_LABELS.company_address, companyAddressRaw),
+    company_address_raw: companyAddressRaw,
+    company_phone: labeledField(PLACEHOLDER_FIELD_LABELS.company_phone, companyPhoneRaw),
+    company_phone_raw: companyPhoneRaw,
+    company_email: labeledField(PLACEHOLDER_FIELD_LABELS.company_email, companyEmailRaw),
+    company_email_raw: companyEmailRaw,
+    company_tax_info: labeledField(PLACEHOLDER_FIELD_LABELS.company_tax_info, companyRncRaw),
+    company_tax_info_raw: companyRncRaw,
     company_logo: emisor.logo?.startsWith('data:image') ? emisor.logo : '',
-    client_name: labeledField(PLACEHOLDER_FIELD_LABELS.client_name, quote.client_nombre),
-    client_rnc: labeledField(PLACEHOLDER_FIELD_LABELS.client_rnc, quote.client_rnc),
-    client_address: labeledField(PLACEHOLDER_FIELD_LABELS.client_address, quote.client_direccion),
-    client_phone: labeledField(PLACEHOLDER_FIELD_LABELS.client_phone, quote.client_telefono),
-    client_email: labeledField(PLACEHOLDER_FIELD_LABELS.client_email, quote.client_email),
-    quotation_number: labeledField(docLabel, docNumber),
-    fiscal_number: labeledField('Número fiscal', quote.fiscal_number || docNumber),
-    date: labeledField(dateLabel, formatDate(quote.fecha || '')),
+    client_name: labeledField(PLACEHOLDER_FIELD_LABELS.client_name, clientNameRaw),
+    client_name_raw: clientNameRaw,
+    client_rnc: labeledField(PLACEHOLDER_FIELD_LABELS.client_rnc, clientRncRaw),
+    client_rnc_raw: clientRncRaw,
+    client_address: labeledField(PLACEHOLDER_FIELD_LABELS.client_address, clientAddressRaw),
+    client_address_raw: clientAddressRaw,
+    client_phone: labeledField(PLACEHOLDER_FIELD_LABELS.client_phone, clientPhoneRaw),
+    client_phone_raw: clientPhoneRaw,
+    client_email: labeledField(PLACEHOLDER_FIELD_LABELS.client_email, clientEmailRaw),
+    client_email_raw: clientEmailRaw,
+    quotation_number: labeledField(docLabel, docNumberRaw),
+    quotation_number_raw: docNumberRaw,
+    fiscal_number: labeledField('Número fiscal', fiscalNumberRaw),
+    fiscal_number_raw: fiscalNumberRaw,
+    date: labeledField(dateLabel, dateRaw),
+    date_raw: dateRaw,
     validity_days: labeledField(validityLabel, validityValue),
-    subtotal: labeledField(PLACEHOLDER_FIELD_LABELS.subtotal, formatMoney(subtotal)),
-    tax: labeledField(PLACEHOLDER_FIELD_LABELS.tax, formatMoney(tax)),
+    validity_days_raw: rawField(validityValue),
+    subtotal: labeledField(PLACEHOLDER_FIELD_LABELS.subtotal, subtotalRaw),
+    subtotal_raw: subtotalRaw,
+    tax: labeledField(PLACEHOLDER_FIELD_LABELS.tax, taxRaw),
+    tax_raw: taxRaw,
     discount:
       disc > 0
-        ? labeledField(PLACEHOLDER_FIELD_LABELS.discount, formatMoney(disc))
+        ? labeledField(PLACEHOLDER_FIELD_LABELS.discount, discountRaw)
         : '',
-    total: labeledField(PLACEHOLDER_FIELD_LABELS.total, formatMoney(total)),
-    notes: labeledField(PLACEHOLDER_FIELD_LABELS.notes, quote.notas),
-    signature: quote.ejecutivo?.trim() ? `Atentamente, ${quote.ejecutivo}` : '',
-    ejecutivo: labeledField(PLACEHOLDER_FIELD_LABELS.ejecutivo, quote.ejecutivo),
-    forma_pago: labeledField(PLACEHOLDER_FIELD_LABELS.forma_pago, quote.forma_pago),
-    estado: labeledField(PLACEHOLDER_FIELD_LABELS.estado, estadoText),
+    discount_raw: discountRaw,
+    total: labeledField(PLACEHOLDER_FIELD_LABELS.total, totalRaw),
+    total_raw: totalRaw,
+    notes: labeledField(PLACEHOLDER_FIELD_LABELS.notes, notesRaw),
+    notes_raw: notesRaw,
+    signature: ejecutivoRaw ? `Atentamente, ${ejecutivoRaw}` : '',
+    ejecutivo: labeledField(PLACEHOLDER_FIELD_LABELS.ejecutivo, ejecutivoRaw),
+    ejecutivo_raw: ejecutivoRaw,
+    forma_pago: labeledField(PLACEHOLDER_FIELD_LABELS.forma_pago, formaPagoRaw),
+    forma_pago_raw: formaPagoRaw,
+    estado: labeledField(PLACEHOLDER_FIELD_LABELS.estado, estadoRaw),
+    estado_raw: estadoRaw,
     items_table_html: buildItemsTableHtml(quote.items),
     qr_payload: isInvoice
       ? `FAC:${quote.fiscal_number || quote.numero || ''}`

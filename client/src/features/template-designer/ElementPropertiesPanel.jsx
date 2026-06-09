@@ -1,3 +1,6 @@
+import { LABELABLE_FIELD_TYPES } from '@template-designer/elementCatalog';
+import { shouldUseCatalogPlaceholder } from '@template-designer/normalizeTemplateDefinition';
+
 export default function ElementPropertiesPanel({ element, onChange, onDelete }) {
   if (!element) {
     return (
@@ -8,6 +11,8 @@ export default function ElementPropertiesPanel({ element, onChange, onDelete }) 
   }
 
   const style = element.style || {};
+  const canToggleLabel =
+    LABELABLE_FIELD_TYPES.includes(element.type) && shouldUseCatalogPlaceholder(element);
 
   const patch = (partial) => {
     onChange({ ...element, ...partial });
@@ -60,6 +65,16 @@ export default function ElementPropertiesPanel({ element, onChange, onDelete }) 
           onChange={(e) => patch({ rotation: Number(e.target.value) })}
         />
       </label>
+      {canToggleLabel && (
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={element.showLabel !== false}
+            onChange={(e) => patch({ showLabel: e.target.checked })}
+          />
+          Mostrar etiqueta en PDF (ej. Cliente: jose)
+        </label>
+      )}
       {!['productTable', 'companyLogo', 'qrCode'].includes(element.type) && (
         <label>
           Contenido / placeholders
@@ -67,8 +82,11 @@ export default function ElementPropertiesPanel({ element, onChange, onDelete }) 
             rows={3}
             value={element.content || ''}
             onChange={(e) => patch({ content: e.target.value })}
-            placeholder="{{company_name}}"
+            placeholder="{{company_name}} o {{company_name_raw}}"
           />
+          <span className="muted td-props-hint">
+            Use <code>{'{{campo}}'}</code> con etiqueta o <code>{'{{campo_raw}}'}</code> solo valor.
+          </span>
         </label>
       )}
       {element.type === 'image' && (

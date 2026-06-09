@@ -189,3 +189,26 @@ export function getCatalogEntry(type: TemplateElementType): ElementCatalogEntry 
   if (!found) throw new Error(`Tipo de elemento desconocido: ${type}`);
   return found;
 }
+
+/** Campos de datos cuyo PDF puede mostrar etiqueta opcional (Cliente: valor). */
+export const LABELABLE_FIELD_TYPES: TemplateElementType[] = [
+  'companyName',
+  'companyRnc',
+  'companyAddress',
+  'companyPhone',
+  'companyEmail',
+  'companyTaxInfo',
+  'clientName',
+  'clientRnc',
+  'clientAddress',
+  'clientPhone',
+  'clientEmail',
+  'quotationNumber',
+  'date',
+  'validityDays',
+  'subtotal',
+  'tax',
+  'discount',
+  'total',
+  'notes',
+];

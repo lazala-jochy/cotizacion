@@ -7,12 +7,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
   clearUpdateCache: () => ipcRenderer.invoke('clear-update-cache'),
   printQuote: () => ipcRenderer.invoke('print-quote'),
-  informe: {
-    pickExcel: () => ipcRenderer.invoke('informe:pick-excel'),
-    readExcel: (filePath) => ipcRenderer.invoke('informe:read-excel', filePath),
-    previewData: (payload) => ipcRenderer.invoke('informe:preview-data', payload),
-    generate: (payload) => ipcRenderer.invoke('informe:generate', payload),
-  },
   onUpdateStatus: (callback) => {
     const handler = (_event, data) => callback(data);
     ipcRenderer.on('update-status', handler);

@@ -63,8 +63,12 @@ function resolveElementText(
   const useCatalog = shouldUseCatalogPlaceholder(el);
 
   if (contextKey && useCatalog) {
-    const labeled = context[contextKey];
-    return labeled != null ? String(labeled) : '';
+    const showLabel = el.showLabel !== false;
+    const key = showLabel
+      ? contextKey
+      : (`${String(contextKey)}_raw` as keyof PlaceholderContext);
+    const value = context[key];
+    return value != null ? String(value) : '';
   }
 
   if (el.content?.trim()) {

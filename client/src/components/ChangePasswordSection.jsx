@@ -45,7 +45,7 @@ export default function ChangePasswordSection() {
 
   return (
     <section className="panel" id="seguridad">
-      <header className="informe-xl-section-head">
+      <header className="form-section-title">
         <h2>Seguridad de la cuenta</h2>
         <p className="muted">
           Cambio de contraseña local en este equipo. Si no recuerdas la actual, usa{' '}

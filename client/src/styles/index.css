@@ -4247,6 +4247,35 @@ a.cell-ellipsis:hover {
   margin-top: 1rem;
 }
 
+.td-preview-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.td-preview-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: rgba(15, 20, 25, 0.72);
+  cursor: pointer;
+}
+
+.td-preview-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(920px, 100%);
+  max-height: calc(100vh - 3rem);
+  overflow: auto;
+  margin: 0;
+}
+
 .td-preview-panel-head {
   display: flex;
   align-items: center;
@@ -4356,69 +4385,6 @@ a.cell-ellipsis:hover {
   .app-shell {
     display: block;
   }
-}
-
-.informe-upload-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
-.informe-upload-label input[type='file'] {
-  display: none;
-}
-
-.informe-format-hint {
-  margin: 0;
-  font-size: 0.85rem;
-  max-width: 42rem;
-}
-
-.informe-metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem;
-}
-
-.informe-metric-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg-elevated, rgba(255, 255, 255, 0.02));
-}
-
-.informe-metric-label {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.informe-metric-value {
-  font-size: 1.2rem;
-}
-
-.informe-metric-hint {
-  font-size: 0.75rem;
-}
-
-.informe-table td:last-child,
-.informe-table th:last-child {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.informe-table-total td {
-  font-weight: 600;
-  border-top: 2px solid var(--border);
-}
-
-.informe-warnings {
-  margin: 0;
-  padding-left: 1.2rem;
-  color: var(--muted);
 }
 
 .report-builder-file-label input[type='file'] {
@@ -5455,379 +5421,6 @@ a.cell-ellipsis:hover {
 
   .report-studio-sidebar {
     order: -1;
-  }
-}
-
-/* ── Informe Excel (IPC + exceljs) ── */
-
-.informe-xl-page {
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-.informe-xl-hero {
-  margin-bottom: 1.25rem;
-}
-
-.informe-xl-eyebrow {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 0.3rem;
-}
-
-.informe-xl-hero h1 {
-  font-size: 1.85rem;
-  font-weight: 700;
-  margin-bottom: 0.35rem;
-}
-
-.informe-xl-hero p {
-  color: var(--text-muted);
-  max-width: 40rem;
-}
-
-.informe-xl-steps {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.25rem;
-}
-
-.informe-xl-step {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.45rem 0.85rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  font-size: 0.82rem;
-  color: var(--text-muted);
-}
-
-.informe-xl-step.is-current {
-  border-color: var(--accent);
-  color: var(--text);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-}
-
-.informe-xl-step.is-done {
-  border-color: color-mix(in srgb, var(--success) 40%, var(--border));
-  color: var(--text);
-}
-
-.informe-xl-step-num {
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-  font-weight: 700;
-  background: var(--bg-panel);
-}
-
-.informe-xl-step.is-current .informe-xl-step-num {
-  background: var(--accent);
-  color: #fff;
-}
-
-.informe-xl-dropzone {
-  border: 2px dashed color-mix(in srgb, var(--accent) 40%, var(--border));
-  border-radius: 14px;
-  padding: 2rem 1.5rem;
-  text-align: center;
-  cursor: pointer;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 5%, var(--bg-elevated)), var(--bg-elevated));
-  transition: border-color 0.2s, background 0.2s;
-}
-
-.informe-xl-dropzone:hover {
-  border-color: var(--accent);
-}
-
-.informe-xl-dropzone.has-file {
-  border-style: solid;
-  padding: 1.25rem;
-}
-
-.informe-xl-dropzone-icon {
-  width: 3rem;
-  height: 3rem;
-  margin: 0 auto 0.65rem;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--accent);
-}
-
-.informe-xl-dropzone-title {
-  font-weight: 600;
-  font-size: 1.05rem;
-}
-
-.informe-xl-clear {
-  margin-top: 0.65rem;
-}
-
-.informe-xl-section-head h2 {
-  font-size: 1rem;
-  margin-bottom: 0.2rem;
-}
-
-.informe-xl-section-head p {
-  margin: 0 0 1rem;
-  font-size: 0.85rem;
-}
-
-.informe-xl-sheet-pickers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.informe-xl-map-card {
-  padding: 1rem;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg-panel);
-  margin-bottom: 0.75rem;
-}
-
-.informe-xl-map-card h3 {
-  font-size: 0.9rem;
-  margin-bottom: 0.35rem;
-}
-
-.informe-xl-preview-cols {
-  font-size: 0.8rem;
-  margin-bottom: 0.75rem;
-}
-
-.informe-xl-map-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem;
-}
-
-.informe-xl-optional {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  margin-left: 0.35rem;
-}
-
-.informe-xl-section-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.informe-xl-section-item {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-  background: var(--bg-panel);
-}
-
-.informe-xl-section-item.is-active {
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
-}
-
-.informe-xl-section-row {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.75rem 1rem;
-}
-
-.informe-xl-section-order {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.informe-xl-toggle {
-  position: relative;
-  display: inline-flex;
-  cursor: pointer;
-}
-
-.informe-xl-toggle input {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.informe-xl-toggle-ui {
-  width: 2.5rem;
-  height: 1.35rem;
-  border-radius: 999px;
-  background: var(--border);
-  position: relative;
-  transition: background 0.2s;
-}
-
-.informe-xl-toggle-ui::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 1rem;
-  height: 1rem;
-  border-radius: 999px;
-  background: #fff;
-  transition: transform 0.2s;
-}
-
-.informe-xl-toggle input:checked + .informe-xl-toggle-ui {
-  background: var(--accent);
-}
-
-.informe-xl-toggle input:checked + .informe-xl-toggle-ui::after {
-  transform: translateX(1.15rem);
-}
-
-.informe-xl-section-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.informe-xl-section-info .muted {
-  font-size: 0.75rem;
-}
-
-.informe-xl-section-config {
-  padding: 0 1rem 1rem;
-  border-top: 1px solid var(--border);
-}
-
-.informe-xl-section-config-auto {
-  padding-top: 0.75rem;
-}
-
-.informe-xl-chip-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.65rem;
-}
-
-.informe-xl-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.5rem;
-  padding: 0.65rem;
-  border-radius: 8px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-}
-
-.informe-xl-chip-field {
-  flex: 1;
-  min-width: 120px;
-}
-
-.informe-xl-chip-field span {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-}
-
-.informe-xl-chip-remove {
-  min-width: 2rem;
-  font-size: 1.1rem;
-  line-height: 1;
-}
-
-.informe-xl-preview-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.informe-xl-preview-block {
-  margin-bottom: 1.25rem;
-}
-
-.informe-xl-preview-block h3 {
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  color: var(--accent);
-}
-
-.informe-xl-table td:last-child,
-.informe-xl-table th:last-child,
-.informe-xl-table td:nth-child(n + 2),
-.informe-xl-table th:nth-child(n + 2) {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.informe-xl-table-total td {
-  font-weight: 700;
-  border-top: 2px solid var(--border);
-  background: color-mix(in srgb, var(--success) 8%, transparent);
-}
-
-.informe-xl-kpi-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 0.65rem;
-}
-
-.informe-xl-kpi {
-  padding: 0.85rem;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.informe-xl-kpi span {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.informe-xl-kpi strong {
-  font-size: 1.1rem;
-}
-
-.informe-xl-kpi.accent {
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
-}
-
-.informe-xl-kpi.positive {
-  border-color: color-mix(in srgb, var(--success) 45%, var(--border));
-  background: color-mix(in srgb, var(--success) 8%, transparent);
-}
-
-.informe-xl-generate-bar {
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--border);
-}
-
-.informe-xl-generate-btn {
-  width: 100%;
-  padding: 0.9rem 1.25rem;
-  font-size: 1rem;
-  border-radius: 10px;
-}
-
-@media (max-width: 720px) {
-  .informe-xl-sheet-pickers {
-    grid-template-columns: 1fr;
   }
 }
 

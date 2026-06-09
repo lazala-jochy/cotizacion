@@ -48,6 +48,8 @@ export interface TemplateElement {
   style?: ElementStyle;
   /** Texto fijo o con placeholders {{company_name}} */
   content?: string;
+  /** Si false, el PDF muestra solo el valor (ej. "jose") sin "Cliente: jose". Por defecto true. */
+  showLabel?: boolean;
   /** URL data: o binding para image */
   src?: string;
   zIndex?: number;
@@ -72,30 +74,53 @@ export interface QuoteTemplateRecord {
 
 export interface PlaceholderContext {
   company_name: string;
+  company_name_raw: string;
   company_rnc: string;
+  company_rnc_raw: string;
   company_address: string;
+  company_address_raw: string;
   company_phone: string;
+  company_phone_raw: string;
   company_email: string;
+  company_email_raw: string;
   company_tax_info: string;
+  company_tax_info_raw: string;
   company_logo: string;
   client_name: string;
+  client_name_raw: string;
   client_rnc: string;
+  client_rnc_raw: string;
   client_address: string;
+  client_address_raw: string;
   client_phone: string;
+  client_phone_raw: string;
   client_email: string;
+  client_email_raw: string;
   quotation_number: string;
+  quotation_number_raw: string;
   fiscal_number: string;
+  fiscal_number_raw: string;
   date: string;
+  date_raw: string;
   validity_days: string;
+  validity_days_raw: string;
   subtotal: string;
+  subtotal_raw: string;
   tax: string;
+  tax_raw: string;
   discount: string;
+  discount_raw: string;
   total: string;
+  total_raw: string;
   notes: string;
+  notes_raw: string;
   signature: string;
   ejecutivo: string;
+  ejecutivo_raw: string;
   forma_pago: string;
+  forma_pago_raw: string;
   estado: string;
+  estado_raw: string;
   items_table_html: string;
   qr_payload: string;
 }

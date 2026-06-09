@@ -20,7 +20,6 @@ const fiscalRoutes = require('./routes/fiscal');
 const dgiiRoutes = require('./routes/dgii');
 const expensesRoutes = require('./routes/expenses');
 const financeRoutes = require('./routes/finance');
-const informeRoutes = require('./routes/informe');
 const reportBuilderRoutes = require('./routes/report_builder');
 const emisorRoutes = require('./routes/emisor');
 const templatesRoutes = require('./routes/templates');
@@ -51,7 +50,6 @@ app.use('/api/fiscal', fiscalRoutes);
 app.use('/api/dgii', dgiiRoutes);
 app.use('/api/expenses', expensesRoutes);
 app.use('/api/finance', financeRoutes);
-app.use('/api/informe', informeRoutes);
 app.use('/api/report-builder', reportBuilderRoutes);
 
 app.use('/api', (req, res) => {

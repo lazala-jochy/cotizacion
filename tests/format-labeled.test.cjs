@@ -36,6 +36,7 @@ describe('buildPlaceholderContext', () => {
       { nombre: 'Mi Empresa', rnc: '123' }
     );
     assert.equal(ctx.client_name, 'Cliente: jose');
+    assert.equal(ctx.client_name_raw, 'jose');
     assert.equal(ctx.client_address, 'Dirección: la mata');
     assert.equal(ctx.client_rnc, 'RNC: 666665555');
     assert.equal(ctx.client_phone, 'Teléfono: 8095550000');
@@ -43,6 +44,48 @@ describe('buildPlaceholderContext', () => {
     assert.equal(ctx.quotation_number, 'Cotización: COT-1');
     assert.equal(ctx.company_name, 'Empresa: Mi Empresa');
     assert.match(ctx.validity_days, /Vigencia: 30 días/);
+  });
+});
+
+describe('renderTemplateHtml showLabel', () => {
+  const { renderTemplateBodyHtml } = require('../shared/template-designer/dist/renderTemplateHtml.js');
+
+  test('showLabel false muestra solo el valor', () => {
+    const ctx = buildPlaceholderContext(
+      { client_nombre: 'jose', numero: 'COT-1', items: [], subtotal: 0, itbis: 0, total: 0 },
+      { nombre: 'Lazala Innovaciones' }
+    );
+    const html = renderTemplateBodyHtml(
+      {
+        version: 1,
+        pageWidth: 400,
+        pageHeight: 200,
+        elements: [
+          {
+            id: 'c1',
+            type: 'clientName',
+            x: 0,
+            y: 0,
+            width: 200,
+            height: 24,
+            showLabel: false,
+          },
+          {
+            id: 'c2',
+            type: 'companyName',
+            x: 0,
+            y: 30,
+            width: 200,
+            height: 24,
+            showLabel: true,
+          },
+        ],
+      },
+      ctx
+    );
+    assert.match(html, />jose</);
+    assert.doesNotMatch(html, />Cliente: jose</);
+    assert.match(html, />Empresa: Lazala Innovaciones</);
   });
 });
 

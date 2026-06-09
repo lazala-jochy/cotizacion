@@ -35,7 +35,6 @@ const ExpensesPage = lazy(() => import('./pages/finance/ExpensesPage'));
 const ExpenseCategoriesPage = lazy(() => import('./pages/finance/ExpenseCategoriesPage'));
 const ExpenseReportPage = lazy(() => import('./pages/finance/ExpenseReportPage'));
 const IncomeStatementPage = lazy(() => import('./pages/finance/IncomeStatementPage'));
-const InformePage = lazy(() => import('./pages/informe/InformePage'));
 const ReportBuilderPage = lazy(() => import('./pages/report_builder/ReportBuilderPage'));
 
 function PageLoading() {
@@ -134,16 +133,6 @@ export default function App() {
           element={
             <LicensedModuleRoute>
               <Reports />
-            </LicensedModuleRoute>
-          }
-        />
-        <Route
-          path="informe"
-          element={
-            <LicensedModuleRoute>
-              <Suspense fallback={<PageLoading />}>
-                <InformePage />
-              </Suspense>
             </LicensedModuleRoute>
           }
         />

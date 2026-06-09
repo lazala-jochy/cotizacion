@@ -326,31 +326,6 @@ export const api = {
     sendEmail: (id, body) =>
       request(`/api/quotes/${id}/send-email`, { method: 'POST', body: JSON.stringify(body) }),
   },
-  informe: {
-    analyze: (body) =>
-      request('/api/informe/analyze', { method: 'POST', body: JSON.stringify(body) }),
-    run: (body) => request('/api/informe/run', { method: 'POST', body: JSON.stringify(body) }),
-    exportBlob: async (body) => {
-      const token = getToken();
-      const res = await fetch(`${API_BASE}/api/informe/export`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Error al exportar');
-      }
-      const contentType = res.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        return res.json();
-      }
-      return res.blob();
-    },
-  },
   report_builder: {
     analyze: (body) =>
       request('/api/report-builder/analyze', { method: 'POST', body: JSON.stringify(body) }),

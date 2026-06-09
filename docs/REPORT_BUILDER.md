@@ -1,6 +1,6 @@
 # Report Builder — Arquitectura dinámica
 
-Módulo **desacoplado** (`report_builder`). No modifica cotizaciones, facturas, compras, informe ni otros flujos.
+Módulo **desacoplado** (`report_builder`). No modifica cotizaciones, facturas, compras ni otros flujos.
 
 ## Principio central
 
