@@ -58,6 +58,12 @@ const ACTION_CARDS = [
     title: 'Reportes',
     text: 'Gráficos de ventas, estados y clientes principales.',
   },
+  {
+    module: 'informe',
+    to: '/informe',
+    title: 'Informe',
+    text: 'Analice un Excel con gastos por entidad, productos estrella y pollo comprado.',
+  },
 ];
 
 export default function Dashboard() {

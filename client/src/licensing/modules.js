@@ -5,6 +5,8 @@ export const APP_MODULES = [
   { code: 'compras', name: 'Compras' },
   { code: 'dgii', name: '606 / 607' },
   { code: 'reportes', name: 'Reportes' },
+  { code: 'informe', name: 'Informe' },
+  { code: 'report_builder', name: 'Report Builder' },
   { code: 'plantillas', name: 'Plantillas PDF' },
 ];
 
@@ -15,6 +17,8 @@ const CLIENT_ROUTE_MODULES = [
   { prefix: '/finanzas', module: 'compras' },
   { prefix: '/dgii', module: 'dgii' },
   { prefix: '/reportes', module: 'reportes' },
+  { prefix: '/informe', module: 'informe' },
+  { prefix: '/report-builder', module: 'report_builder' },
   { prefix: '/plantillas', module: 'plantillas' },
 ];
 
@@ -29,6 +33,8 @@ export const NAV_ITEMS = [
   { to: '/cotizaciones', end: true, label: 'Cotizaciones', module: 'cotizaciones' },
   { to: '/facturas', end: true, label: 'Facturas', module: 'facturas' },
   { to: '/reportes', end: false, label: 'Reportes', module: 'reportes' },
+  { to: '/informe', end: true, label: 'Informe', module: 'informe' },
+  { to: '/report-builder', end: true, label: 'Report Builder', module: 'report_builder' },
   { to: '/dgii', end: false, label: '606/607', module: 'dgii' },
   { to: '/compras/gastos', end: false, label: 'Compras', module: 'compras' },
   { to: '/plantillas', end: false, label: 'Plantillas', module: 'plantillas' },

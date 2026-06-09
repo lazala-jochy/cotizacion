@@ -20,6 +20,8 @@ const fiscalRoutes = require('./routes/fiscal');
 const dgiiRoutes = require('./routes/dgii');
 const expensesRoutes = require('./routes/expenses');
 const financeRoutes = require('./routes/finance');
+const informeRoutes = require('./routes/informe');
+const reportBuilderRoutes = require('./routes/report_builder');
 const emisorRoutes = require('./routes/emisor');
 const templatesRoutes = require('./routes/templates');
 const publicRoutes = require('./routes/public');
@@ -49,6 +51,12 @@ app.use('/api/fiscal', fiscalRoutes);
 app.use('/api/dgii', dgiiRoutes);
 app.use('/api/expenses', expensesRoutes);
 app.use('/api/finance', financeRoutes);
+app.use('/api/informe', informeRoutes);
+app.use('/api/report-builder', reportBuilderRoutes);
+
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `Ruta no encontrada: ${req.method} ${req.originalUrl}` });
+});
 
 const distPath = path.join(__dirname, '..', 'dist');
 app.use(express.static(distPath));
@@ -63,7 +71,7 @@ app.get('*', (req, res, next) => {
 
 app.use((err, _req, res, _next) => {
   console.error(err);
-  res.status(500).send('Error del servidor');
+  res.status(500).json({ error: 'Error del servidor' });
 });
 
 let activeServer = null;

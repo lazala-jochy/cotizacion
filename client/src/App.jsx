@@ -5,6 +5,7 @@ import { useLicense } from './context/LicenseContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import RecoverPassword from './pages/RecoverPassword';
 import ActivateLicense from './pages/ActivateLicense';
 import Dashboard from './pages/Dashboard';
 import Quotes from './pages/Quotes';
@@ -34,6 +35,8 @@ const ExpensesPage = lazy(() => import('./pages/finance/ExpensesPage'));
 const ExpenseCategoriesPage = lazy(() => import('./pages/finance/ExpenseCategoriesPage'));
 const ExpenseReportPage = lazy(() => import('./pages/finance/ExpenseReportPage'));
 const IncomeStatementPage = lazy(() => import('./pages/finance/IncomeStatementPage'));
+const InformePage = lazy(() => import('./pages/informe/InformePage'));
+const ReportBuilderPage = lazy(() => import('./pages/report_builder/ReportBuilderPage'));
 
 function PageLoading() {
   return (
@@ -89,6 +92,14 @@ export default function App() {
         }
       />
       <Route
+        path="/restablecer-contrasena"
+        element={
+          <PublicRoute>
+            <RecoverPassword />
+          </PublicRoute>
+        }
+      />
+      <Route
         element={
           <PrivateRoute>
             <Layout />
@@ -123,6 +134,26 @@ export default function App() {
           element={
             <LicensedModuleRoute>
               <Reports />
+            </LicensedModuleRoute>
+          }
+        />
+        <Route
+          path="informe"
+          element={
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <InformePage />
+              </Suspense>
+            </LicensedModuleRoute>
+          }
+        />
+        <Route
+          path="report-builder"
+          element={
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <ReportBuilderPage />
+              </Suspense>
             </LicensedModuleRoute>
           }
         />

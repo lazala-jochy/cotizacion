@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useLicense } from '../context/LicenseContext';
 import FiscalSettingsSection from '../components/FiscalSettingsSection';
 import LicenseSettingsSection from '../components/LicenseSettingsSection';
+import ChangePasswordSection from '../components/ChangePasswordSection';
 
 const emptyEmisor = {
   nombre: '',
@@ -209,6 +210,8 @@ export default function Settings() {
           </div>
         </form>
       </section>
+
+      <ChangePasswordSection />
 
       <LicenseSettingsSection />
 

@@ -1,11 +1,61 @@
 // Misma origen en prod (Express sirve dist + API en :3847)
 const API_BASE = '';
 
+let refreshInFlight = null;
+
 function getToken() {
   return localStorage.getItem('token');
 }
 
-async function request(path, options = {}) {
+export function getRefreshToken() {
+  return localStorage.getItem('refreshToken');
+}
+
+export function setAuthTokens({ accessToken, refreshToken, token }) {
+  const access = accessToken || token;
+  if (access) localStorage.setItem('token', access);
+  if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+  window.dispatchEvent(
+    new CustomEvent('auth:tokens-refreshed', {
+      detail: { accessToken: access, refreshToken, token: access },
+    })
+  );
+}
+
+export function clearAuthTokens() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('refreshToken');
+}
+
+async function refreshAccessToken() {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+
+  if (!refreshInFlight) {
+    refreshInFlight = fetch(`${API_BASE}/api/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'refresh failed');
+        setAuthTokens(data);
+        return true;
+      })
+      .catch(() => {
+        clearAuthTokens();
+        return false;
+      })
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+
+  return refreshInFlight;
+}
+
+async function request(path, options = {}, allowRetry = true) {
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
@@ -14,9 +64,38 @@ async function request(path, options = {}) {
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
-  const data = await res.json().catch(() => ({}));
+  const raw = await res.text();
+  let data = {};
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      data = { error: raw.trim() || `Error ${res.status}` };
+    }
+  }
+
+  const skipRefreshOn401 = new Set([
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/auth/refresh',
+    '/api/auth/logout',
+    '/api/auth/recover-password',
+  ]);
+  if (
+    res.status === 401 &&
+    allowRetry &&
+    !skipRefreshOn401.has(path) &&
+    getRefreshToken() &&
+    !options._retried
+  ) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      return request(path, { ...options, _retried: true }, false);
+    }
+  }
+
   if (!res.ok) {
-    throw new Error(data.error || 'Error en la solicitud');
+    throw new Error(data.error || `Error en la solicitud (${res.status})`);
   }
   return data;
 }
@@ -42,6 +121,12 @@ export const api = {
   },
   register: (body) => request('/api/auth/register', { method: 'POST', body: JSON.stringify(body) }),
   login: (body) => request('/api/auth/login', { method: 'POST', body: JSON.stringify(body) }),
+  refresh: (body) => request('/api/auth/refresh', { method: 'POST', body: JSON.stringify(body) }),
+  logout: (body) => request('/api/auth/logout', { method: 'POST', body: JSON.stringify(body) }),
+  changePassword: (body) =>
+    request('/api/auth/change-password', { method: 'POST', body: JSON.stringify(body) }),
+  recoverPassword: (body) =>
+    request('/api/auth/recover-password', { method: 'POST', body: JSON.stringify(body) }),
   clients: {
     list: () => request('/api/clients'),
     get: (id) => request(`/api/clients/${id}`),
@@ -240,5 +325,56 @@ export const api = {
     getEmailDefaults: (id) => request(`/api/quotes/${id}/email-defaults`),
     sendEmail: (id, body) =>
       request(`/api/quotes/${id}/send-email`, { method: 'POST', body: JSON.stringify(body) }),
+  },
+  informe: {
+    analyze: (body) =>
+      request('/api/informe/analyze', { method: 'POST', body: JSON.stringify(body) }),
+    run: (body) => request('/api/informe/run', { method: 'POST', body: JSON.stringify(body) }),
+    exportBlob: async (body) => {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/api/informe/export`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Error al exportar');
+      }
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        return res.json();
+      }
+      return res.blob();
+    },
+  },
+  report_builder: {
+    analyze: (body) =>
+      request('/api/report-builder/analyze', { method: 'POST', body: JSON.stringify(body) }),
+    run: (body) =>
+      request('/api/report-builder/run', { method: 'POST', body: JSON.stringify(body) }),
+    exportBlob: async (body) => {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/api/report-builder/export`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Error al exportar');
+      }
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        return res.json();
+      }
+      return res.blob();
+    },
   },
 };

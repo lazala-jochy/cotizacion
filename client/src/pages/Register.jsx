@@ -87,7 +87,7 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      const { user, token } = await api.register({
+      const data = await api.register({
         razon_social: empresa.razon_social,
         rnc: empresa.rnc,
         logo: empresa.logo,
@@ -99,11 +99,11 @@ export default function Register() {
         emisor_email: cuenta.emisor_email,
       });
       saveAccountAfterLogin({
-        user,
+        user: data.user,
         password: cuenta.password,
         rememberPassword: true,
       });
-      login(user, token);
+      login(data.user, data);
       navigate('/');
     } catch (err) {
       setError(err.message);

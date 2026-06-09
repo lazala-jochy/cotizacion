@@ -27,15 +27,12 @@ export function LicenseProvider({ children }) {
       const cached = await api.license.status();
       if (!cached.productKey) return applyStatus(cached);
 
-      if (cached.needsSync) {
-        try {
-          return applyStatus(await api.license.refresh());
-        } catch {
-          return applyStatus(cached);
-        }
+      // Consultar servidor al abrir: los módulos pueden haber cambiado en license-server.
+      try {
+        return applyStatus(await api.license.refresh());
+      } catch {
+        return applyStatus(cached);
       }
-
-      return applyStatus(cached);
     } catch {
       return applyStatus({ active: false, required: true, modules: [], needsSync: false });
     } finally {

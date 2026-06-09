@@ -69,8 +69,8 @@ export default function Layout() {
     window.electronAPI?.getUpdateState?.().then(applyUpdateStatus).catch(() => {});
   }, [applyUpdateStatus]);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 

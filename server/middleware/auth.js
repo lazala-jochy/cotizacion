@@ -8,7 +8,11 @@ function authMiddleware(req, res, next) {
   }
   try {
     const token = header.slice(7);
-    req.user = jwt.verify(token, JWT_SECRET);
+    const payload = jwt.verify(token, JWT_SECRET);
+    if (payload.type && payload.type !== 'access') {
+      return res.status(401).json({ error: 'Sesión inválida o expirada' });
+    }
+    req.user = payload;
     next();
   } catch {
     return res.status(401).json({ error: 'Sesión inválida o expirada' });

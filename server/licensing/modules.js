@@ -5,6 +5,8 @@ const APP_MODULES = [
   { code: 'compras', name: 'Compras' },
   { code: 'dgii', name: '606 / 607' },
   { code: 'reportes', name: 'Reportes' },
+  { code: 'informe', name: 'Informe' },
+  { code: 'report_builder', name: 'Report Builder' },
   { code: 'plantillas', name: 'Plantillas PDF' },
 ];
 
@@ -19,6 +21,8 @@ const API_MODULE_PREFIXES = [
   { prefix: '/api/expenses', module: 'compras' },
   { prefix: '/api/finance', module: 'compras' },
   { prefix: '/api/dgii', module: 'dgii' },
+  { prefix: '/api/informe', module: 'informe' },
+  { prefix: '/api/report-builder', module: 'report_builder' },
   { prefix: '/api/templates', module: 'plantillas' },
 ];
 
@@ -30,6 +34,8 @@ const CLIENT_ROUTE_MODULES = [
   { prefix: '/finanzas', module: 'compras' },
   { prefix: '/dgii', module: 'dgii' },
   { prefix: '/reportes', module: 'reportes' },
+  { prefix: '/informe', module: 'informe' },
+  { prefix: '/report-builder', module: 'report_builder' },
   { prefix: '/plantillas', module: 'plantillas' },
 ];
 

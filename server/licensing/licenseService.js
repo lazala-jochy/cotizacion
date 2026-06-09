@@ -20,10 +20,15 @@ function normalizeProductKey(raw) {
     .replace(/\s+/g, '');
 }
 
+function normalizeModuleList(modules) {
+  if (!Array.isArray(modules)) return [];
+  return [...new Set(modules.map((c) => String(c || '').trim()).filter(Boolean))];
+}
+
 function parseModules(row) {
   try {
     const parsed = JSON.parse(row?.modules_json || '[]');
-    return Array.isArray(parsed) ? parsed.filter((c) => MODULE_CODES.includes(c)) : [];
+    return normalizeModuleList(parsed);
   } catch {
     return [];
   }
@@ -109,8 +114,13 @@ async function fetchFromLicenseServer(endpoint, productKey, source = 'manual') {
     throw err;
   }
 
-  const modules = (data.license?.modules || []).filter((c) => MODULE_CODES.includes(c));
+  const modules = normalizeModuleList(data.license?.modules);
   if (!modules.length) throw new Error('La licencia no tiene módulos asignados');
+
+  const unknown = modules.filter((c) => !MODULE_CODES.includes(c));
+  if (unknown.length) {
+    console.warn('[license] módulos del servidor aún no en esta versión de la app:', unknown.join(', '));
+  }
 
   saveLicense({
     productKey: data.license.productKey || normalized,

@@ -32,14 +32,14 @@ export default function Login() {
   }, [savedAccounts.length, view]);
 
   const completeLogin = async (credentials, shouldRemember) => {
-    const { user, token } = await api.login(credentials);
+    const data = await api.login(credentials);
     saveAccountAfterLogin({
-      user,
+      user: data.user,
       password: credentials.password,
       rememberPassword: shouldRemember,
     });
     refreshSavedAccounts();
-    login(user, token);
+    login(data.user, data);
     navigate('/');
   };
 
@@ -149,6 +149,9 @@ export default function Login() {
             <button type="button" className="btn-ghost saved-accounts-other" onClick={showManualForm}>
               Usar otra cuenta
             </button>
+            <p className="auth-forgot">
+              <Link to="/restablecer-contrasena">¿Olvidaste tu contraseña?</Link>
+            </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
@@ -205,6 +208,9 @@ export default function Login() {
               />
               Recordar en este equipo
             </label>
+            <p className="auth-forgot">
+              <Link to="/restablecer-contrasena">¿Olvidaste tu contraseña?</Link>
+            </p>
             <button type="submit" className="btn-primary" disabled={loading}>
               {loading ? 'Entrando…' : 'Entrar'}
             </button>

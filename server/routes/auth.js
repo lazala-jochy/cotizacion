@@ -1,9 +1,10 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const db = require('../db');
-const { JWT_SECRET, JWT_EXPIRES } = require('../config');
 const templateRepo = require('../templates/templateRepository');
+const { authMiddleware } = require('../middleware/auth');
+const { issueTokenPair, rotateRefreshToken, revokeRefreshToken } = require('../auth/tokenService');
+const { changePasswordLocal, recoverPasswordLocal } = require('../auth/passwordService');
 
 const router = express.Router();
 
@@ -62,8 +63,8 @@ router.post('/register', (req, res) => {
   ensureDefaultCategories(db, userId);
 
   const user = { id: userId, nombre: nombre.trim(), email: email.trim().toLowerCase() };
-  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-  res.status(201).json({ user, token });
+  const tokens = issueTokenPair(user);
+  res.status(201).json(tokens);
 });
 
 router.post('/login', (req, res) => {
@@ -76,8 +77,65 @@ router.post('/login', (req, res) => {
     return res.status(401).json({ error: 'Credenciales incorrectas' });
   }
   const user = { id: row.id, nombre: row.nombre, email: row.email };
-  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-  res.json({ user, token });
+  res.json(issueTokenPair(user));
+});
+
+router.post('/refresh', (req, res) => {
+  const { refreshToken } = req.body || {};
+  if (!refreshToken) {
+    return res.status(400).json({ error: 'refreshToken requerido' });
+  }
+  const tokens = rotateRefreshToken(refreshToken);
+  if (!tokens) {
+    return res.status(401).json({ error: 'Sesión expirada. Inicie sesión de nuevo.' });
+  }
+  res.json(tokens);
+});
+
+router.post('/logout', (req, res) => {
+  const { refreshToken } = req.body || {};
+  revokeRefreshToken(refreshToken);
+  res.json({ ok: true });
+});
+
+router.post('/recover-password', (req, res) => {
+  try {
+    const { email, newPassword } = req.body || {};
+    const result = recoverPasswordLocal(email, newPassword);
+    if (!result.ok) {
+      return res.status(400).json({ error: result.error });
+    }
+    const tokens = issueTokenPair(result.user);
+    res.json({
+      message: 'Contraseña restablecida correctamente',
+      ...tokens,
+    });
+  } catch (err) {
+    console.error('[auth] recover-password:', err);
+    res.status(500).json({ error: 'No se pudo restablecer la contraseña' });
+  }
+});
+
+router.post('/change-password', authMiddleware, (req, res) => {
+  try {
+    const userId = req.user?.id ?? req.user?.sub;
+    if (!userId) {
+      return res.status(401).json({ error: 'Sesión inválida. Inicie sesión de nuevo.' });
+    }
+    const { currentPassword, newPassword } = req.body || {};
+    const result = changePasswordLocal(userId, currentPassword, newPassword);
+    if (!result.ok) {
+      return res.status(400).json({ error: result.error });
+    }
+    const tokens = issueTokenPair(result.user);
+    res.json({
+      message: 'Contraseña actualizada correctamente',
+      ...tokens,
+    });
+  } catch (err) {
+    console.error('[auth] change-password:', err);
+    res.status(500).json({ error: 'No se pudo cambiar la contraseña' });
+  }
 });
 
 module.exports = router;

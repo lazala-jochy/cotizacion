@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron');
+const { registerInformeHandlers } = require('./handlers/informe.handler');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
 const { configureGithubUpdater, getPublishConfig } = require('./updater-auth');
@@ -149,6 +150,8 @@ async function startEmbeddedServer() {
   const { startServer } = require(path.join(__dirname, '..', 'server', 'index.js'));
   return startServer();
 }
+
+registerInformeHandlers(ipcMain, dialog);
 
 app.whenReady().then(async () => {
   try {

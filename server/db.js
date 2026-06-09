@@ -24,6 +24,27 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    revoked_at TEXT,
+    replaced_by TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TEXT NOT NULL,
+    used_at TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
   CREATE TABLE IF NOT EXISTS clients (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -243,7 +264,11 @@ if (userCount === 0) {
   db.prepare(
     'INSERT INTO users (nombre, email, password_hash) VALUES (?, ?, ?)'
   ).run('Administrador', 'admin@demo.local', hash);
-  db.prepare('INSERT INTO emisor_settings (user_id, nombre) VALUES (?, ?)').run(1, '');
+  db.prepare('INSERT INTO emisor_settings (user_id, nombre, rnc) VALUES (?, ?, ?)').run(
+    1,
+    'Empresa Demo',
+    '000000000'
+  );
 }
 
 function closeDb() {

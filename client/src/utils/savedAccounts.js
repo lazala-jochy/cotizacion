@@ -76,6 +76,19 @@ export function saveAccountAfterLogin({ user, password, rememberPassword }) {
   return entry.id;
 }
 
+export function updateSavedAccountPassword(email, newPassword) {
+  const normalized = String(email || '').trim().toLowerCase();
+  if (!normalized) return;
+  const list = readAll();
+  const idx = list.findIndex((item) => item.email === normalized);
+  if (idx < 0 || !list[idx].passwordEnc) return;
+  list[idx] = {
+    ...list[idx],
+    passwordEnc: encodeSecret(newPassword),
+  };
+  writeAll(list);
+}
+
 export function removeSavedAccount(id) {
   writeAll(readAll().filter((item) => item.id !== id));
 }
