@@ -1,5 +1,6 @@
 import { getCatalogEntry } from './elementCatalog';
-import { shouldUseCatalogPlaceholder } from './normalizeTemplateDefinition';
+import { getDefaultFieldLabel } from './elementFieldLabels';
+import { formatLabeled } from './formatLabeled';
 import { buildPlaceholderContext, replacePlaceholders } from './placeholders';
 import type {
   PlaceholderContext,
@@ -26,6 +27,8 @@ const TYPE_TO_CONTEXT_KEY: Partial<
   quotationNumber: 'quotation_number',
   date: 'date',
   validityDays: 'validity_days',
+  formaPago: 'forma_pago',
+  ejecutivo: 'ejecutivo',
   subtotal: 'subtotal',
   tax: 'tax',
   discount: 'discount',
@@ -59,22 +62,41 @@ function resolveElementText(
   el: TemplateElement,
   context: PlaceholderContext
 ): string {
-  const contextKey = TYPE_TO_CONTEXT_KEY[el.type as TemplateElementType];
-  const useCatalog = shouldUseCatalogPlaceholder(el);
+  const type = el.type as TemplateElementType;
+  const contextKey = TYPE_TO_CONTEXT_KEY[type];
 
-  if (contextKey && useCatalog) {
-    const showLabel = el.showLabel !== false;
-    const key = showLabel
-      ? contextKey
-      : (`${String(contextKey)}_raw` as keyof PlaceholderContext);
-    const value = context[key];
-    return value != null ? String(value) : '';
+  if (el.content?.trim() && /\{\{\w+\}\}/.test(el.content)) {
+    return replacePlaceholders(el.content, context);
+  }
+
+  if (contextKey) {
+    if (type === 'signature') {
+      const ejecutivoRaw = String(context.ejecutivo_raw ?? '').trim();
+      if (el.showLabel === false) return ejecutivoRaw;
+      const customLabel = el.fieldLabel?.trim();
+      if (customLabel) {
+        return ejecutivoRaw ? formatLabeled(customLabel, ejecutivoRaw) : '';
+      }
+      return String(context.signature ?? '');
+    }
+
+    const rawKey = `${String(contextKey)}_raw` as keyof PlaceholderContext;
+    const raw = String(context[rawKey] ?? '').trim();
+    if (type === 'discount' && !raw) return '';
+
+    if (el.showLabel === false) return raw;
+
+    const customLabel = el.fieldLabel?.trim();
+    if (customLabel) return formatLabeled(customLabel, raw);
+
+    const labeled = context[contextKey];
+    return labeled != null ? String(labeled) : '';
   }
 
   if (el.content?.trim()) {
     return replacePlaceholders(el.content, context);
   }
-  const entry = getCatalogEntry(el.type);
+  const entry = getCatalogEntry(type);
   if (entry.placeholder) {
     return replacePlaceholders(entry.placeholder, context);
   }

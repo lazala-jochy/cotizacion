@@ -16,6 +16,8 @@ export type TemplateElementType =
   | 'quotationNumber'
   | 'date'
   | 'validityDays'
+  | 'formaPago'
+  | 'ejecutivo'
   | 'productTable'
   | 'subtotal'
   | 'tax'
@@ -46,9 +48,11 @@ export interface TemplateElement {
   height: number;
   rotation?: number;
   style?: ElementStyle;
-  /** Texto fijo o con placeholders {{company_name}} */
+  /** Texto libre o plantilla avanzada con {{placeholders}} (solo texto libre). */
   content?: string;
-  /** Si false, el PDF muestra solo el valor (ej. "jose") sin "Cliente: jose". Por defecto true. */
+  /** Etiqueta personalizada del campo. Vacío = etiqueta por defecto del catálogo. */
+  fieldLabel?: string;
+  /** Si false, el PDF muestra solo el valor sin etiqueta. Por defecto true. */
   showLabel?: boolean;
   /** URL data: o binding para image */
   src?: string;

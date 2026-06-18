@@ -1,4 +1,5 @@
 import { getCatalogEntry } from './elementCatalog';
+import { augmentTemplateDefinition } from './augmentTemplateDefinition';
 import type { QuoteTemplateDefinition, TemplateElement, TemplateElementType } from './types';
 
 /** Contenidos antiguos (con o sin etiqueta duplicada) → usar placeholder del catálogo. */
@@ -30,6 +31,8 @@ const LEGACY_BARE_PLACEHOLDERS: Partial<Record<TemplateElementType, string[]>> =
   ],
   date: ['{{date}}', 'Fecha: {{date}}'],
   validityDays: ['{{validity_days}}', 'Válida {{validity_days}}', 'Vigencia: {{validity_days}}'],
+  formaPago: ['{{forma_pago}}', 'Forma de pago: {{forma_pago}}', 'Forma de pago: {{forma_pago_raw}}'],
+  ejecutivo: ['{{ejecutivo}}', 'Ejecutivo: {{ejecutivo}}', 'Ejecutivo: {{ejecutivo_raw}}'],
   subtotal: ['{{subtotal}}', 'Subtotal: {{subtotal}}'],
   tax: ['{{tax}}', 'ITBIS: {{tax}}', 'Impuestos: {{tax}}'],
   discount: ['{{discount}}', 'Descuento: {{discount}}'],
@@ -74,5 +77,5 @@ export function normalizeTemplateDefinition(
     }
   });
   elements = removeRedundantClientLabel(elements);
-  return { ...definition, elements };
+  return augmentTemplateDefinition({ ...definition, elements });
 }

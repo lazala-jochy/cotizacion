@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { getCatalogEntry } from './utils';
+import { getDefaultFieldLabel, isDataBoundField } from '@template-designer/elementFieldLabels';
 
 const MIN_SIZE = 24;
 
@@ -114,7 +115,11 @@ function CanvasElement({
         : el.type === 'qrCode' ?
           <span className="muted">QR</span>
         : <span className="td-canvas-element-preview">
-            {(el.content || '').slice(0, 80)}
+            {isDataBoundField(el.type)
+              ? (el.showLabel === false
+                  ? '(solo valor)'
+                  : `${el.fieldLabel?.trim() || getDefaultFieldLabel(el.type)}: …`)
+              : (el.content || '').slice(0, 80)}
           </span>
         }
       </div>

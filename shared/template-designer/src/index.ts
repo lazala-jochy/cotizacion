@@ -4,3 +4,6 @@ export * from './placeholders';
 export * from './defaultTemplate';
 export * from './presetTemplates';
 export * from './renderTemplateHtml';
+export * from './normalizeTemplateDefinition';
+export * from './augmentTemplateDefinition';
+export * from './elementFieldLabels';

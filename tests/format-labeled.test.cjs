@@ -87,9 +87,51 @@ describe('renderTemplateHtml showLabel', () => {
     assert.doesNotMatch(html, />Cliente: jose</);
     assert.match(html, />Empresa: Lazala Innovaciones</);
   });
+
+  test('fieldLabel personalizado mantiene el valor', () => {
+    const ctx = buildPlaceholderContext(
+      { client_nombre: 'jose', numero: 'COT-1', items: [], subtotal: 0, itbis: 0, total: 0 },
+      { nombre: 'Mi Empresa' }
+    );
+    const html = renderTemplateBodyHtml(
+      {
+        version: 1,
+        pageWidth: 400,
+        pageHeight: 200,
+        elements: [
+          {
+            id: 'c1',
+            type: 'clientName',
+            x: 0,
+            y: 0,
+            width: 200,
+            height: 24,
+            fieldLabel: 'Comprador',
+          },
+        ],
+      },
+      ctx
+    );
+    assert.match(html, />Comprador: jose</);
+    assert.doesNotMatch(html, />Cliente: jose</);
+  });
 });
 
 describe('normalizeTemplateDefinition', () => {
+  test('agrega forma de pago y ejecutivo si faltan', () => {
+    const def = createDefaultTemplateDefinition();
+    const stripped = {
+      ...def,
+      elements: def.elements.filter(
+        (e) => !['formaPago', 'ejecutivo', 'companyEmail', 'signature'].includes(e.type)
+      ),
+    };
+    const { augmentTemplateDefinition } = require('../shared/template-designer/dist/augmentTemplateDefinition.js');
+    const augmented = augmentTemplateDefinition(stripped);
+    assert.ok(augmented.elements.some((e) => e.type === 'formaPago'));
+    assert.ok(augmented.elements.some((e) => e.type === 'ejecutivo'));
+  });
+
   test('elimina etiqueta Cliente: suelta y usa catálogo para nombre', () => {
     const def = createDefaultTemplateDefinition();
     def.elements.push({

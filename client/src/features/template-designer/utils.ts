@@ -14,7 +14,7 @@ export function createElement(type: TemplateElementType, x = 40, y = 40): Templa
     width: entry.defaultWidth,
     height: entry.defaultHeight,
     style: { fontSize: 12, color: '#0f172a' },
-    content: entry.defaultContent || entry.placeholder,
+    ...(entry.defaultContent ? { content: entry.defaultContent } : {}),
     zIndex: 1,
   };
 }

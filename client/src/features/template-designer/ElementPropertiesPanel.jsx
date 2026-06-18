@@ -1,5 +1,7 @@
-import { LABELABLE_FIELD_TYPES } from '@template-designer/elementCatalog';
-import { shouldUseCatalogPlaceholder } from '@template-designer/normalizeTemplateDefinition';
+import {
+  getDefaultFieldLabel,
+  isDataBoundField,
+} from '@template-designer/elementFieldLabels';
 
 export default function ElementPropertiesPanel({ element, onChange, onDelete }) {
   if (!element) {
@@ -11,8 +13,8 @@ export default function ElementPropertiesPanel({ element, onChange, onDelete }) 
   }
 
   const style = element.style || {};
-  const canToggleLabel =
-    LABELABLE_FIELD_TYPES.includes(element.type) && shouldUseCatalogPlaceholder(element);
+  const isDataField = isDataBoundField(element.type);
+  const defaultLabel = isDataField ? getDefaultFieldLabel(element.type) : '';
 
   const patch = (partial) => {
     onChange({ ...element, ...partial });
@@ -65,27 +67,47 @@ export default function ElementPropertiesPanel({ element, onChange, onDelete }) 
           onChange={(e) => patch({ rotation: Number(e.target.value) })}
         />
       </label>
-      {canToggleLabel && (
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={element.showLabel !== false}
-            onChange={(e) => patch({ showLabel: e.target.checked })}
-          />
-          Mostrar etiqueta en PDF (ej. Cliente: jose)
-        </label>
+      {isDataField && (
+        <>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={element.showLabel !== false}
+              onChange={(e) => patch({ showLabel: e.target.checked })}
+            />
+            Mostrar etiqueta en PDF
+          </label>
+          {element.showLabel !== false && (
+            <label>
+              Etiqueta (key)
+              <input
+                type="text"
+                value={element.fieldLabel || ''}
+                onChange={(e) =>
+                  patch({ fieldLabel: e.target.value.trim() || undefined })
+                }
+                placeholder={defaultLabel || 'Etiqueta por defecto'}
+              />
+              <span className="muted td-props-hint">
+                Dejar vacío usa «{defaultLabel}». El valor siempre viene de los datos de la
+                cotización.
+              </span>
+            </label>
+          )}
+        </>
       )}
-      {!['productTable', 'companyLogo', 'qrCode'].includes(element.type) && (
+      {element.type === 'freeText' && (
         <label>
           Contenido / placeholders
           <textarea
             rows={3}
             value={element.content || ''}
             onChange={(e) => patch({ content: e.target.value })}
-            placeholder="{{company_name}} o {{company_name_raw}}"
+            placeholder="Texto libre o {{client_name_raw}}"
           />
           <span className="muted td-props-hint">
-            Use <code>{'{{campo}}'}</code> con etiqueta o <code>{'{{campo_raw}}'}</code> solo valor.
+            En texto libre use <code>{'{{campo}}'}</code> o <code>{'{{campo_raw}}'}</code> para
+            datos dinámicos.
           </span>
         </label>
       )}
