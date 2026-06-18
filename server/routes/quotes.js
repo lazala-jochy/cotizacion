@@ -457,7 +457,7 @@ router.put('/:id', (req, res) => {
   if (!canEditQuote(existing.estado)) {
     return res.status(400).json({
       error:
-        'Solo se puede editar el contenido en estado Creada. Usa la vista de detalle para cambiar el estado o registrar pagos.',
+        'No se puede editar una cotización pagada o cancelada.',
     });
   }
 
@@ -515,7 +515,7 @@ router.put('/:id', (req, res) => {
   const updateAll = db.transaction(() => {
     db.prepare(
       `UPDATE quotes SET
-        client_id=?, fecha=?, validez_dias=?, notas=?, subtotal=?, itbis=?, descuento=?, total=?, estado='creada',
+        client_id=?, fecha=?, validez_dias=?, notas=?, subtotal=?, itbis=?, descuento=?, total=?,
         client_nombre=?, client_rnc=?, client_direccion=?, client_telefono=?, client_email=?,
         itbis_rate=?, itbis_manual=?, ejecutivo=?, forma_pago=?, updated_at=datetime('now')
        WHERE id=? AND user_id=?`

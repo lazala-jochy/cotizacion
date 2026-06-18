@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { IconEye, IconEdit, IconTrash } from './Icons';
 import QuoteConvertToInvoiceButton from './QuoteConvertToInvoiceButton';
 import {
   QUOTE_ESTADO_OPTIONS,
@@ -169,13 +168,20 @@ export function QuoteCard({
             + Pago
           </button>
         )}
-        <QuoteRowActions q={q} onDelete={onDelete} showPayBtn={false} />
+        <QuoteRowActions
+          q={q}
+          onDelete={onDelete}
+          showPayBtn={false}
+          onRegisterPayment={() => onRegisterPayment(q)}
+        />
       </footer>
     </article>
   );
 }
 
 function QuoteRowActions({ q, onDelete, showPayBtn, onRegisterPayment }) {
+  const editable = canEditQuoteContent(q.estado);
+
   return (
     <div className="row-actions">
       {showPayBtn && (
@@ -189,32 +195,29 @@ function QuoteRowActions({ q, onDelete, showPayBtn, onRegisterPayment }) {
           $
         </button>
       )}
-      <Link
-        to={`/cotizaciones/${q.id}`}
-        className="btn-icon"
-        title="Ver detalle y pagos"
-        aria-label="Ver cotización"
-      >
-        <IconEye />
-      </Link>
-      {canEditQuoteContent(q.estado) && (
+      {editable && (
         <Link
           to={`/cotizaciones/${q.id}/editar`}
-          className="btn-icon"
-          title="Editar contenido"
-          aria-label="Editar cotización"
+          className="btn-ghost btn-sm quote-action-edit"
+          title="Editar cotización"
         >
-          <IconEdit />
+          Editar
         </Link>
       )}
+      <Link
+        to={`/cotizaciones/${q.id}`}
+        className="btn-ghost btn-sm"
+        title="Ver detalle y pagos"
+      >
+        Ver
+      </Link>
       <button
         type="button"
-        className="btn-icon btn-icon-danger"
+        className="btn-ghost btn-sm btn-icon-danger-text"
         onClick={() => onDelete(q.id)}
         title="Eliminar"
-        aria-label="Eliminar cotización"
       >
-        <IconTrash />
+        Eliminar
       </button>
     </div>
   );

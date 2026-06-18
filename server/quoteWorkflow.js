@@ -47,7 +47,8 @@ function normalizeEstado(estado) {
 }
 
 function canEditQuote(estado) {
-  return normalizeEstado(estado) === 'creada';
+  const e = normalizeEstado(estado);
+  return !['cancelada', 'pagada'].includes(e);
 }
 
 function sumPayments(payments) {

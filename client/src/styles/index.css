@@ -1411,7 +1411,20 @@ a.cell-ellipsis:hover {
   align-items: center;
   justify-content: flex-end;
   gap: 0.35rem;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+}
+
+.quote-action-edit {
+  white-space: nowrap;
+}
+
+.btn-icon-danger-text {
+  color: var(--danger, #dc2626);
+}
+
+.btn-icon-danger-text:hover {
+  color: var(--danger, #dc2626);
+  border-color: color-mix(in srgb, var(--danger, #dc2626) 35%, var(--border));
 }
 
 .btn-icon {

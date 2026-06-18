@@ -194,11 +194,11 @@ export default function QuoteForm() {
         <header className="page-header">
           <div>
             <h1>Cotización {numero}</h1>
-            <p>Esta cotización ya no está en estado Creada y no se puede editar aquí.</p>
+            <p>Esta cotización está pagada o cancelada y no se puede editar.</p>
           </div>
         </header>
         <div className="alert alert-warn">
-          Usa la vista de detalle para cambiar el estado del proceso o registrar pagos.
+          Usa la vista de detalle para consultar el historial o los pagos registrados.
         </div>
         <Link to={`/cotizaciones/${id}`} className="btn-primary">
           Ir a detalle de cotización

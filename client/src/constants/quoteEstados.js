@@ -67,7 +67,8 @@ export function quoteEstadoHint(estado) {
 }
 
 export function canEditQuoteContent(estado) {
-  return normalizeEstado(estado) === 'creada';
+  const e = normalizeEstado(estado);
+  return !['cancelada', 'pagada'].includes(e);
 }
 
 const PAYMENT_PHASE_ESTADOS = ['aprobada', 'en_proceso', 'completada', 'pago_parcial'];
