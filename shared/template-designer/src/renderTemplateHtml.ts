@@ -154,6 +154,29 @@ export const TEMPLATE_PAGE_STYLES = `
   .td-empty { color: #94a3b8; font-size: 12px; }
 `;
 
+function buildPdfPrintStyles(definition: QuoteTemplateDefinition): string {
+  const { pageWidth, pageHeight } = definition;
+  return `
+  @page {
+    size: ${pageWidth}px ${pageHeight}px;
+    margin: 0;
+  }
+  html, body {
+    width: ${pageWidth}px;
+    height: ${pageHeight}px;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #fff;
+  }
+  .td-page {
+    margin: 0 !important;
+    box-shadow: none !important;
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }`;
+}
+
 export function renderTemplateBodyHtml(
   definition: QuoteTemplateDefinition,
   context: PlaceholderContext
@@ -176,7 +199,7 @@ export function renderTemplateDocumentHtml(
 <head>
   <meta charset="utf-8" />
   <title>${escapeHtml(title)}</title>
-  <style>${TEMPLATE_PAGE_STYLES}</style>
+  <style>${TEMPLATE_PAGE_STYLES}${buildPdfPrintStyles(definition)}</style>
 </head>
 <body>${body}</body>
 </html>`;

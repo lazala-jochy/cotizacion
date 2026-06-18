@@ -20,12 +20,10 @@ async function generatePdfFromHtmlElectron(html) {
     await win.loadFile(tmpPath);
     return await win.webContents.printToPDF({
       printBackground: true,
+      pageSize: 'A4',
+      preferCSSPageSize: true,
       margins: {
-        marginType: 'custom',
-        top: 0.35,
-        bottom: 0.35,
-        left: 0.35,
-        right: 0.35,
+        marginType: 'none',
       },
     });
   } finally {

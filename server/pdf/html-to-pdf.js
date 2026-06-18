@@ -32,9 +32,10 @@ async function generatePdfFromHtmlPuppeteer(html) {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'load' });
     const buf = await page.pdf({
-      format: 'Letter',
+      format: 'A4',
       printBackground: true,
-      margin: { top: '0.35in', right: '0.35in', bottom: '0.35in', left: '0.35in' },
+      preferCSSPageSize: true,
+      margin: { top: 0, right: 0, bottom: 0, left: 0 },
     });
     return Buffer.from(buf);
   } finally {
