@@ -4,13 +4,9 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { canEditQuoteContent } from '../constants/quoteEstados';
 import ClientFields, { EMPTY_CLIENT_FORM } from '../components/ClientFields';
+import FormaPagoFields from '../components/FormaPagoFields';
 import { buildQuoteClientSuggestions } from '../utils/quoteClientSuggestions';
-
-const FORMA_PAGO_OPTIONS = [
-  'Efectivo / Transferencia',
-  'Efectivo',
-  'Transferencia',
-];
+import { FORMA_PAGO_PRESETS } from '../utils/formaPago';
 
 const emptyItem = { descripcion: '', cantidad: 1, precio_unitario: 0, costo_unitario: 0 };
 const ITBIS_RATE_DEFAULT = 18;
@@ -31,7 +27,7 @@ export default function QuoteForm() {
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
   const [validezDias, setValidezDias] = useState(30);
   const [ejecutivo, setEjecutivo] = useState(() => user?.nombre || '');
-  const [formaPago, setFormaPago] = useState(FORMA_PAGO_OPTIONS[0]);
+  const [formaPago, setFormaPago] = useState(FORMA_PAGO_PRESETS[0]);
   const [notas, setNotas] = useState('');
   const [descuento, setDescuento] = useState(0);
   const [locked, setLocked] = useState(false);
@@ -67,7 +63,7 @@ export default function QuoteForm() {
         setFecha(q.fecha);
         setValidezDias(q.validez_dias);
         setEjecutivo(q.ejecutivo || user?.nombre || '');
-        setFormaPago(q.forma_pago || FORMA_PAGO_OPTIONS[0]);
+        setFormaPago(q.forma_pago || FORMA_PAGO_PRESETS[0]);
         setNotas(q.notas || '');
         setDescuento(q.descuento || 0);
         setLocked(!canEditQuoteContent(q.estado));
@@ -248,16 +244,7 @@ export default function QuoteForm() {
                 placeholder="Nombre de quien atiende la cotización"
               />
             </label>
-            <label>
-              Forma de pago
-              <select value={formaPago} onChange={(e) => setFormaPago(e.target.value)}>
-                {FORMA_PAGO_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <FormaPagoFields value={formaPago} onChange={setFormaPago} />
           </div>
           {!isEdit && (
             <p className="panel-hint">Se creará en estado <strong>Creada</strong>. Podrás avanzar el flujo desde el detalle.</p>

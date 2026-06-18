@@ -1227,6 +1227,10 @@ a.cell-ellipsis:hover {
   padding-left: 1.25rem;
 }
 
+.forma-pago-fields {
+  display: contents;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

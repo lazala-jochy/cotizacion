@@ -3,12 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { INVOICE_ESTADOS, canEditInvoice } from '../constants/invoiceEstados';
 import ClientFields, { EMPTY_CLIENT_FORM } from '../components/ClientFields';
-
-const FORMA_PAGO_OPTIONS = [
-  'Efectivo / Transferencia',
-  'Efectivo',
-  'Transferencia',
-];
+import FormaPagoFields from '../components/FormaPagoFields';
+import { FORMA_PAGO_PRESETS } from '../utils/formaPago';
 
 const emptyItem = { descripcion: '', cantidad: 1, precio_unitario: 0 };
 const ITBIS_RATE_DEFAULT = 18;
@@ -27,7 +23,7 @@ export default function InvoiceForm() {
   const [fechaVencimiento, setFechaVencimiento] = useState('');
   const [estado, setEstado] = useState('pendiente');
   const [ejecutivo, setEjecutivo] = useState('');
-  const [formaPago, setFormaPago] = useState(FORMA_PAGO_OPTIONS[0]);
+  const [formaPago, setFormaPago] = useState(FORMA_PAGO_PRESETS[0]);
   const [notas, setNotas] = useState('');
   const [descuento, setDescuento] = useState(0);
   const [montoPagado, setMontoPagado] = useState(0);
@@ -76,7 +72,7 @@ export default function InvoiceForm() {
         setFechaVencimiento(inv.fecha_vencimiento || '');
         setEstado(inv.estado);
         setEjecutivo(inv.ejecutivo || '');
-        setFormaPago(inv.forma_pago || FORMA_PAGO_OPTIONS[0]);
+        setFormaPago(inv.forma_pago || FORMA_PAGO_PRESETS[0]);
         setNotas(inv.notas || '');
         setDescuento(inv.descuento || 0);
         setMontoPagado(inv.monto_pagado || 0);
@@ -292,16 +288,7 @@ export default function InvoiceForm() {
               Ejecutivo
               <input value={ejecutivo} onChange={(e) => setEjecutivo(e.target.value)} />
             </label>
-            <label>
-              Forma de pago
-              <select value={formaPago} onChange={(e) => setFormaPago(e.target.value)}>
-                {FORMA_PAGO_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <FormaPagoFields value={formaPago} onChange={setFormaPago} />
           </div>
         </section>
 
