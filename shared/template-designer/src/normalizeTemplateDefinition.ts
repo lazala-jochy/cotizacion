@@ -13,6 +13,12 @@ const LEGACY_BARE_PLACEHOLDERS: Partial<Record<TemplateElementType, string[]>> =
     'Tel.: {{company_phone}}',
     'Teléfono: {{company_phone}}',
   ],
+  companyCelular: [
+    '{{company_celular}}',
+    'Cel: {{company_celular}}',
+    'Cel.: {{company_celular}}',
+    'Celular: {{company_celular}}',
+  ],
   companyEmail: ['{{company_email}}', 'Correo: {{company_email}}'],
   companyTaxInfo: ['{{company_tax_info}}', 'RNC: {{company_tax_info}}'],
   clientName: ['{{client_name}}', 'Cliente: {{client_name}}'],

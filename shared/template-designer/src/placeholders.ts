@@ -65,6 +65,7 @@ interface EmisorLike {
   rnc?: string;
   direccion?: string;
   telefono?: string;
+  celular?: string;
   email?: string;
   logo?: string | null;
   firma?: string | null;
@@ -153,6 +154,7 @@ export function buildPlaceholderContext(
   const companyRncRaw = rawField(emisor.rnc);
   const companyAddressRaw = rawField(emisor.direccion);
   const companyPhoneRaw = rawField(emisor.telefono);
+  const companyCelularRaw = rawField(emisor.celular);
   const companyEmailRaw = rawField(emisor.email);
   const clientNameRaw = rawField(quote.client_nombre);
   const clientRncRaw = rawField(quote.client_rnc);
@@ -181,6 +183,8 @@ export function buildPlaceholderContext(
     company_address_raw: companyAddressRaw,
     company_phone: labeledField(PLACEHOLDER_FIELD_LABELS.company_phone, companyPhoneRaw),
     company_phone_raw: companyPhoneRaw,
+    company_celular: labeledField(PLACEHOLDER_FIELD_LABELS.company_celular, companyCelularRaw),
+    company_celular_raw: companyCelularRaw,
     company_email: labeledField(PLACEHOLDER_FIELD_LABELS.company_email, companyEmailRaw),
     company_email_raw: companyEmailRaw,
     company_tax_info: labeledField(PLACEHOLDER_FIELD_LABELS.company_tax_info, companyRncRaw),

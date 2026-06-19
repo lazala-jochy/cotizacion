@@ -3,10 +3,20 @@ import type { QuoteTemplateDefinition, TemplateElement, TemplateElementType } fr
 /** Campos que deben existir en plantillas antiguas para mostrarse en el PDF. */
 const STANDARD_TEMPLATE_PATCHES: TemplateElement[] = [
   {
+    id: 'std-company-celular',
+    type: 'companyCelular',
+    x: 40,
+    y: 226,
+    width: 360,
+    height: 22,
+    style: { fontSize: 11 },
+    zIndex: 2,
+  },
+  {
     id: 'std-company-email',
     type: 'companyEmail',
     x: 40,
-    y: 228,
+    y: 248,
     width: 360,
     height: 22,
     style: { fontSize: 11 },

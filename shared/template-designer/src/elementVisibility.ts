@@ -15,6 +15,7 @@ const TYPE_TO_CONTEXT_KEY: Partial<
   companyRnc: 'company_rnc',
   companyAddress: 'company_address',
   companyPhone: 'company_phone',
+  companyCelular: 'company_celular',
   companyEmail: 'company_email',
   companyTaxInfo: 'company_tax_info',
   clientName: 'client_name',

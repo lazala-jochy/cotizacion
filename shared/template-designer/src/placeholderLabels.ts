@@ -9,6 +9,7 @@ export const PLACEHOLDER_FIELD_LABELS = {
   company_rnc: 'RNC',
   company_address: 'Dirección',
   company_phone: 'Teléfono',
+  company_celular: 'Celular',
   company_email: 'Correo',
   company_tax_info: 'RNC',
   client_name: 'Cliente',

@@ -23,6 +23,7 @@ function publicEmisorFields(row) {
     rnc: row.rnc || '',
     direccion: row.direccion || '',
     telefono: row.telefono || '',
+    celular: row.celular || '',
     email: row.email || '',
     logo: row.logo || null,
     firma: row.firma || null,

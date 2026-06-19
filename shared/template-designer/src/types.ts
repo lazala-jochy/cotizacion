@@ -5,6 +5,7 @@ export type TemplateElementType =
   | 'companyName'
   | 'companyAddress'
   | 'companyPhone'
+  | 'companyCelular'
   | 'companyEmail'
   | 'companyRnc'
   | 'companyTaxInfo'
@@ -108,6 +109,8 @@ export interface PlaceholderContext {
   company_address_raw: string;
   company_phone: string;
   company_phone_raw: string;
+  company_celular: string;
+  company_celular_raw: string;
   company_email: string;
   company_email_raw: string;
   company_tax_info: string;

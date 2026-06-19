@@ -43,6 +43,15 @@ export default function EmisorGeneralSection({ form, setForm, setError, onSubmit
           <input
             value={form.telefono}
             onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+            placeholder="Ej.: 809-555-0100"
+          />
+        </label>
+        <label>
+          Celular
+          <input
+            value={form.celular || ''}
+            onChange={(e) => setForm({ ...form, celular: e.target.value })}
+            placeholder="Ej.: 829-555-0100"
           />
         </label>
         <label>

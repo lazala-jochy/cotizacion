@@ -33,6 +33,7 @@ export function samplePreviewEmisor() {
     rnc: '000000000',
     direccion: 'Santo Domingo, RD',
     telefono: '809-000-0000',
+    celular: '829-000-0000',
     email: 'empresa@ejemplo.com',
     logo: null,
     firma: null,

@@ -127,6 +127,9 @@ if (!emisorCols.some((c) => c.name === 'sello')) {
 if (!emisorCols.some((c) => c.name === 'mensaje_pdf')) {
   db.exec('ALTER TABLE emisor_settings ADD COLUMN mensaje_pdf TEXT');
 }
+if (!emisorCols.some((c) => c.name === 'celular')) {
+  db.exec('ALTER TABLE emisor_settings ADD COLUMN celular TEXT');
+}
 
 const { decrypt } = require('./utils/credentials');
 const emisorSmtpMigrate = db

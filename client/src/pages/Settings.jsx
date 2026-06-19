@@ -16,6 +16,7 @@ const emptyEmisor = {
   rnc: '',
   direccion: '',
   telefono: '',
+  celular: '',
   email: '',
   logo: null,
   firma: null,

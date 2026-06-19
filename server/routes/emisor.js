@@ -14,7 +14,7 @@ router.get('/', (req, res) => {
 });
 
 router.put('/', (req, res) => {
-  const { nombre, rnc, direccion, telefono, email, logo, firma, sello, mensaje_pdf, smtp_user, smtp_password } =
+  const { nombre, rnc, direccion, telefono, celular, email, logo, firma, sello, mensaje_pdf, smtp_user, smtp_password } =
     req.body;
   if (!nombre?.trim()) {
     return res.status(400).json({ error: 'El nombre de la empresa es requerido' });
@@ -44,13 +44,14 @@ router.put('/', (req, res) => {
   }
 
   db.prepare(
-    `INSERT INTO emisor_settings (user_id, nombre, rnc, direccion, telefono, email, logo, firma, sello, mensaje_pdf, smtp_user, smtp_password, smtp_password_enc, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, datetime('now'))
+    `INSERT INTO emisor_settings (user_id, nombre, rnc, direccion, telefono, celular, email, logo, firma, sello, mensaje_pdf, smtp_user, smtp_password, smtp_password_enc, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, datetime('now'))
      ON CONFLICT(user_id) DO UPDATE SET
        nombre=excluded.nombre,
        rnc=excluded.rnc,
        direccion=excluded.direccion,
        telefono=excluded.telefono,
+       celular=excluded.celular,
        email=excluded.email,
        logo=excluded.logo,
        firma=excluded.firma,
@@ -66,6 +67,7 @@ router.put('/', (req, res) => {
     rnc?.trim() || null,
     direccion?.trim() || null,
     telefono?.trim() || null,
+    celular?.trim() || null,
     email?.trim() || null,
     logoValue,
     firmaValue,

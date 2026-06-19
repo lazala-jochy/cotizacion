@@ -45,6 +45,14 @@ export const ELEMENT_CATALOG: ElementCatalogEntry[] = [
     placeholder: '{{company_phone}}',
   },
   {
+    type: 'companyCelular',
+    label: 'Celular empresa',
+    category: 'empresa',
+    defaultWidth: 280,
+    defaultHeight: 24,
+    placeholder: '{{company_celular}}',
+  },
+  {
     type: 'companyEmail',
     label: 'Correo empresa',
     category: 'empresa',
@@ -235,6 +243,7 @@ export const LABELABLE_FIELD_TYPES: TemplateElementType[] = [
   'companyRnc',
   'companyAddress',
   'companyPhone',
+  'companyCelular',
   'companyEmail',
   'companyTaxInfo',
   'clientName',
