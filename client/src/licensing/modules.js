@@ -26,14 +26,14 @@ export function moduleForClientPath(pathname) {
 }
 
 export const NAV_ITEMS = [
-  { to: '/', end: true, label: 'Inicio', module: null },
-  { to: '/cotizaciones/nueva', end: true, label: 'Nueva cotización', module: 'cotizaciones' },
-  { to: '/cotizaciones', end: true, label: 'Cotizaciones', module: 'cotizaciones' },
-  { to: '/facturas', end: true, label: 'Facturas', module: 'facturas' },
-  { to: '/reportes', end: false, label: 'Reportes', module: 'reportes' },
-  { to: '/report-builder', end: true, label: 'Report Builder', module: 'report_builder' },
-  { to: '/dgii', end: false, label: '606/607', module: 'dgii' },
-  { to: '/compras/gastos', end: false, label: 'Compras', module: 'compras' },
-  { to: '/plantillas', end: false, label: 'Plantillas', module: 'plantillas' },
-  { to: '/configuracion', end: false, label: 'Empresa', module: null },
+  { to: '/', end: true, label: 'Inicio', shortLabel: '⌂', module: null },
+  { to: '/cotizaciones/nueva', end: true, label: 'Nueva cotización', shortLabel: '+', module: 'cotizaciones' },
+  { to: '/cotizaciones', end: true, label: 'Cotizaciones', shortLabel: 'C', module: 'cotizaciones' },
+  { to: '/facturas', end: true, label: 'Facturas', shortLabel: 'F', module: 'facturas' },
+  { to: '/reportes', end: false, label: 'Reportes', shortLabel: 'R', module: 'reportes' },
+  { to: '/report-builder', end: true, label: 'Report Builder', shortLabel: 'RB', module: 'report_builder' },
+  { to: '/dgii', end: false, label: '606/607', shortLabel: 'DG', module: 'dgii' },
+  { to: '/compras/gastos', end: false, label: 'Compras', shortLabel: '$', module: 'compras' },
+  { to: '/plantillas', end: false, label: 'Plantillas', shortLabel: 'P', module: 'plantillas' },
+  { to: '/configuracion', end: false, label: 'Empresa', shortLabel: '⚙', module: null },
 ];

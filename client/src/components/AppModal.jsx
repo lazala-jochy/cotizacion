@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import LoadingOverlay from './LoadingOverlay';
 
 /**
  * Diálogo modal coherente con paneles y botones de la app.
@@ -13,11 +14,13 @@ export default function AppModal({
   footer,
   size = 'md',
   closeOnOverlay = true,
+  busy = false,
+  busyMessage = 'Procesando…',
 }) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape' && !busy) onClose();
     };
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
@@ -26,7 +29,7 @@ export default function AppModal({
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [open, onClose]);
+  }, [open, onClose, busy]);
 
   if (!open) return null;
 
@@ -36,13 +39,14 @@ export default function AppModal({
     <div
       className="app-modal-overlay"
       role="presentation"
-      onClick={closeOnOverlay ? onClose : undefined}
+      onClick={closeOnOverlay && !busy ? onClose : undefined}
     >
       <div
         className={`app-modal-panel app-modal-panel--${size}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? labelledBy : undefined}
+        aria-busy={busy || undefined}
         onClick={(e) => e.stopPropagation()}
       >
         {(title || subtitle) && (
@@ -59,6 +63,7 @@ export default function AppModal({
               type="button"
               className="btn-ghost btn-sm app-modal-close"
               onClick={onClose}
+              disabled={busy}
               aria-label="Cerrar"
             >
               ✕
@@ -66,7 +71,11 @@ export default function AppModal({
           </header>
         )}
 
-        <div className="app-modal-body">{children}</div>
+        <div className="app-modal-body">
+          <LoadingOverlay show={busy} message={busyMessage}>
+            {children}
+          </LoadingOverlay>
+        </div>
 
         {footer && <footer className="app-modal-footer">{footer}</footer>}
       </div>

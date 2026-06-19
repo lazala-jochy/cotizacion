@@ -1,3 +1,5 @@
+import LoadingOverlay from '../LoadingOverlay';
+
 const AGG_OPTIONS = [
   { value: 'sum', label: 'SUM' },
   { value: 'avg', label: 'AVG' },
@@ -68,6 +70,7 @@ export default function ReportDesigner({ schema, config, onChange, onRun, loadin
   );
 
   return (
+    <LoadingOverlay show={loading} message="Ejecutando reporte…">
     <section className="panel">
       <h2 className="panel-title">Constructor de reportes</h2>
       <p className="muted">Filtros, agrupaciones y métricas basados en las columnas detectadas del archivo.</p>
@@ -239,8 +242,9 @@ export default function ReportDesigner({ schema, config, onChange, onRun, loadin
       </div>
 
       <button type="button" className="btn-primary" onClick={onRun} disabled={loading}>
-        {loading ? 'Ejecutando…' : 'Generar reporte'}
+        Generar reporte
       </button>
     </section>
+    </LoadingOverlay>
   );
 }

@@ -14,6 +14,7 @@ import ReportTooltip from '../../components/reports/ReportTooltip';
 import { CHART_AXIS_TICK, CHART_COLORS } from '../../utils/reportStats';
 import MonthYearFilterFields from '../../components/filters/MonthYearFilterFields';
 import { dateRangeFromYearMonth, getDefaultYearMonth } from '../../utils/dateRangeFilters';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 const defaultPeriod = getDefaultYearMonth();
 
@@ -65,6 +66,7 @@ export default function ExpenseReportPage() {
 
   return (
     <>
+      <LoadingOverlay show={loading} fixed message="Cargando reporte…" />
       <section className="panel">
         <h2 className="panel-title">Reporte de gastos</h2>
         <div className="quotes-filters-bar" role="group" aria-label="Filtros del reporte">
@@ -108,7 +110,7 @@ export default function ExpenseReportPage() {
         </div>
         <div className="form-actions">
           <button type="button" className="btn-primary btn-sm" onClick={loadReport} disabled={loading}>
-            {loading ? 'Cargando…' : 'Actualizar'}
+            Actualizar
           </button>
           <button type="button" className="btn-ghost btn-sm" onClick={() => handleExport('csv')}>
             Exportar CSV

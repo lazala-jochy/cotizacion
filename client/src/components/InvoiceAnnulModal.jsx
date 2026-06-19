@@ -52,6 +52,8 @@ export default function InvoiceAnnulModal({ invoice, open, onClose, onAnnulled }
     <AppModal
       open={open}
       onClose={() => !busy && onClose()}
+      busy={busy}
+      busyMessage="Anulando factura…"
       title="Anular factura"
       subtitle={invoice.fiscal_number}
       titleId="annul-invoice-title"
@@ -67,7 +69,7 @@ export default function InvoiceAnnulModal({ invoice, open, onClose, onAnnulled }
             className="btn-ghost danger"
             disabled={busy}
           >
-            {busy ? 'Anulando…' : 'Anular factura'}
+            Anular factura
           </button>
         </div>
       }

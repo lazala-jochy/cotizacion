@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import HtmlPreview from './HtmlPreview';
+import { SectionLoader } from './loading';
 
 /**
  * Vista previa de cotización con la plantilla predeterminada (sin iframe).
@@ -34,7 +35,7 @@ export default function QuoteDocument({ quote }) {
   }, [quote]);
 
   if (loading) {
-    return <p className="muted">Generando vista previa…</p>;
+    return <SectionLoader message="Generando vista previa…" />;
   }
 
   if (error) {

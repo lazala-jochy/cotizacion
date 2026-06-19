@@ -6,6 +6,7 @@ import ExpenseListTable from './ExpenseListTable';
 import ExpenseAttachmentViewer from './ExpenseAttachmentViewer';
 import ConfirmModal from '../ConfirmModal';
 import { useExpenseListActions } from '../../hooks/useExpenseListActions';
+import { SectionLoader } from '../loading';
 
 export default function InvoiceExpensesSection({
   invoiceId,
@@ -48,7 +49,7 @@ export default function InvoiceExpensesSection({
       </div>
 
       {actions.error && <div className="alert alert-error">{actions.error}</div>}
-      {loading && <p className="muted">Cargando…</p>}
+      {loading && <SectionLoader message="Cargando gastos…" />}
 
       {!loading && (
         <>

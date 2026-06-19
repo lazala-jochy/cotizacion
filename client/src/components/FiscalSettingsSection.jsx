@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
+import { SectionLoader } from './loading';
+import LoadingOverlay from './LoadingOverlay';
 
 const emptySequence = {
   fiscal_document_type_id: '',
@@ -95,10 +97,12 @@ export default function FiscalSettingsSection() {
       ? `${selectedType.code}${padSeq(Number(form.last_used_number) + 1)}`
       : '—';
 
-  if (loading) return <p className="muted">Cargando comprobantes fiscales…</p>;
+  if (loading) return <SectionLoader message="Cargando comprobantes fiscales…" />;
 
   return (
-    <section className="panel" style={{ marginTop: '1.5rem' }}>
+    <>
+      <LoadingOverlay show={saving} fixed message="Guardando comprobante fiscal…" />
+      <section className="panel" style={{ marginTop: '1.5rem' }}>
       <div className="form-section-title">
         <h2>Comprobantes fiscales</h2>
         <p className="muted">
@@ -186,7 +190,7 @@ export default function FiscalSettingsSection() {
         </p>
         <div className="form-actions span-2">
           <button type="submit" className="btn-primary" disabled={saving}>
-            {saving ? 'Guardando…' : editingId ? 'Actualizar rango' : 'Registrar rango'}
+            {editingId ? 'Actualizar rango' : 'Registrar rango'}
           </button>
           {editingId && (
             <button type="button" className="btn-ghost" onClick={resetForm}>
@@ -243,5 +247,6 @@ export default function FiscalSettingsSection() {
         </div>
       )}
     </section>
+    </>
   );
 }

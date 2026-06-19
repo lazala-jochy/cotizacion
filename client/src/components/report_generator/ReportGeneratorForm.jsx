@@ -1,6 +1,7 @@
 import CheckboxFilterGroup from './CheckboxFilterGroup';
 import ActiveFiltersBar from './ActiveFiltersBar';
-import { ReportTypeIcon, IconSpark } from './icons';
+import LoadingOverlay from '../LoadingOverlay';
+import { IconSpark, ReportTypeIcon } from './icons';
 
 const REPORT_TYPES = [
   { id: 'purchases', label: 'Compras', desc: 'Totales comprados', color: 'blue' },
@@ -35,6 +36,7 @@ export default function ReportGeneratorForm({
     });
 
   return (
+    <LoadingOverlay show={loading} message="Generando informe…">
     <div className="report-studio-builder">
       <div className="report-studio-builder-main">
         <section className="report-studio-panel">
@@ -135,10 +137,11 @@ export default function ReportGeneratorForm({
             disabled={loading}
           >
             <IconSpark />
-            {loading ? 'Generando informe…' : 'Generar Informe'}
+            Generar Informe
           </button>
         </div>
       </aside>
     </div>
+    </LoadingOverlay>
   );
 }

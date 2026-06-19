@@ -34,6 +34,7 @@ import {
   getYearOptionsFromItems,
   matchesYearMonth,
 } from '../utils/dateRangeFilters';
+import { SectionLoader } from '../components/loading';
 
 const defaultMonthFilter = getDefaultYearMonth();
 
@@ -181,7 +182,7 @@ export default function Reports() {
       {error && <div className="alert alert-error">{error}</div>}
 
       {loading && financeLoading ? (
-        <p className="muted reports-loading">Cargando reportes…</p>
+        <SectionLoader message="Cargando reportes…" />
       ) : (
         <>
           <section className="reports-finance-section" aria-label="Ingresos y gastos">
@@ -190,7 +191,7 @@ export default function Reports() {
               Entrada por facturas emitidas y salida por gastos operativos registrados en Compras.
             </p>
             {financeLoading ? (
-              <p className="muted">Cargando ingresos y gastos…</p>
+              <SectionLoader message="Cargando ingresos y gastos…" />
             ) : finance ? (
               <>
                 <div className="reports-kpi-grid reports-kpi-grid--finance">

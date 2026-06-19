@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { APP_NAME } from '../constants/appBrand';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useLicense } from '../context/LicenseContext';
 import { formatProductKeyInput } from '../utils/productKeyFormat';
 import LicenseContactNote from '../components/LicenseContactNote';
+import LoadingOverlay from '../components/LoadingOverlay';
+import { PageLoader } from '../components/loading';
 
 export default function ActivateLicense() {
   const { activate, license, isLicensed, loading: licenseLoading } = useLicense();
@@ -29,10 +32,22 @@ export default function ActivateLicense() {
     }
   };
 
+  if (licenseLoading) {
+    return (
+      <div className="auth-page">
+        <div className="auth-card">
+          <PageLoader message="Cargando información de licencia…" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="auth-page">
+    <>
+      <LoadingOverlay show={submitting} fixed message="Activando licencia…" />
+      <div className="auth-page">
       <div className="auth-card">
-        <h1>Activar Lazala Cotizaciones</h1>
+        <h1>Activar {APP_NAME}</h1>
         <p className="muted">
           Ingrese el product key proporcionado por Lazala Innovaciones (formato LISC-XXXXX-...).
         </p>
@@ -55,7 +70,7 @@ export default function ActivateLicense() {
           {license?.error && !error && <p className="form-error">{license.error}</p>}
 
           <button type="submit" className="btn-primary" disabled={submitting || licenseLoading}>
-            {submitting ? 'Activando…' : 'Activar licencia'}
+            Activar licencia
           </button>
         </form>
 
@@ -70,5 +85,6 @@ export default function ActivateLicense() {
         </p>
       </div>
     </div>
+    </>
   );
 }

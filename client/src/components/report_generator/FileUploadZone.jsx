@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { IconUpload } from './icons';
+import { SectionLoader } from '../loading';
 
 export default function FileUploadZone({ onFile, loading, fileName, schema }) {
   const inputRef = useRef(null);
@@ -51,13 +52,7 @@ export default function FileUploadZone({ onFile, loading, fileName, schema }) {
         </div>
 
         {loading ? (
-          <>
-            <p className="report-studio-dropzone-title">Analizando archivo…</p>
-            <p className="report-studio-dropzone-sub">Detectando productos, proveedores y columnas</p>
-            <div className="report-studio-progress" aria-hidden="true">
-              <span className="report-studio-progress-bar" />
-            </div>
-          </>
+          <SectionLoader message="Analizando archivo…" />
         ) : hasFile ? (
           <>
             <p className="report-studio-dropzone-title">{fileName}</p>

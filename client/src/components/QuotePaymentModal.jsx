@@ -25,7 +25,9 @@ export default function QuotePaymentModal({ quote, onClose, onUpdated }) {
   return (
     <AppModal
       open
-      onClose={onClose}
+      onClose={() => !busy && onClose()}
+      busy={busy}
+      busyMessage="Registrando pago…"
       title="Registrar pago parcial"
       subtitle={`${quote.numero} · ${quote.client_nombre || 'Sin cliente'}`}
       titleId="payment-modal-title"

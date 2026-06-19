@@ -4,6 +4,8 @@ import { api } from '../api';
 import { useLicense } from '../context/LicenseContext';
 import FiscalSettingsSection from '../components/FiscalSettingsSection';
 import LicenseSettingsSection from '../components/LicenseSettingsSection';
+import LoadingOverlay from '../components/LoadingOverlay';
+import { PageLoader } from '../components/loading';
 
 const emptyEmisor = {
   nombre: '',
@@ -76,10 +78,18 @@ export default function Settings() {
     reader.readAsDataURL(file);
   };
 
-  if (loading) return <div className="page"><p className="muted">Cargando…</p></div>;
+  if (loading) {
+    return (
+      <div className="page">
+        <PageLoader message="Cargando datos de la empresa…" />
+      </div>
+    );
+  }
 
   return (
-    <div className="page">
+    <>
+      <LoadingOverlay show={saving} fixed message="Guardando datos de la empresa…" />
+      <div className="page">
       <header className="page-header">
         <div>
           <h1>Datos de la empresa</h1>
@@ -204,7 +214,7 @@ export default function Settings() {
 
           <div className="form-actions span-2">
             <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? 'Guardando…' : 'Guardar empresa'}
+              Guardar empresa
             </button>
           </div>
         </form>
@@ -214,5 +224,6 @@ export default function Settings() {
 
       <FiscalSettingsSection />
     </div>
+    </>
   );
 }

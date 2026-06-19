@@ -1,4 +1,5 @@
 import { TEMPLATE_PRESETS } from '@template-designer/presetTemplates';
+import LoadingOverlay from './LoadingOverlay';
 
 function TemplatePresetPreview({ variant }) {
   return (
@@ -18,6 +19,7 @@ function TemplatePresetPreview({ variant }) {
 
 export default function TemplatePresetGallery({ busyId, onSelect }) {
   return (
+    <LoadingOverlay show={Boolean(busyId)} message="Creando plantilla…">
     <section className="template-preset-section">
       <div className="template-preset-section-head">
         <h2>Plantillas PDF listas para usar</h2>
@@ -48,12 +50,13 @@ export default function TemplatePresetGallery({ busyId, onSelect }) {
                 disabled={busyId === preset.id}
                 onClick={() => onSelect(preset)}
               >
-                {busyId === preset.id ? 'Creando…' : 'Usar esta plantilla'}
+                Usar esta plantilla
               </button>
             </div>
           </article>
         ))}
       </div>
     </section>
+    </LoadingOverlay>
   );
 }

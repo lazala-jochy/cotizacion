@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { saveAccountAfterLogin } from '../utils/savedAccounts';
+import { APP_NAME } from '../constants/appBrand';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
@@ -113,12 +115,15 @@ export default function Register() {
   };
 
   return (
-    <div className="auth-page">
+    <>
+      <LoadingOverlay show={loading} fixed message="Creando cuenta…" />
+      <div className="auth-page">
       <div className="auth-card auth-card--wizard">
         <div className="auth-wizard">
           <aside className="auth-wizard-side">
-            <span className="brand-mark lg">C</span>
+            <span className="brand-mark lg">LIS</span>
             <h1>Crear cuenta</h1>
+            <p className="auth-wizard-app muted">{APP_NAME}</p>
             <p className="auth-wizard-desc">
               {step === 1
                 ? 'Paso 1: datos de tu empresa'
@@ -275,7 +280,7 @@ export default function Register() {
                     ← Atrás
                   </button>
                   <button type="submit" className="btn-primary" disabled={loading}>
-                    {loading ? 'Creando…' : 'Crear cuenta'}
+                    Crear cuenta
                   </button>
                 </div>
               </form>
@@ -288,5 +293,6 @@ export default function Register() {
         </div>
       </div>
     </div>
+    </>
   );
 }

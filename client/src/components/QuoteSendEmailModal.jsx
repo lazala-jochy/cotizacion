@@ -56,7 +56,9 @@ export default function QuoteSendEmailModal({
   return (
     <AppModal
       open
-      onClose={onClose}
+      onClose={() => !busy && onClose()}
+      busy={busy}
+      busyMessage="Enviando correo…"
       title="Enviar cotización por correo"
       subtitle={`${quote.numero} — PDF adjunto con plantilla profesional`}
       titleId="send-email-title"
@@ -77,7 +79,7 @@ export default function QuoteSendEmailModal({
             className="btn-primary"
             disabled={busy || !to.trim()}
           >
-            {busy ? 'Enviando…' : submitLabel}
+            {submitLabel}
           </button>
         </div>
       }

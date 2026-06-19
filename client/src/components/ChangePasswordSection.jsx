@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { updateSavedAccountPassword } from '../utils/savedAccounts';
+import LoadingOverlay from './LoadingOverlay';
 
 export default function ChangePasswordSection() {
   const { user, login } = useAuth();
@@ -44,7 +45,9 @@ export default function ChangePasswordSection() {
   };
 
   return (
-    <section className="panel" id="seguridad">
+    <>
+      <LoadingOverlay show={loading} fixed message="Guardando contraseña…" />
+      <section className="panel" id="seguridad">
       <header className="form-section-title">
         <h2>Seguridad de la cuenta</h2>
         <p className="muted">
@@ -91,10 +94,11 @@ export default function ChangePasswordSection() {
         </label>
         <div className="form-actions span-2">
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Guardando…' : 'Cambiar contraseña'}
+            Cambiar contraseña
           </button>
         </div>
       </form>
     </section>
+    </>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import AppModal from './AppModal';
+import { SectionLoader } from './loading';
 
 /**
  * Modal para convertir cotización → factura eligiendo tipo de comprobante (NCF / e-CF).
@@ -117,6 +118,8 @@ export default function QuoteConvertToInvoiceModal({
     <AppModal
       open={open}
       onClose={() => !busy && onClose()}
+      busy={busy}
+      busyMessage="Convirtiendo a factura…"
       title="Convertir a factura"
       subtitle={quoteNumero ? `Cotización ${quoteNumero}` : undefined}
       titleId="convert-invoice-modal-title"
@@ -132,7 +135,7 @@ export default function QuoteConvertToInvoiceModal({
             className="btn-primary"
             disabled={busy || !selectedTypeId || rncMissing || !hasActiveRange}
           >
-            {busy ? 'Convirtiendo…' : 'Crear factura'}
+            Crear factura
           </button>
         </div>
       }
@@ -145,7 +148,7 @@ export default function QuoteConvertToInvoiceModal({
       </p>
 
       {loadingTypes ?
-        <p className="muted">Cargando tipos de comprobante…</p>
+        <SectionLoader message="Cargando tipos de comprobante…" />
       : <form id="convert-invoice-form" className="form-grid" onSubmit={handleSubmit}>
           <label className="span-2">
             Tipo de comprobante *
@@ -200,7 +203,7 @@ export default function QuoteConvertToInvoiceModal({
               Próximo número fiscal:{' '}
               <strong>
                 {loadingPreview ?
-                  'Calculando…'
+                  '—'
                 : preview?.fiscal_number || '—'}
               </strong>
               {preview?.document_type_name && (

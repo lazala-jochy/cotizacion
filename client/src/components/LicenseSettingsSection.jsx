@@ -3,7 +3,8 @@ import { useLicense } from '../context/LicenseContext';
 import { APP_MODULES } from '../licensing/modules';
 import { formatProductKeyInput } from '../utils/productKeyFormat';
 import LicenseContactNote from './LicenseContactNote';
-import LicenseLoadingScreen from './LicenseLoadingScreen';
+import { SectionLoader } from './loading';
+import LoadingOverlay from './LoadingOverlay';
 
 function moduleLabel(code) {
   return APP_MODULES.find((m) => m.code === code)?.name || code;
@@ -67,13 +68,16 @@ export default function LicenseSettingsSection() {
   if (loading) {
     return (
       <section className="panel license-panel-loading" id="licencia">
-        <LicenseLoadingScreen message="Cargando información de licencia…" />
+        <SectionLoader message="Cargando información de licencia…" />
       </section>
     );
   }
 
   return (
-    <section className="panel" id="licencia">
+    <>
+      <LoadingOverlay show={submitting} fixed message="Guardando licencia…" />
+      <LoadingOverlay show={syncing} fixed message="Actualizando módulos…" />
+      <section className="panel" id="licencia">
       <div className="panel-header-row">
         <div>
           <h2>Licencia / Product key</h2>
@@ -135,7 +139,7 @@ export default function LicenseSettingsSection() {
                 onClick={handleUpdateModules}
                 disabled={syncing}
               >
-                {syncing ? 'Actualizando módulos…' : 'Actualizar módulos'}
+                Actualizar módulos
               </button>
               {!showChangeForm && (
                 <button
@@ -176,7 +180,7 @@ export default function LicenseSettingsSection() {
           </label>
           <div className="form-actions">
             <button type="submit" className="btn-primary" disabled={submitting}>
-              {submitting ? 'Guardando…' : hasStoredKey ? 'Actualizar licencia' : 'Activar licencia'}
+              {hasStoredKey ? 'Actualizar licencia' : 'Activar licencia'}
             </button>
             {hasStoredKey && (
               <button
@@ -195,5 +199,6 @@ export default function LicenseSettingsSection() {
         </form>
       )}
     </section>
+    </>
   );
 }

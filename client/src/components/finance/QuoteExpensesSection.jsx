@@ -6,6 +6,7 @@ import ExpenseListTable from './ExpenseListTable';
 import ExpenseAttachmentViewer from './ExpenseAttachmentViewer';
 import ConfirmModal from '../ConfirmModal';
 import { useExpenseListActions } from '../../hooks/useExpenseListActions';
+import { SectionLoader } from '../loading';
 
 export default function QuoteExpensesSection({ quoteId, clientId, clientRnc, onChanged }) {
   const [expenses, setExpenses] = useState([]);
@@ -42,7 +43,7 @@ export default function QuoteExpensesSection({ quoteId, clientId, clientRnc, onC
       </div>
 
       {actions.error && <div className="alert alert-error">{actions.error}</div>}
-      {loading && <p className="muted">Cargando gastos…</p>}
+      {loading && <SectionLoader message="Cargando gastos…" />}
 
       {!loading && (
         <>

@@ -10,6 +10,7 @@ import {
   YAxis,
 } from 'recharts';
 import { api } from '../api';
+import { APP_DEVELOPER } from '../constants/appBrand';
 import { useLicense } from '../context/LicenseContext';
 import { formatMoney, formatMoneyCompact } from '../utils/formatMoney';
 import ReportTooltip from '../components/reports/ReportTooltip';
@@ -95,6 +96,7 @@ export default function Dashboard() {
 
   return (
     <div className="page dashboard-page">
+      <div className="dashboard-page-body">
       <header className="page-header">
         <div>
           <h1>Inicio</h1>
@@ -259,6 +261,11 @@ export default function Dashboard() {
           </dl>
         </section>
       )}
+      </div>
+
+      <footer className="dashboard-credit">
+        Desarrollado por <strong>{APP_DEVELOPER}</strong>
+      </footer>
     </div>
   );
 }

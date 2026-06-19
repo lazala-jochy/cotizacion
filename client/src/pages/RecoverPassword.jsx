@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { updateSavedAccountPassword } from '../utils/savedAccounts';
+import LoadingOverlay from '../components/LoadingOverlay';
+import { APP_NAME } from '../constants/appBrand';
 
 export default function RecoverPassword() {
   const [email, setEmail] = useState('');
@@ -40,18 +42,20 @@ export default function RecoverPassword() {
   };
 
   return (
-    <div className="auth-page">
+    <>
+      <LoadingOverlay show={loading} fixed message="Restableciendo contraseña…" />
+      <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <span className="brand-mark lg">C</span>
+          <span className="brand-mark lg">LIS</span>
           <h1>Restablecer contraseña</h1>
-          <p>Recuperación local en este equipo.</p>
+          <p>{APP_NAME}</p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <h2>Recuperar acceso</h2>
           <p className="muted auth-recover-hint">
-            Ingresa el email de tu cuenta y define una nueva contraseña.
+            Recuperación local en este equipo. Ingresa el email de tu cuenta y define una nueva contraseña.
           </p>
 
           {error && <div className="alert alert-error">{error}</div>}
@@ -90,7 +94,7 @@ export default function RecoverPassword() {
           </label>
 
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Restableciendo…' : 'Restablecer y entrar'}
+            Restablecer y entrar
           </button>
         </form>
 
@@ -99,5 +103,6 @@ export default function RecoverPassword() {
         </p>
       </div>
     </div>
+    </>
   );
 }

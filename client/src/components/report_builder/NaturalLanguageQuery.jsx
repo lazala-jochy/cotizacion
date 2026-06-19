@@ -1,3 +1,5 @@
+import LoadingOverlay from '../LoadingOverlay';
+
 function buildDynamicExamples(schema) {
   if (!schema?.columns?.length) {
     return [
@@ -30,29 +32,31 @@ export default function NaturalLanguageQuery({ schema, value, onChange, onRun, l
   const examples = buildDynamicExamples(schema);
 
   return (
-    <section className="panel">
-      <h2 className="panel-title">Consulta en lenguaje natural</h2>
-      <p className="muted">
-        El motor interpreta la consulta usando columnas y valores únicos detectados en tu archivo.
-      </p>
-      <textarea
-        className="report-builder-nl-input"
-        rows={3}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Ej: Muéstrame cuánto gasté en cada proveedor."
-      />
-      <div className="report-builder-examples">
-        {examples.map((ex) => (
-          <button key={ex} type="button" className="btn-ghost btn-sm" onClick={() => onChange(ex)}>
-            {ex}
-          </button>
-        ))}
-      </div>
-      <button type="button" className="btn-primary" onClick={onRun} disabled={loading || !value.trim()}>
-        {loading ? 'Generando…' : 'Generar reporte'}
-      </button>
-      {lastExplanation && <p className="muted report-builder-explanation">{lastExplanation}</p>}
-    </section>
+    <LoadingOverlay show={loading} message="Generando reporte…">
+      <section className="panel">
+        <h2 className="panel-title">Consulta en lenguaje natural</h2>
+        <p className="muted">
+          El motor interpreta la consulta usando columnas y valores únicos detectados en tu archivo.
+        </p>
+        <textarea
+          className="report-builder-nl-input"
+          rows={3}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Ej: Muéstrame cuánto gasté en cada proveedor."
+        />
+        <div className="report-builder-examples">
+          {examples.map((ex) => (
+            <button key={ex} type="button" className="btn-ghost btn-sm" onClick={() => onChange(ex)}>
+              {ex}
+            </button>
+          ))}
+        </div>
+        <button type="button" className="btn-primary" onClick={onRun} disabled={loading || !value.trim()}>
+          Generar reporte
+        </button>
+        {lastExplanation && <p className="muted report-builder-explanation">{lastExplanation}</p>}
+      </section>
+    </LoadingOverlay>
   );
 }

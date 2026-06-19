@@ -7,6 +7,8 @@ import ClientFields, { EMPTY_CLIENT_FORM } from '../components/ClientFields';
 import FormaPagoFields from '../components/FormaPagoFields';
 import { buildQuoteClientSuggestions } from '../utils/quoteClientSuggestions';
 import { FORMA_PAGO_PRESETS } from '../utils/formaPago';
+import LoadingOverlay from '../components/LoadingOverlay';
+import { PageLoader } from '../components/loading';
 
 const emptyItem = { descripcion: '', cantidad: 1, precio_unitario: 0, costo_unitario: 0 };
 const ITBIS_RATE_DEFAULT = 18;
@@ -36,6 +38,7 @@ export default function QuoteForm() {
   const [items, setItems] = useState([{ ...emptyItem }]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(isEdit);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     api.quotes
@@ -147,6 +150,7 @@ export default function QuoteForm() {
     }
 
     try {
+      setSaving(true);
       const payload = {
         numero: isEdit ? undefined : numero,
         fecha,
@@ -178,11 +182,19 @@ export default function QuoteForm() {
       }
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
 
-  if (loading) return <div className="page"><p className="muted">Cargando…</p></div>;
+  if (loading) {
+    return (
+      <div className="page">
+        <PageLoader message="Cargando cotización…" />
+      </div>
+    );
+  }
 
   if (locked) {
     return (
@@ -204,7 +216,13 @@ export default function QuoteForm() {
   }
 
   return (
-    <div className="page">
+    <>
+      <LoadingOverlay
+        show={saving}
+        fixed
+        message={isEdit ? 'Guardando cotización…' : 'Creando cotización…'}
+      />
+      <div className="page">
       <header className="page-header">
         <div>
           <h1>{isEdit ? 'Editar cotización' : 'Nueva cotización'}</h1>
@@ -452,5 +470,6 @@ export default function QuoteForm() {
         </div>
       </form>
     </div>
+    </>
   );
 }

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { invoiceEstadoLabel } from '../constants/invoiceEstados';
 import HtmlPreview from './HtmlPreview';
+import { SectionLoader } from './loading';
 
 function mapInvoiceForPreview(invoice) {
   return {
@@ -61,7 +62,7 @@ export default function InvoiceDocument({ invoice }) {
     };
   }, [invoice]);
 
-  if (loading) return <p className="muted">Generando vista previa…</p>;
+  if (loading) return <SectionLoader message="Generando vista previa…" />;
 
   if (error) {
     return (

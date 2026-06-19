@@ -5,6 +5,8 @@ import { INVOICE_ESTADOS, canEditInvoice } from '../constants/invoiceEstados';
 import ClientFields, { EMPTY_CLIENT_FORM } from '../components/ClientFields';
 import FormaPagoFields from '../components/FormaPagoFields';
 import { FORMA_PAGO_PRESETS } from '../utils/formaPago';
+import LoadingOverlay from '../components/LoadingOverlay';
+import { PageLoader } from '../components/loading';
 
 const emptyItem = { descripcion: '', cantidad: 1, precio_unitario: 0 };
 const ITBIS_RATE_DEFAULT = 18;
@@ -37,6 +39,7 @@ export default function InvoiceForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(isEdit);
   const [locked, setLocked] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     api.fiscal.documentTypes().then(setDocumentTypes).catch(() => {});
@@ -160,6 +163,7 @@ export default function InvoiceForm() {
     };
 
     try {
+      setSaving(true);
       if (isEdit) {
         const updated = await api.invoices.update(id, payload);
         navigate(`/facturas/${id}`, { state: { invoice: updated } });
@@ -169,10 +173,18 @@ export default function InvoiceForm() {
       }
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading) return <div className="page"><p className="muted">Cargando…</p></div>;
+  if (loading) {
+    return (
+      <div className="page">
+        <PageLoader message="Cargando factura…" />
+      </div>
+    );
+  }
 
   if (locked) {
     return (
@@ -186,7 +198,13 @@ export default function InvoiceForm() {
   }
 
   return (
-    <div className="page">
+    <>
+      <LoadingOverlay
+        show={saving}
+        fixed
+        message={isEdit ? 'Guardando factura…' : 'Creando factura…'}
+      />
+      <div className="page">
       <header className="page-header">
         <div>
           <h1>{isEdit ? 'Editar factura' : 'Nueva factura'}</h1>
@@ -427,5 +445,6 @@ export default function InvoiceForm() {
         </div>
       </form>
     </div>
+    </>
   );
 }

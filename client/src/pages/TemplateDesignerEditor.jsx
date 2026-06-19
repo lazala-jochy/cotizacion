@@ -4,10 +4,14 @@ import { buildPlaceholderContext } from '@template-designer/placeholders';
 import { normalizeTemplateDefinition } from '@template-designer/normalizeTemplateDefinition';
 import { renderTemplateDocumentHtml } from '@template-designer/renderTemplateHtml';
 import { api } from '../api';
+import { PageLoader } from '../components/loading';
+import LoadingOverlay from '../components/LoadingOverlay';
+import CollapsiblePanel from '../components/CollapsiblePanel';
 import HtmlPreview from '../components/HtmlPreview';
 import DesignerCanvas from '../features/template-designer/DesignerCanvas';
 import DesignerSidebar from '../features/template-designer/DesignerSidebar';
 import ElementPropertiesPanel from '../features/template-designer/ElementPropertiesPanel';
+import { usePersistedBoolean } from '../hooks/usePersistedBoolean';
 import { createElement } from '../features/template-designer/utils';
 import { samplePreviewEmisor, samplePreviewQuote } from '../utils/templateSamplePreview';
 
@@ -27,6 +31,8 @@ export default function TemplateDesignerEditor() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [leftCollapsed, toggleLeftPanel] = usePersistedBoolean('td-panel-left-collapsed', false);
+  const [rightCollapsed, toggleRightPanel] = usePersistedBoolean('td-panel-right-collapsed', false);
 
   useEffect(() => {
     if (invalidId) {
@@ -151,13 +157,16 @@ export default function TemplateDesignerEditor() {
   if (loading || !definition) {
     return (
       <div className="page">
-        <p className="muted">Cargando diseñador…</p>
+        <PageLoader message="Cargando diseñador…" />
       </div>
     );
   }
 
   return (
-    <div className="page td-editor-page">
+    <>
+      <LoadingOverlay show={saving} fixed message="Guardando plantilla…" />
+      <LoadingOverlay show={previewLoading} fixed message="Generando vista previa…" />
+      <div className="page td-editor-page">
       <header className="page-header">
         <div>
           <Link to="/plantillas" className="btn-ghost btn-sm">
@@ -189,10 +198,10 @@ export default function TemplateDesignerEditor() {
             onClick={refreshPreview}
             disabled={previewLoading}
           >
-            {previewLoading ? 'Generando…' : 'Vista previa'}
+            Vista previa
           </button>
           <button type="button" className="btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? 'Guardando…' : 'Guardar plantilla'}
+            Guardar plantilla
           </button>
         </div>
       </header>
@@ -200,8 +209,24 @@ export default function TemplateDesignerEditor() {
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
-      <div className="td-editor-layout">
-        <DesignerSidebar onAddElement={addElement} />
+      <div
+        className={[
+          'td-editor-layout',
+          leftCollapsed ? 'td-editor-layout--left-collapsed' : '',
+          rightCollapsed ? 'td-editor-layout--right-collapsed' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <CollapsiblePanel
+          side="left"
+          title="Elementos"
+          collapsed={leftCollapsed}
+          onToggle={toggleLeftPanel}
+          className="td-sidebar-wrap"
+        >
+          <DesignerSidebar onAddElement={addElement} />
+        </CollapsiblePanel>
         <div className="td-editor-main">
           <DesignerCanvas
             definition={definition}
@@ -210,22 +235,30 @@ export default function TemplateDesignerEditor() {
             onUpdateElement={updateElement}
           />
         </div>
-        <ElementPropertiesPanel
-          element={selected}
-          onChange={(updated) => {
-            setDefinition((prev) =>
-              prev ?
-                {
-                  ...prev,
-                  elements: prev.elements.map((el) =>
-                    el.id === updated.id ? updated : el
-                  ),
-                }
-              : prev
-            );
-          }}
-          onDelete={removeElement}
-        />
+        <CollapsiblePanel
+          side="right"
+          title="Propiedades"
+          collapsed={rightCollapsed}
+          onToggle={toggleRightPanel}
+          className="td-props-wrap"
+        >
+          <ElementPropertiesPanel
+            element={selected}
+            onChange={(updated) => {
+              setDefinition((prev) =>
+                prev ?
+                  {
+                    ...prev,
+                    elements: prev.elements.map((el) =>
+                      el.id === updated.id ? updated : el
+                    ),
+                  }
+                : prev
+              );
+            }}
+            onDelete={removeElement}
+          />
+        </CollapsiblePanel>
       </div>
 
       {showPreview && previewHtml && (
@@ -258,5 +291,6 @@ export default function TemplateDesignerEditor() {
         </div>
       )}
     </div>
+    </>
   );
 }

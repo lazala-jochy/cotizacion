@@ -67,7 +67,7 @@
   },
   "build": {
     "appId": "com.cotizaciones.desktop",
-    "productName": "Cotizaciones",
+    "productName": "LIS Cotizaciones",
     "icon": "asset/icon.png",
     "directories": {
       "output": "release",
@@ -99,7 +99,7 @@
       "target": [
         "nsis"
       ],
-      "executableName": "Cotizaciones"
+      "executableName": "LISCotizaciones"
     },
     "nsis": {
       "oneClick": false,

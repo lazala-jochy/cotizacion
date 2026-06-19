@@ -173,6 +173,8 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
     <AppModal
       open={open}
       onClose={() => !busy && onClose()}
+      busy={busy}
+      busyMessage="Guardando gasto…"
       title={expense ? 'Editar gasto' : 'Registrar gasto'}
       size="md"
       footer={
@@ -181,7 +183,7 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
             Cancelar
           </button>
           <button type="submit" form="expense-form" className="btn-primary" disabled={busy}>
-            {busy ? 'Guardando…' : 'Guardar'}
+            Guardar
           </button>
         </div>
       }

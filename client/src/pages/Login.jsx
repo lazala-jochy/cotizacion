@@ -9,6 +9,8 @@ import {
   removeSavedAccount,
   saveAccountAfterLogin,
 } from '../utils/savedAccounts';
+import { APP_NAME } from '../constants/appBrand';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 export default function Login() {
   const [savedAccounts, setSavedAccounts] = useState(() => listSavedAccounts());
@@ -104,11 +106,13 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-page">
+    <>
+      <LoadingOverlay show={loading} fixed message="Iniciando sesión…" />
+      <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <span className="brand-mark lg">C</span>
-          <h1>Cotizaciones</h1>
+          <span className="brand-mark lg">LIS</span>
+          <h1>{APP_NAME}</h1>
           <p>Genera y administra cotizaciones para tu negocio</p>
         </div>
 
@@ -212,7 +216,7 @@ export default function Login() {
               <Link to="/restablecer-contrasena">¿Olvidaste tu contraseña?</Link>
             </p>
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Entrando…' : 'Entrar'}
+              Entrar
             </button>
           </form>
         )}
@@ -222,5 +226,6 @@ export default function Login() {
         </p>
       </div>
     </div>
+    </>
   );
 }

@@ -46,7 +46,9 @@ export default function QuoteEnviadaModal({ quote, onClose, onUpdated }) {
   return (
     <AppModal
       open
-      onClose={onClose}
+      onClose={() => !marking && onClose()}
+      busy={marking}
+      busyMessage="Guardando…"
       title="Marcar como enviada"
       subtitle={
         quote.client_nombre
@@ -66,7 +68,7 @@ export default function QuoteEnviadaModal({ quote, onClose, onUpdated }) {
             onClick={handleMarkOnly}
             disabled={marking}
           >
-            {marking ? 'Guardando…' : 'Solo marcar como enviada'}
+            Solo marcar como enviada
           </button>
           <button type="button" className="btn-ghost" onClick={onClose} disabled={marking}>
             Cancelar

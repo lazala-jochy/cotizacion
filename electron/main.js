@@ -7,6 +7,7 @@ const { shutdownForUpdate } = require('./shutdown-for-update');
 
 const isDev = !app.isPackaged;
 const PORT = 3847;
+const APP_NAME = require('../package.json').build?.productName || 'LIS Cotizaciones';
 
 function getAppIconPath() {
   return path.join(__dirname, '..', 'asset', 'icon.png');
@@ -43,14 +44,14 @@ function formatUpdateError(err) {
     return 'Error al aplicar la actualización. Pulsa «Reiniciar e instalar» o Reintentar.';
   }
   if (/uninstall|desinstal/i.test(msg)) {
-    return 'No se pudo reemplazar la versión anterior. Cierra Cotizaciones (y el Administrador de tareas) e inténtalo de nuevo.';
+    return `No se pudo reemplazar la versión anterior. Cierra ${APP_NAME} (y el Administrador de tareas) e inténtalo de nuevo.`;
   }
   return msg.length > 200 ? `${msg.slice(0, 200)}…` : msg;
 }
 
 function showBootError(message) {
   const devHint = isDev ? '\n\nSi desarrollas en local: npm run rebuild:dev' : '';
-  dialog.showErrorBox('Cotizaciones — error al iniciar', `${message}${devHint}`);
+  dialog.showErrorBox(`${APP_NAME} — error al iniciar`, `${message}${devHint}`);
 }
 
 function createWindow() {
@@ -59,7 +60,7 @@ function createWindow() {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    title: 'Cotizaciones',
+    title: APP_NAME,
     icon: getAppIconPath(),
     show: false,
     backgroundColor: '#0f1419',

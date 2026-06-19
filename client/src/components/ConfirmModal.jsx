@@ -13,6 +13,7 @@ export default function ConfirmModal({
   cancelLabel = 'Cancelar',
   onConfirm,
   busy = false,
+  busyMessage,
   error = '',
   confirmVariant = 'primary',
   titleId,
@@ -20,6 +21,12 @@ export default function ConfirmModal({
   const handleConfirm = async () => {
     await onConfirm?.();
   };
+
+  const resolvedBusyMessage =
+    busyMessage ||
+    (confirmLabel.toLowerCase().includes('eliminar') ? 'Eliminando…'
+    : confirmLabel.toLowerCase().includes('anular') ? 'Anulando…'
+    : 'Procesando…');
 
   return (
     <AppModal
@@ -29,6 +36,9 @@ export default function ConfirmModal({
       subtitle={subtitle}
       titleId={titleId}
       size="sm"
+      busy={busy}
+      busyMessage={resolvedBusyMessage}
+      closeOnOverlay={!busy}
       footer={
         <div className="app-modal-actions">
           <button type="button" className="btn-ghost" onClick={onClose} disabled={busy}>
@@ -42,7 +52,7 @@ export default function ConfirmModal({
             onClick={handleConfirm}
             disabled={busy}
           >
-            {busy ? 'Procesando…' : confirmLabel}
+            {confirmLabel}
           </button>
         </div>
       }

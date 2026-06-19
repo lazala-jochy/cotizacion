@@ -4,6 +4,7 @@ import { api } from '../api';
 import { createDefaultTemplateDefinition } from '@template-designer/defaultTemplate';
 import TemplatePresetGallery from '../components/TemplatePresetGallery';
 import ConfirmModal from '../components/ConfirmModal';
+import { SectionLoader } from '../components/loading';
 
 export default function TemplateDesignerList() {
   const navigate = useNavigate();
@@ -162,7 +163,7 @@ export default function TemplateDesignerList() {
         </div>
 
         {loading ?
-          <p className="muted">Cargando plantillas…</p>
+          <SectionLoader message="Cargando plantillas…" />
         : templates.length === 0 ?
           <div className="quotes-empty">
             <p className="muted">

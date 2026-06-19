@@ -18,6 +18,7 @@ import {
   quoteMatchesListFilters,
 } from '../utils/quoteListFilters';
 import MonthYearFilterFields from '../components/filters/MonthYearFilterFields';
+import { SectionLoader } from '../components/loading';
 import { getDefaultYearMonth } from '../utils/dateRangeFilters';
 
 const PAGE_SIZE_DEFAULT = 5;
@@ -196,7 +197,7 @@ export default function Quotes() {
 
   const listSummary =
     loading ?
-      'Cargando…'
+      '—'
     : filtered.length === 0 ?
       hasFilters ?
         'Sin resultados para los filtros'
@@ -315,7 +316,7 @@ export default function Quotes() {
         </div>
 
         {loading ? (
-          <p className="muted quotes-empty">Cargando cotizaciones…</p>
+          <SectionLoader message="Cargando cotizaciones…" />
         ) : quotes.length === 0 ? (
           <div className="quotes-empty">
             <p className="muted">No hay cotizaciones aún.</p>

@@ -3,6 +3,8 @@ import { api } from '../../api';
 import DgiiPeriodField, { buildPeriod, defaultPeriodParts } from '../../components/dgii/DgiiPeriodField';
 import DgiiTxtPreview from '../../components/dgii/DgiiTxtPreview';
 import { formatDgiiPeriodLabel } from '../../utils/dgiiPeriod';
+import { SectionLoader } from '../../components/loading';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-DO', {
@@ -65,6 +67,7 @@ export default function DgiiFormat607() {
 
   return (
     <>
+      <LoadingOverlay show={exporting} fixed message="Exportando TXT…" />
       <section className="panel">
         <h2 className="panel-title">607 — Ventas</h2>
         <p className="muted panel-desc">
@@ -76,7 +79,7 @@ export default function DgiiFormat607() {
 
         <div className="form-actions" style={{ marginTop: '1rem' }}>
           <button type="button" className="btn-primary" onClick={loadPreview} disabled={loading || !period}>
-            {loading ? 'Generando TXT…' : 'Vista previa'}
+            Vista previa
           </button>
           <button
             type="button"
@@ -84,13 +87,15 @@ export default function DgiiFormat607() {
             onClick={handleExport}
             disabled={exporting || loading || !period}
           >
-            {exporting ? 'Exportando…' : 'Exportar TXT'}
+            Exportar TXT
           </button>
         </div>
       </section>
 
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
+
+      {loading && <SectionLoader message="Generando vista previa TXT…" />}
 
       {!preview && !loading && period && (
         <p className="muted">

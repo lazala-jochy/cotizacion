@@ -9,6 +9,8 @@ import InvoiceAnnulModal from '../components/InvoiceAnnulModal';
 import ConfirmModal from '../components/ConfirmModal';
 import InvoiceExpensesSection from '../components/finance/InvoiceExpensesSection';
 import ProfitabilityPanel from '../components/finance/ProfitabilityPanel';
+import { PageLoader } from '../components/loading';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(n || 0);
@@ -96,12 +98,20 @@ export default function InvoiceView() {
       </div>
     );
   }
-  if (!invoice) return <div className="page"><p className="muted">Cargando…</p></div>;
+  if (!invoice) {
+    return (
+      <div className="page">
+        <PageLoader message="Cargando factura…" />
+      </div>
+    );
+  }
 
   const editable = canEditInvoice(invoice.estado);
 
   return (
-    <div className="page quote-view-page">
+    <>
+      <LoadingOverlay show={pdfLoading} fixed message="Generando PDF…" />
+      <div className="page quote-view-page">
       <div className="no-print quote-view-toolbar">
         <Link to="/facturas" className="btn-ghost btn-sm">
           ← Volver
@@ -118,7 +128,7 @@ export default function InvoiceView() {
             onClick={handleDownloadPdf}
             disabled={pdfLoading}
           >
-            {pdfLoading ? 'Generando PDF…' : 'Descargar PDF'}
+            Descargar PDF
           </button>
           {invoice.estado !== 'anulada' && (
             <button
@@ -253,5 +263,6 @@ export default function InvoiceView() {
         </section>
       )}
     </div>
+    </>
   );
 }

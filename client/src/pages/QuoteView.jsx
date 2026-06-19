@@ -9,6 +9,8 @@ import QuoteSendEmailModal from '../components/QuoteSendEmailModal';
 import QuoteConvertToInvoiceButton from '../components/QuoteConvertToInvoiceButton';
 import QuoteExpensesSection from '../components/finance/QuoteExpensesSection';
 import ProfitabilityPanel from '../components/finance/ProfitabilityPanel';
+import { PageLoader } from '../components/loading';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 export default function QuoteView() {
   const { id } = useParams();
@@ -47,13 +49,21 @@ export default function QuoteView() {
   };
 
   if (error && !quote) return <div className="page"><div className="alert alert-error">{error}</div></div>;
-  if (!quote || emisor === null) return <div className="page"><p className="muted">Cargando…</p></div>;
+  if (!quote || emisor === null) {
+    return (
+      <div className="page">
+        <PageLoader message="Cargando cotización…" />
+      </div>
+    );
+  }
 
   const emisorListo = emisor?.nombre?.trim();
   const editable = canEditQuoteContent(quote.estado);
 
   return (
-    <div className="page quote-view-page">
+    <>
+      <LoadingOverlay show={pdfLoading} fixed message="Generando PDF…" />
+      <div className="page quote-view-page">
       <div className="no-print quote-view-toolbar">
         <Link to="/cotizaciones" className="btn-ghost btn-sm">
           ← Volver
@@ -70,7 +80,7 @@ export default function QuoteView() {
             onClick={handleDownloadPdf}
             disabled={pdfLoading}
           >
-            {pdfLoading ? 'Generando PDF…' : 'Descargar PDF'}
+            Descargar PDF
           </button>
           <button
             type="button"
@@ -145,5 +155,6 @@ export default function QuoteView() {
 
       <QuoteDocument quote={quote} emisor={emisor} />
     </div>
+    </>
   );
 }

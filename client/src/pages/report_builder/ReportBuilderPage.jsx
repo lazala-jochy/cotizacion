@@ -5,6 +5,7 @@ import ReportStepper from '../../components/report_generator/ReportStepper';
 import DatasetSummaryBar from '../../components/report_generator/DatasetSummaryBar';
 import ReportGeneratorForm from '../../components/report_generator/ReportGeneratorForm';
 import ReportResults from '../../components/report_generator/ReportResults';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 const EMPTY_SELECTIONS = {
   products: [],
@@ -113,7 +114,9 @@ export default function ReportBuilderPage() {
   const activeStep = getActiveStep(schema, report);
 
   return (
-    <div className="page report-studio-page">
+    <>
+      <LoadingOverlay show={exporting} fixed message="Exportando reporte…" />
+      <div className="page report-studio-page">
       <header className="report-studio-hero">
         <div>
           <p className="report-studio-hero-eyebrow">Report Builder</p>
@@ -165,5 +168,6 @@ export default function ReportBuilderPage() {
         />
       )}
     </div>
+    </>
   );
 }

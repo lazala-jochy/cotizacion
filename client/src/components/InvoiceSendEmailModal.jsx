@@ -50,7 +50,9 @@ export default function InvoiceSendEmailModal({ invoice, onClose, onSent }) {
   return (
     <AppModal
       open
-      onClose={onClose}
+      onClose={() => !busy && onClose()}
+      busy={busy}
+      busyMessage="Enviando correo…"
       title="Enviar factura por correo"
       subtitle={`${invoice.fiscal_number} — PDF adjunto`}
       titleId="invoice-send-email-title"
@@ -65,7 +67,7 @@ export default function InvoiceSendEmailModal({ invoice, onClose, onSent }) {
             className="btn-primary"
             disabled={busy || !to.trim()}
           >
-            {busy ? 'Enviando…' : 'Enviar correo'}
+            Enviar correo
           </button>
         </div>
       }

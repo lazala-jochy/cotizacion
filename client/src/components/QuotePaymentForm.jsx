@@ -141,7 +141,7 @@ export default function QuotePaymentForm({
             </button>
           )}
           <button type="submit" className="btn-primary" disabled={busy}>
-            {busy ? 'Guardando…' : 'Registrar pago'}
+            Registrar pago
           </button>
         </div>
       </form>

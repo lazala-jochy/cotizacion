@@ -15,6 +15,7 @@ import ReportTooltip from '../../components/reports/ReportTooltip';
 import { CHART_AXIS_TICK, CHART_COLORS } from '../../utils/reportStats';
 import MonthYearFilterFields from '../../components/filters/MonthYearFilterFields';
 import { dateRangeFromYearMonth, getDefaultYearMonth } from '../../utils/dateRangeFilters';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 const defaultPeriod = getDefaultYearMonth();
 
@@ -38,6 +39,7 @@ export default function IncomeStatementPage() {
 
   return (
     <>
+      <LoadingOverlay show={loading} fixed message="Calculando estado de resultados…" />
       <section className="panel">
         <h2 className="panel-title">Estado de resultados</h2>
         <p className="muted panel-desc">
@@ -53,7 +55,7 @@ export default function IncomeStatementPage() {
           />
         </div>
         <button type="button" className="btn-primary btn-sm" onClick={load} disabled={loading}>
-          {loading ? 'Calculando…' : 'Generar'}
+          Generar
         </button>
       </section>
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api';
 import MonthYearFilterFields from '../../components/filters/MonthYearFilterFields';
 import { getDefaultYearMonth, getYearOptionsFromItems, matchesDgiiPeriod } from '../../utils/dateRangeFilters';
+import { SectionLoader } from '../../components/loading';
 
 const defaultMonthFilter = getDefaultYearMonth();
 
@@ -75,7 +76,7 @@ export default function DgiiReportsHistory() {
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
-      {loading && <p className="muted">Cargando…</p>}
+      {loading && <SectionLoader message="Cargando historial…" />}
 
       {!loading && (
         <div className="table-wrap">

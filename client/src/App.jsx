@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { useLicense } from './context/LicenseContext';
 import Layout from './components/Layout';
+import AppLoadingScreen from './components/AppLoadingScreen';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import RecoverPassword from './pages/RecoverPassword';
@@ -38,11 +39,7 @@ const IncomeStatementPage = lazy(() => import('./pages/finance/IncomeStatementPa
 const ReportBuilderPage = lazy(() => import('./pages/report_builder/ReportBuilderPage'));
 
 function PageLoading() {
-  return (
-    <div className="page">
-      <p className="muted">Cargando…</p>
-    </div>
-  );
+  return <AppLoadingScreen message="Cargando…" variant="page" />;
 }
 
 function PrivateRoute({ children }) {

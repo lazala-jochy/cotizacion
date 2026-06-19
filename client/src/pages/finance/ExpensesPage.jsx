@@ -9,6 +9,7 @@ import { getAttachmentSource } from '../../utils/expenseAttachment';
 import MonthYearFilterFields from '../../components/filters/MonthYearFilterFields';
 import { dateRangeFromYearMonth, getDefaultYearMonth } from '../../utils/dateRangeFilters';
 import { resolveExpenseItbis } from '../../utils/expenseItbis';
+import { SectionLoader } from '../../components/loading';
 
 const defaultPeriod = getDefaultYearMonth();
 
@@ -130,7 +131,7 @@ export default function ExpensesPage() {
       </section>
 
       {error && <div className="alert alert-error">{error}</div>}
-      {loading && <p className="muted">Cargando…</p>}
+      {loading && <SectionLoader message="Cargando gastos…" />}
 
       {!loading && (
         <section className="panel quotes-panel">
