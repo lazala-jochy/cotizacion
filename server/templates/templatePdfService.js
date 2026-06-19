@@ -10,9 +10,12 @@ async function getDefaultDefinition(userId) {
   return template.definition;
 }
 
+const { normalizeTemplateDefinition } = require('../../shared/template-designer/dist/normalizeTemplateDefinition');
+
 function renderHtmlForQuote(quote, emisor, userId, options = {}) {
   const template = options.template || templateRepo.ensureDefaultTemplate(userId);
-  const definition = options.definition || template.definition;
+  const rawDefinition = options.definition || template.definition;
+  const definition = normalizeTemplateDefinition(rawDefinition);
   return renderQuoteWithTemplate(definition, quote, emisor, {
     estadoLabel: options.estadoLabel,
   });
@@ -25,7 +28,8 @@ async function generateQuotePdf(quote, emisor, userId, options = {}) {
 
 function renderHtmlForInvoice(invoice, emisor, userId, options = {}) {
   const template = options.template || templateRepo.ensureDefaultTemplate(userId);
-  const definition = options.definition || template.definition;
+  const rawDefinition = options.definition || template.definition;
+  const definition = normalizeTemplateDefinition(rawDefinition);
   return renderInvoiceWithTemplate(definition, invoice, emisor, {
     estadoLabel: options.estadoLabel,
   });

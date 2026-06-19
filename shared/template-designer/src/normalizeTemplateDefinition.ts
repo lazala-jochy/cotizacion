@@ -38,6 +38,7 @@ const LEGACY_BARE_PLACEHOLDERS: Partial<Record<TemplateElementType, string[]>> =
   discount: ['{{discount}}', 'Descuento: {{discount}}'],
   total: ['{{total}}', 'Total: {{total}}'],
   notes: ['{{notes}}', 'Notas: {{notes}}'],
+  customMessage: ['{{mensaje_pdf}}'],
 };
 
 export function shouldUseCatalogPlaceholder(el: TemplateElement): boolean {

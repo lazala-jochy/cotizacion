@@ -30,7 +30,7 @@ async function generatePdfFromHtmlPuppeteer(html) {
 
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'load' });
+    await page.setContent(html, { waitUntil: 'networkidle0' });
     const buf = await page.pdf({
       format: 'A4',
       printBackground: true,

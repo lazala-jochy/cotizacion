@@ -110,10 +110,12 @@ function CanvasElement({
         <span className="td-canvas-element-type">{label}</span>
         {el.type === 'productTable' ?
           <span className="muted">Tabla de ítems</span>
-        : el.type === 'companyLogo' || el.type === 'image' ?
+        : el.type === 'companyLogo' || el.type === 'image' || el.type === 'signature' || el.type === 'sello' ?
           <span className="muted">Imagen</span>
         : el.type === 'qrCode' ?
           <span className="muted">QR</span>
+        : el.type === 'customMessage' ?
+          <span className="muted td-canvas-element-preview">Mensaje personalizado…</span>
         : <span className="td-canvas-element-preview">
             {isDataBoundField(el.type)
               ? (el.showLabel === false

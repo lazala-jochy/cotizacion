@@ -67,6 +67,9 @@ interface EmisorLike {
   telefono?: string;
   email?: string;
   logo?: string | null;
+  firma?: string | null;
+  sello?: string | null;
+  mensaje_pdf?: string | null;
 }
 
 export function buildItemsTableHtml(
@@ -103,6 +106,15 @@ export function buildItemsTableHtml(
 
 function rawField(value?: string | null): string {
   return String(value ?? '').trim();
+}
+
+function emisorImageUrl(value?: string | null): string {
+  const s = rawField(value);
+  if (!s) return '';
+  if (s.startsWith('data:image') || s.startsWith('http://') || s.startsWith('https://')) {
+    return s;
+  }
+  return '';
 }
 
 function escapeHtml(value: string): string {
@@ -155,6 +167,7 @@ export function buildPlaceholderContext(
   const discountRaw = disc > 0 ? formatMoney(disc) : '';
   const totalRaw = formatMoney(total);
   const notesRaw = rawField(quote.notas);
+  const mensajePdfRaw = rawField(emisor.mensaje_pdf);
   const ejecutivoRaw = rawField(quote.ejecutivo);
   const formaPagoRaw = rawField(quote.forma_pago);
   const estadoRaw = rawField(estadoText);
@@ -172,7 +185,9 @@ export function buildPlaceholderContext(
     company_email_raw: companyEmailRaw,
     company_tax_info: labeledField(PLACEHOLDER_FIELD_LABELS.company_tax_info, companyRncRaw),
     company_tax_info_raw: companyRncRaw,
-    company_logo: emisor.logo?.startsWith('data:image') ? emisor.logo : '',
+    company_logo: emisorImageUrl(emisor.logo),
+    firma_image: emisorImageUrl(emisor.firma),
+    sello_image: emisorImageUrl(emisor.sello),
     client_name: labeledField(PLACEHOLDER_FIELD_LABELS.client_name, clientNameRaw),
     client_name_raw: clientNameRaw,
     client_rnc: labeledField(PLACEHOLDER_FIELD_LABELS.client_rnc, clientRncRaw),
@@ -204,6 +219,8 @@ export function buildPlaceholderContext(
     total_raw: totalRaw,
     notes: labeledField(PLACEHOLDER_FIELD_LABELS.notes, notesRaw),
     notes_raw: notesRaw,
+    mensaje_pdf: mensajePdfRaw,
+    mensaje_pdf_raw: mensajePdfRaw,
     signature: ejecutivoRaw ? `Atentamente, ${ejecutivoRaw}` : '',
     ejecutivo: labeledField(PLACEHOLDER_FIELD_LABELS.ejecutivo, ejecutivoRaw),
     ejecutivo_raw: ejecutivoRaw,

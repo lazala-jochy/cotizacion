@@ -1556,6 +1556,88 @@ a.cell-ellipsis:hover {
   font-size: 0.85rem;
 }
 
+.settings-page .settings-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+  padding: 0.35rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.settings-nav-link {
+  padding: 0.5rem 0.85rem;
+  border-radius: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.settings-nav-link:hover {
+  color: var(--text);
+  background: var(--bg-panel);
+}
+
+.settings-nav-link--active {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.settings-section-lead {
+  margin: -0.25rem 0 1rem;
+  max-width: 52rem;
+}
+
+.field-label-block {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.signature-pad {
+  margin-top: 0.5rem;
+}
+
+.signature-pad-canvas {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: #fff;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.signature-pad-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+}
+
+.signature-pad-actions {
+  margin-top: 0.5rem;
+}
+
+.signature-upload-preview img,
+.sello-upload-preview img {
+  max-height: 120px;
+  object-fit: contain;
+}
+
+.sello-upload-preview img {
+  max-height: 160px;
+}
+
+.emisor-image-upload > span {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 500;
+}
+
 .dashboard-page {
   min-height: calc(100vh - 3rem);
   display: flex;

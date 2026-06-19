@@ -3,6 +3,7 @@ const { authMiddleware } = require('../middleware/auth');
 const templateRepo = require('../templates/templateRepository');
 const { renderTemplateDocumentHtml } = require('../../shared/template-designer/dist/renderTemplateHtml');
 const { buildPlaceholderContext } = require('../../shared/template-designer/dist/placeholders');
+const { normalizeTemplateDefinition } = require('../../shared/template-designer/dist/normalizeTemplateDefinition');
 const { getEmisorRow, publicEmisorFields } = require('../emisorSmtp');
 const { getQuoteWithItems } = require('./quotesTemplateHelpers');
 
@@ -71,7 +72,7 @@ router.post('/:id/preview', (req, res) => {
   const template = templateRepo.getById(Number(req.params.id), req.user.id);
   if (!template) return res.status(404).json({ error: 'Plantilla no encontrada' });
 
-  const definition = req.body?.definition || template.definition;
+  const definition = normalizeTemplateDefinition(req.body?.definition || template.definition);
 
   const emisor = publicEmisorFields(getEmisorRow(req.user.id));
   let quote = req.body?.quote;

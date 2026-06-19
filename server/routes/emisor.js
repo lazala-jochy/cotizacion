@@ -14,16 +14,28 @@ router.get('/', (req, res) => {
 });
 
 router.put('/', (req, res) => {
-  const { nombre, rnc, direccion, telefono, email, logo, smtp_user, smtp_password } = req.body;
+  const { nombre, rnc, direccion, telefono, email, logo, firma, sello, mensaje_pdf, smtp_user, smtp_password } =
+    req.body;
   if (!nombre?.trim()) {
     return res.status(400).json({ error: 'El nombre de la empresa es requerido' });
   }
-  if (logo && logo.length > 3_000_000) {
-    return res.status(400).json({ error: 'El logo es demasiado grande (máx. ~2 MB)' });
+  const imageFields = [
+    ['logo', logo],
+    ['firma', firma],
+    ['sello', sello],
+  ];
+  for (const [label, value] of imageFields) {
+    if (value && value.length > 3_000_000) {
+      return res.status(400).json({ error: `La imagen de ${label} es demasiado grande (máx. ~2 MB)` });
+    }
   }
 
   const current = getEmisorRow(req.user.id);
   const logoValue = logo !== undefined ? logo || null : current?.logo || null;
+  const firmaValue = firma !== undefined ? firma || null : current?.firma || null;
+  const selloValue = sello !== undefined ? sello || null : current?.sello || null;
+  const mensajePdfValue =
+    mensaje_pdf !== undefined ? String(mensaje_pdf || '').trim() || null : current?.mensaje_pdf || null;
   const smtpUserValue = smtp_user !== undefined ? smtp_user?.trim() || null : current.smtp_user;
   let smtpPasswordValue = readSmtpPassword(current) || null;
   if (smtp_password !== undefined) {
@@ -32,8 +44,8 @@ router.put('/', (req, res) => {
   }
 
   db.prepare(
-    `INSERT INTO emisor_settings (user_id, nombre, rnc, direccion, telefono, email, logo, smtp_user, smtp_password, smtp_password_enc, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, datetime('now'))
+    `INSERT INTO emisor_settings (user_id, nombre, rnc, direccion, telefono, email, logo, firma, sello, mensaje_pdf, smtp_user, smtp_password, smtp_password_enc, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, datetime('now'))
      ON CONFLICT(user_id) DO UPDATE SET
        nombre=excluded.nombre,
        rnc=excluded.rnc,
@@ -41,6 +53,9 @@ router.put('/', (req, res) => {
        telefono=excluded.telefono,
        email=excluded.email,
        logo=excluded.logo,
+       firma=excluded.firma,
+       sello=excluded.sello,
+       mensaje_pdf=excluded.mensaje_pdf,
        smtp_user=excluded.smtp_user,
        smtp_password=excluded.smtp_password,
        smtp_password_enc=NULL,
@@ -53,6 +68,9 @@ router.put('/', (req, res) => {
     telefono?.trim() || null,
     email?.trim() || null,
     logoValue,
+    firmaValue,
+    selloValue,
+    mensajePdfValue,
     smtpUserValue,
     smtpPasswordValue
   );

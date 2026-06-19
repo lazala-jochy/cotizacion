@@ -18,6 +18,18 @@ async function generatePdfFromHtmlElectron(html) {
 
   try {
     await win.loadFile(tmpPath);
+    await win.webContents.executeJavaScript(`
+      Promise.all(
+        Array.from(document.images).map((img) =>
+          img.complete
+            ? Promise.resolve()
+            : new Promise((resolve) => {
+                img.onload = resolve;
+                img.onerror = resolve;
+              })
+        )
+      )
+    `);
     return await win.webContents.printToPDF({
       printBackground: true,
       pageSize: 'A4',

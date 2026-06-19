@@ -102,7 +102,7 @@ export default function FiscalSettingsSection() {
   return (
     <>
       <LoadingOverlay show={saving} fixed message="Guardando comprobante fiscal…" />
-      <section className="panel" style={{ marginTop: '1.5rem' }}>
+      <section className="panel" id="fiscal">
       <div className="form-section-title">
         <h2>Comprobantes fiscales</h2>
         <p className="muted">

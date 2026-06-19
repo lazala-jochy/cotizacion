@@ -34,7 +34,8 @@ export default function DesignerSidebar({ onAddElement }) {
       <div className="td-sidebar-placeholders muted">
         <strong>Placeholders:</strong>
         <code>{'{{company_name}}'}</code>, <code>{'{{client_name}}'}</code>,{' '}
-        <code>{'{{quotation_number}}'}</code>, <code>{'{{total}}'}</code>…
+        <code>{'{{quotation_number}}'}</code>, <code>{'{{total}}'}</code>,{' '}
+        <code>{'{{mensaje_pdf}}'}</code>…
       </div>
     </aside>
   );

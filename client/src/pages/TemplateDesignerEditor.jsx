@@ -66,6 +66,9 @@ export default function TemplateDesignerEditor() {
           telefono: row.telefono || emisor.telefono,
           email: row.email || emisor.email,
           logo: row.logo || null,
+          firma: row.firma || null,
+          sello: row.sello || null,
+          mensaje_pdf: row.mensaje_pdf || '',
         };
       } catch {
         /* datos de ejemplo si no hay emisor */

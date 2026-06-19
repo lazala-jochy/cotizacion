@@ -35,5 +35,8 @@ export function samplePreviewEmisor() {
     telefono: '809-000-0000',
     email: 'empresa@ejemplo.com',
     logo: null,
+    firma: null,
+    sello: null,
+    mensaje_pdf: 'Gracias por confiar en nuestro equipo.',
   };
 }

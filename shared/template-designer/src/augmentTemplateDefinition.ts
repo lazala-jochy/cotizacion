@@ -33,14 +33,24 @@ const STANDARD_TEMPLATE_PATCHES: TemplateElement[] = [
     zIndex: 7,
   },
   {
+    id: 'std-custom-message',
+    type: 'customMessage',
+    x: 40,
+    y: 900,
+    width: 714,
+    height: 48,
+    style: { fontSize: 11, fontStyle: 'italic', textAlign: 'center', color: '#334155' },
+    zIndex: 7,
+  },
+  {
     id: 'std-signature',
     type: 'signature',
     x: 40,
     y: 1008,
-    width: 420,
-    height: 52,
+    width: 200,
+    height: 72,
     style: { fontSize: 11 },
-    zIndex: 7,
+    zIndex: 50,
   },
 ];
 
@@ -74,11 +84,15 @@ export function augmentTemplateDefinition(
     const freeTextPattern =
       patch.type === 'formaPago'
         ? /\{\{forma_pago/
-        : patch.type === 'ejecutivo'
-          ? /\{\{ejecutivo/
-          : patch.type === 'signature'
+          : patch.type === 'ejecutivo'
+            ? /\{\{ejecutivo/
+            : patch.type === 'customMessage'
+              ? /\{\{mensaje_pdf\}\}/
+              : patch.type === 'signature'
             ? /\{\{signature\}\}/
-            : undefined;
+            : patch.type === 'sello'
+              ? /\{\{sello/
+              : undefined;
 
     if (isTypeCovered(elements, patch.type, freeTextPattern)) continue;
     if (ids.has(patch.id)) continue;

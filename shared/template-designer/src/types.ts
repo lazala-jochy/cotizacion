@@ -24,7 +24,9 @@ export type TemplateElementType =
   | 'discount'
   | 'total'
   | 'signature'
+  | 'sello'
   | 'notes'
+  | 'customMessage'
   | 'freeText'
   | 'image'
   | 'qrCode';
@@ -118,7 +120,11 @@ export interface PlaceholderContext {
   total_raw: string;
   notes: string;
   notes_raw: string;
+  mensaje_pdf: string;
+  mensaje_pdf_raw: string;
   signature: string;
+  firma_image: string;
+  sello_image: string;
   ejecutivo: string;
   ejecutivo_raw: string;
   forma_pago: string;

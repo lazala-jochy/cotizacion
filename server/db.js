@@ -118,6 +118,15 @@ if (!emisorCols.some((c) => c.name === 'smtp_password_enc')) {
 if (!emisorCols.some((c) => c.name === 'smtp_password')) {
   db.exec('ALTER TABLE emisor_settings ADD COLUMN smtp_password TEXT');
 }
+if (!emisorCols.some((c) => c.name === 'firma')) {
+  db.exec('ALTER TABLE emisor_settings ADD COLUMN firma TEXT');
+}
+if (!emisorCols.some((c) => c.name === 'sello')) {
+  db.exec('ALTER TABLE emisor_settings ADD COLUMN sello TEXT');
+}
+if (!emisorCols.some((c) => c.name === 'mensaje_pdf')) {
+  db.exec('ALTER TABLE emisor_settings ADD COLUMN mensaje_pdf TEXT');
+}
 
 const { decrypt } = require('./utils/credentials');
 const emisorSmtpMigrate = db

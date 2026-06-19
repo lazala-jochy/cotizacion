@@ -96,6 +96,21 @@ export default function ElementPropertiesPanel({ element, onChange, onDelete }) 
           )}
         </>
       )}
+      {element.type === 'customMessage' && (
+        <label>
+          Texto en esta plantilla (opcional)
+          <textarea
+            rows={3}
+            value={element.content || ''}
+            onChange={(e) => patch({ content: e.target.value })}
+            placeholder="Vacío = usar mensaje de Empresa → Mensaje para PDF"
+          />
+          <span className="muted td-props-hint">
+            Si dejas esto vacío, se usa el mensaje configurado en{' '}
+            <strong>Empresa → Mensaje para PDF</strong>.
+          </span>
+        </label>
+      )}
       {element.type === 'freeText' && (
         <label>
           Contenido / placeholders
