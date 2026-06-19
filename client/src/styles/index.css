@@ -868,6 +868,16 @@ label {
   box-sizing: border-box;
 }
 
+.license-notice-banner {
+  margin: 0 0 1rem;
+}
+
+.license-notice-banner a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 .sidebar-footer .btn-primary.btn-sm {
   width: 100%;
   justify-content: center;

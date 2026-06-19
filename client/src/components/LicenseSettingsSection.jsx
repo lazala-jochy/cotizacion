@@ -157,9 +157,6 @@ export default function LicenseSettingsSection() {
             </div>
           </div>
 
-          {license.stale && license.error && (
-            <p className="alert alert-error">{license.error} (usando caché local)</p>
-          )}
         </div>
       )}
 

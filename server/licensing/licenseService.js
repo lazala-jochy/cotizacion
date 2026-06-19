@@ -155,16 +155,21 @@ async function refreshFromServer(source = 'manual') {
     return await fetchFromLicenseServer('activate', row.product_key, source);
   } catch (err) {
     if (err.status === 403) {
+      const revokedMessage = err.message || 'Su licencia ya no está activa.';
       appendSyncLog({
         productKey: row.product_key,
         machineId: getMachineId(),
         modules: parseModules(row),
         result: err.code === 'LICENSE_IN_USE' ? 'in_use' : 'revoked',
-        message: err.message,
+        message: revokedMessage,
         source,
       });
       clearLicense();
-      return getStatus();
+      return {
+        ...getStatus(),
+        revoked: true,
+        revokedMessage,
+      };
     }
     const cached = rowToStatus(row, { stale: true, error: err.message });
     if (cached.active) return cached;

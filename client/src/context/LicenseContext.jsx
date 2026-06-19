@@ -13,33 +13,70 @@ export function LicenseProvider({ children }) {
   const [license, setLicense] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [licenseNotice, setLicenseNotice] = useState('');
 
   const applyStatus = useCallback((status) => {
     setLicense(status);
+    if (status?.revoked && status?.revokedMessage) {
+      setLicenseNotice(status.revokedMessage);
+    } else if (isLicenseActive(status)) {
+      setLicenseNotice('');
+    }
     return status;
   }, []);
 
-  const refresh = useCallback(async ({ silent = false } = {}) => {
-    if (!silent) setLoading(true);
-    else setSyncing(true);
-
+  const loadLocal = useCallback(async () => {
     try {
-      const cached = await api.license.status();
-      if (!cached.productKey) return applyStatus(cached);
-
-      // Consultar servidor al abrir: los módulos pueden haber cambiado en license-server.
-      try {
-        return applyStatus(await api.license.refresh());
-      } catch {
-        return applyStatus(cached);
-      }
+      return applyStatus(await api.license.status());
     } catch {
       return applyStatus({ active: false, required: true, modules: [], needsSync: false });
-    } finally {
-      if (!silent) setLoading(false);
-      else setSyncing(false);
     }
   }, [applyStatus]);
+
+  const syncWithServer = useCallback(async () => {
+    try {
+      return applyStatus(await api.license.refresh());
+    } catch {
+      /* Sin aviso: seguir con caché local */
+      return null;
+    }
+  }, [applyStatus]);
+
+  const runScheduledSync = useCallback(async () => {
+    try {
+      const status = await api.license.syncScheduled();
+      applyStatus(status);
+    } catch {
+      /* mantener caché local */
+    }
+  }, [applyStatus]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const cached = await loadLocal();
+      if (cancelled) return;
+      setLoading(false);
+      if (cached?.productKey) {
+        syncWithServer();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadLocal, syncWithServer]);
+
+  useEffect(() => {
+    if (loading || !license?.productKey) return undefined;
+
+    runScheduledSync();
+    const timer = window.setInterval(runScheduledSync, BACKGROUND_CHECK_MS);
+    return () => window.clearInterval(timer);
+  }, [loading, license?.productKey, runScheduledSync]);
+
+  const refresh = useCallback(async () => loadLocal(), [loadLocal]);
 
   const refreshModules = useCallback(async () => {
     setSyncing(true);
@@ -51,35 +88,15 @@ export function LicenseProvider({ children }) {
     }
   }, [applyStatus]);
 
-  const runBackgroundSync = useCallback(async () => {
-    if (!license?.productKey || !license?.needsSync) return;
-    try {
-      const status = await api.license.syncScheduled();
-      applyStatus(status);
-    } catch {
-      /* mantener caché local */
-    }
-  }, [license?.productKey, license?.needsSync, applyStatus]);
-
-  useEffect(() => {
-    refresh({ silent: false });
-  }, [refresh]);
-
-  useEffect(() => {
-    if (loading) return undefined;
-
-    runBackgroundSync();
-    const timer = window.setInterval(runBackgroundSync, BACKGROUND_CHECK_MS);
-    return () => window.clearInterval(timer);
-  }, [loading, runBackgroundSync]);
-
   const activate = async (productKey) => {
     const status = await api.license.activate(productKey);
+    setLicenseNotice('');
     return applyStatus(status);
   };
 
   const deactivate = async () => {
     const status = await api.license.deactivate();
+    setLicenseNotice('');
     return applyStatus(status);
   };
 
@@ -100,6 +117,7 @@ export function LicenseProvider({ children }) {
         license,
         loading,
         syncing,
+        licenseNotice,
         refresh,
         refreshModules,
         activate,

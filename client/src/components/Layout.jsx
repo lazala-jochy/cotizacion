@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLicense } from '../context/LicenseContext';
 import { api } from '../api';
@@ -9,7 +9,7 @@ const idleUpdate = { status: 'idle', message: '' };
 
 export default function Layout() {
   const { user, logout } = useAuth();
-  const { hasModule, canAccessPath, isLicensed, loading: licenseLoading } = useLicense();
+  const { hasModule, canAccessPath, loading: licenseLoading, licenseNotice } = useLicense();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -198,6 +198,12 @@ export default function Layout() {
         </div>
       </aside>
       <main className="main-content">
+        {licenseNotice && (
+          <div className="license-notice-banner alert alert-error" role="alert">
+            {licenseNotice}{' '}
+            <Link to="/configuracion#licencia">Renovar licencia</Link>
+          </div>
+        )}
         <Outlet />
       </main>
     </div>

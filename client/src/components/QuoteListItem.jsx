@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { IconEye, IconEdit, IconTrash } from './Icons';
 import QuoteConvertToInvoiceButton from './QuoteConvertToInvoiceButton';
 import {
   QUOTE_ESTADO_OPTIONS,
@@ -198,26 +199,29 @@ function QuoteRowActions({ q, onDelete, showPayBtn, onRegisterPayment }) {
       {editable && (
         <Link
           to={`/cotizaciones/${q.id}/editar`}
-          className="btn-ghost btn-sm quote-action-edit"
+          className="btn-icon"
           title="Editar cotización"
+          aria-label="Editar cotización"
         >
-          Editar
+          <IconEdit />
         </Link>
       )}
       <Link
         to={`/cotizaciones/${q.id}`}
-        className="btn-ghost btn-sm"
+        className="btn-icon"
         title="Ver detalle y pagos"
+        aria-label="Ver cotización"
       >
-        Ver
+        <IconEye />
       </Link>
       <button
         type="button"
-        className="btn-ghost btn-sm btn-icon-danger-text"
+        className="btn-icon btn-icon-danger"
         onClick={() => onDelete(q.id)}
         title="Eliminar"
+        aria-label="Eliminar cotización"
       >
-        Eliminar
+        <IconTrash />
       </button>
     </div>
   );
