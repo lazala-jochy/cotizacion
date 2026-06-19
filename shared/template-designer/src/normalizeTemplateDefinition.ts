@@ -63,8 +63,14 @@ function removeRedundantClientLabel(elements: TemplateElement[]): TemplateElemen
 }
 
 /** Alinea elementos guardados con placeholders etiquetados del catálogo. */
+export interface NormalizeTemplateOptions {
+  /** Si false, no reinyecta elementos estándar que el usuario eliminó. */
+  allowAugment?: boolean;
+}
+
 export function normalizeTemplateDefinition(
-  definition: QuoteTemplateDefinition
+  definition: QuoteTemplateDefinition,
+  options: NormalizeTemplateOptions = {}
 ): QuoteTemplateDefinition {
   let elements = definition.elements.map((el) => {
     if (!shouldUseCatalogPlaceholder(el)) return el;
@@ -78,5 +84,8 @@ export function normalizeTemplateDefinition(
     }
   });
   elements = removeRedundantClientLabel(elements);
-  return augmentTemplateDefinition({ ...definition, elements });
+  const base = { ...definition, elements };
+  const allowAugment = options.allowAugment ?? !definition.layoutLocked;
+  if (!allowAugment) return base;
+  return augmentTemplateDefinition(base);
 }

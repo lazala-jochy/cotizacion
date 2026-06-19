@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import HtmlPreview from './HtmlPreview';
 import { SectionLoader } from './loading';
+import { TEMPLATES_UPDATED_EVENT } from '../utils/templatesEvents';
 
 /**
  * Vista previa de cotización con la plantilla predeterminada (sin iframe).
@@ -11,6 +12,13 @@ export default function QuoteDocument({ quote }) {
   const [previewHtml, setPreviewHtml] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [templateRevision, setTemplateRevision] = useState(0);
+
+  useEffect(() => {
+    const onTemplatesUpdated = () => setTemplateRevision((n) => n + 1);
+    window.addEventListener(TEMPLATES_UPDATED_EVENT, onTemplatesUpdated);
+    return () => window.removeEventListener(TEMPLATES_UPDATED_EVENT, onTemplatesUpdated);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,7 +40,7 @@ export default function QuoteDocument({ quote }) {
     return () => {
       cancelled = true;
     };
-  }, [quote]);
+  }, [quote, templateRevision]);
 
   if (loading) {
     return <SectionLoader message="Generando vista previa…" />;

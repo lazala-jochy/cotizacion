@@ -4,6 +4,7 @@ import { api } from '../api';
 import { invoiceEstadoLabel } from '../constants/invoiceEstados';
 import HtmlPreview from './HtmlPreview';
 import { SectionLoader } from './loading';
+import { TEMPLATES_UPDATED_EVENT } from '../utils/templatesEvents';
 
 function mapInvoiceForPreview(invoice) {
   return {
@@ -35,6 +36,13 @@ export default function InvoiceDocument({ invoice }) {
   const [previewHtml, setPreviewHtml] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [templateRevision, setTemplateRevision] = useState(0);
+
+  useEffect(() => {
+    const onTemplatesUpdated = () => setTemplateRevision((n) => n + 1);
+    window.addEventListener(TEMPLATES_UPDATED_EVENT, onTemplatesUpdated);
+    return () => window.removeEventListener(TEMPLATES_UPDATED_EVENT, onTemplatesUpdated);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,7 +68,7 @@ export default function InvoiceDocument({ invoice }) {
     return () => {
       cancelled = true;
     };
-  }, [invoice]);
+  }, [invoice, templateRevision]);
 
   if (loading) return <SectionLoader message="Generando vista previa…" />;
 

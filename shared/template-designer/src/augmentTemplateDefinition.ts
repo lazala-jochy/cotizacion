@@ -52,6 +52,15 @@ const STANDARD_TEMPLATE_PATCHES: TemplateElement[] = [
     style: { fontSize: 11 },
     zIndex: 50,
   },
+  {
+    id: 'std-sello',
+    type: 'sello',
+    x: 634,
+    y: 988,
+    width: 120,
+    height: 120,
+    zIndex: 50,
+  },
 ];
 
 function hasPlaceholderInFreeText(

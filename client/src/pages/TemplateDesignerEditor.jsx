@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { buildPlaceholderContext } from '@template-designer/placeholders';
-import { normalizeTemplateDefinition } from '@template-designer/normalizeTemplateDefinition';
-import { renderTemplateDocumentHtml } from '@template-designer/renderTemplateHtml';
 import { api } from '../api';
 import { PageLoader } from '../components/loading';
 import LoadingOverlay from '../components/LoadingOverlay';
@@ -11,9 +8,10 @@ import HtmlPreview from '../components/HtmlPreview';
 import DesignerCanvas from '../features/template-designer/DesignerCanvas';
 import DesignerSidebar from '../features/template-designer/DesignerSidebar';
 import ElementPropertiesPanel from '../features/template-designer/ElementPropertiesPanel';
+import CloseBlockSettings from '../features/template-designer/CloseBlockSettings';
 import { usePersistedBoolean } from '../hooks/usePersistedBoolean';
 import { createElement } from '../features/template-designer/utils';
-import { samplePreviewEmisor, samplePreviewQuote } from '../utils/templateSamplePreview';
+import { notifyTemplatesUpdated } from '../utils/templatesEvents';
 
 export default function TemplateDesignerEditor() {
   const { id } = useParams();
@@ -56,30 +54,7 @@ export default function TemplateDesignerEditor() {
     setPreviewLoading(true);
     setError('');
     try {
-      let emisor = samplePreviewEmisor();
-      try {
-        const row = await api.emisor.get();
-        emisor = {
-          nombre: row.nombre || emisor.nombre,
-          rnc: row.rnc || emisor.rnc,
-          direccion: row.direccion || emisor.direccion,
-          telefono: row.telefono || emisor.telefono,
-          email: row.email || emisor.email,
-          logo: row.logo || null,
-          firma: row.firma || null,
-          sello: row.sello || null,
-          mensaje_pdf: row.mensaje_pdf || '',
-        };
-      } catch {
-        /* datos de ejemplo si no hay emisor */
-      }
-
-      const context = buildPlaceholderContext(samplePreviewQuote(), emisor);
-      const html = renderTemplateDocumentHtml(
-        normalizeTemplateDefinition(definition),
-        context,
-        'Vista previa'
-      );
+      const { html } = await api.templates.preview(templateId, { definition });
       setPreviewHtml(html);
       setShowPreview(true);
     } catch (e) {
@@ -89,7 +64,7 @@ export default function TemplateDesignerEditor() {
     } finally {
       setPreviewLoading(false);
     }
-  }, [definition]);
+  }, [definition, templateId]);
 
   const updateElement = (elementId, patch) => {
     setDefinition((prev) => {
@@ -130,11 +105,16 @@ export default function TemplateDesignerEditor() {
         definition,
         isDefault,
       });
+      setDefinition(updated.definition);
       setIsDefault(Boolean(updated.is_default));
+      notifyTemplatesUpdated({
+        id: templateId,
+        isDefault: Boolean(updated.is_default),
+      });
       setSuccess(
         updated.is_default ?
-          'Plantilla guardada y establecida como predeterminada.'
-        : 'Plantilla guardada.'
+          'Plantilla guardada. Se aplicará al descargar PDF y en correos.'
+        : 'Plantilla guardada. Para usarla en PDF, márcala como predeterminada.'
       );
     } catch (e) {
       setError(e.message);
@@ -149,7 +129,8 @@ export default function TemplateDesignerEditor() {
     try {
       const row = await api.templates.setDefault(templateId);
       setIsDefault(Boolean(row.is_default));
-      setSuccess('Plantilla establecida como predeterminada.');
+      notifyTemplatesUpdated({ id: templateId, isDefault: true });
+      setSuccess('Plantilla establecida como predeterminada. Ya se usa en PDF y correos.');
     } catch (e) {
       setError(e.message);
     }
@@ -188,6 +169,12 @@ export default function TemplateDesignerEditor() {
             />
             Plantilla predeterminada (usar en PDF y correos)
           </label>
+          <CloseBlockSettings
+            closeBlock={definition.closeBlock}
+            onChange={(closeBlock) =>
+              setDefinition((prev) => (prev ? { ...prev, closeBlock } : prev))
+            }
+          />
         </div>
         <div className="td-editor-header-actions">
           {!isDefault && (
@@ -211,6 +198,13 @@ export default function TemplateDesignerEditor() {
 
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
+      {!isDefault && (
+        <div className="alert alert-warn">
+          Esta plantilla <strong>no es la predeterminada</strong>. Los PDF y los correos usan la
+          plantilla marcada como predeterminada en la lista. Marca la casilla arriba o pulsa{' '}
+          <strong>Usar por defecto</strong> y guarda.
+        </div>
+      )}
 
       <div
         className={[

@@ -61,11 +61,26 @@ export interface TemplateElement {
   zIndex?: number;
 }
 
+export type CloseBlockMode = 'fixed' | 'followTable';
+
+export interface CloseBlockConfig {
+  /** Por defecto `fixed` (plantillas existentes). */
+  mode?: CloseBlockMode;
+  /** Espacio entre la tabla y el bloque de cierre (px). */
+  gapAfterTable?: number;
+  /** No subir el bloque por encima de la posición diseñada. */
+  respectDesignedFloor?: boolean;
+}
+
 export interface QuoteTemplateDefinition {
   version: 1;
   pageWidth: number;
   pageHeight: number;
   elements: TemplateElement[];
+  /** Si true, el diseñador controla los elementos; no se reinyectan campos estándar. */
+  layoutLocked?: boolean;
+  /** Comportamiento del bloque de cierre en el PDF. */
+  closeBlock?: CloseBlockConfig;
 }
 
 export interface QuoteTemplateRecord {

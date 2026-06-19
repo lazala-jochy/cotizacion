@@ -4,6 +4,7 @@ const templateRepo = require('../templates/templateRepository');
 const { renderTemplateDocumentHtml } = require('../../shared/template-designer/dist/renderTemplateHtml');
 const { buildPlaceholderContext } = require('../../shared/template-designer/dist/placeholders');
 const { normalizeTemplateDefinition } = require('../../shared/template-designer/dist/normalizeTemplateDefinition');
+const { countQuoteItems } = require('../../shared/template-designer/dist/resolveTemplateLayout');
 const { getEmisorRow, publicEmisorFields } = require('../emisorSmtp');
 const { getQuoteWithItems } = require('./quotesTemplateHelpers');
 
@@ -40,6 +41,13 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
   const id = Number(req.params.id);
   const { name, definition, isDefault } = req.body;
+  if (definition !== undefined) {
+    try {
+      templateRepo.prepareDefinitionForStorage(definition);
+    } catch (err) {
+      return res.status(400).json({ error: err.message || 'Definición inválida' });
+    }
+  }
   const updated = templateRepo.update(id, req.user.id, { name, definition, isDefault });
   if (!updated) return res.status(404).json({ error: 'Plantilla no encontrada' });
   res.json(updated);
@@ -72,7 +80,11 @@ router.post('/:id/preview', (req, res) => {
   const template = templateRepo.getById(Number(req.params.id), req.user.id);
   if (!template) return res.status(404).json({ error: 'Plantilla no encontrada' });
 
-  const definition = normalizeTemplateDefinition(req.body?.definition || template.definition);
+  const fromEditor = req.body?.definition;
+  const definition = normalizeTemplateDefinition(
+    fromEditor ? { ...fromEditor, layoutLocked: true } : template.definition,
+    fromEditor ? { allowAugment: false } : {}
+  );
 
   const emisor = publicEmisorFields(getEmisorRow(req.user.id));
   let quote = req.body?.quote;
@@ -93,7 +105,9 @@ router.post('/:id/preview', (req, res) => {
     docType === 'invoice'
       ? `Factura ${quote.fiscal_number || quote.numero || ''}`
       : 'Vista previa';
-  const html = renderTemplateDocumentHtml(definition, context, title);
+  const html = renderTemplateDocumentHtml(definition, context, title, {
+    itemCount: countQuoteItems(quote.items),
+  });
   res.json({ html });
 });
 

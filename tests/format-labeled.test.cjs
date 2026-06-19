@@ -117,6 +117,77 @@ describe('renderTemplateHtml showLabel', () => {
   });
 });
 
+describe('renderTemplateHtml firma y sello', () => {
+  const { renderTemplateBodyHtml } = require('../shared/template-designer/dist/renderTemplateHtml.js');
+
+  const selloDataUrl = 'data:image/png;base64,iVBORw0KGgo=';
+
+  test('sello usa la posición del elemento en plantilla', () => {
+    const ctx = buildPlaceholderContext(
+      { numero: 'COT-1', items: [], subtotal: 0, itbis: 0, total: 0 },
+      { nombre: 'Empresa', sello: selloDataUrl }
+    );
+    const html = renderTemplateBodyHtml(
+      {
+        version: 1,
+        pageWidth: 794,
+        pageHeight: 1123,
+        elements: [
+          {
+            id: 's1',
+            type: 'sello',
+            x: 520,
+            y: 400,
+            width: 100,
+            height: 100,
+            zIndex: 10,
+          },
+        ],
+      },
+      ctx
+    );
+    assert.match(html, /left:520px/);
+    assert.match(html, /top:400px/);
+    assert.match(html, /td-el-sello/);
+    assert.doesNotMatch(html, /td-emisor-stamps/);
+  });
+
+  test('sin firma ni sello en plantilla no muestra imágenes aunque existan en emisor', () => {
+    const ctx = buildPlaceholderContext(
+      { numero: 'COT-1', items: [], subtotal: 0, itbis: 0, total: 0 },
+      {
+        nombre: 'Empresa',
+        firma: 'data:image/png;base64,firma',
+        sello: 'data:image/png;base64,sello',
+      }
+    );
+    const html = renderTemplateBodyHtml(
+      {
+        version: 1,
+        pageWidth: 794,
+        pageHeight: 1123,
+        layoutLocked: true,
+        elements: [
+          {
+            id: 't1',
+            type: 'total',
+            x: 40,
+            y: 40,
+            width: 200,
+            height: 24,
+          },
+        ],
+      },
+      ctx
+    );
+    assert.doesNotMatch(html, /td-el-signature/);
+    assert.doesNotMatch(html, /td-el-sello/);
+    assert.doesNotMatch(html, /td-emisor-stamps/);
+    assert.doesNotMatch(html, /alt="Firma"/);
+    assert.doesNotMatch(html, /alt="Sello"/);
+  });
+});
+
 describe('normalizeTemplateDefinition', () => {
   test('agrega forma de pago y ejecutivo si faltan', () => {
     const def = createDefaultTemplateDefinition();
@@ -156,5 +227,17 @@ describe('normalizeTemplateDefinition', () => {
     assert.ok(!normalized.elements.some((e) => e.content === 'Cliente:'));
     const nameEl = normalized.elements.find((e) => e.id === 'y');
     assert.ok(nameEl && !nameEl.content);
+  });
+
+  test('layoutLocked no reinyecta elementos eliminados', () => {
+    const def = createDefaultTemplateDefinition();
+    const stripped = {
+      ...def,
+      layoutLocked: true,
+      elements: def.elements.filter((e) => e.type !== 'sello' && e.type !== 'customMessage'),
+    };
+    const normalized = normalizeTemplateDefinition(stripped);
+    assert.ok(!normalized.elements.some((e) => e.type === 'sello'));
+    assert.ok(!normalized.elements.some((e) => e.type === 'customMessage'));
   });
 });

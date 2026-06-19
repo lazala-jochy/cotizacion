@@ -255,5 +255,9 @@ export function createDefaultTemplateDefinition(): QuoteTemplateDefinition {
         zIndex: 7,
       },
     ],
+    closeBlock: {
+      mode: 'followTable',
+      gapAfterTable: 20,
+    },
   };
 }

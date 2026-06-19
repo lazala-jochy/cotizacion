@@ -4466,6 +4466,47 @@ a.cell-ellipsis:hover {
   width: min(320px, 100%);
 }
 
+.td-close-block-settings {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  border-radius: 8px;
+  max-width: 360px;
+}
+
+.td-close-block-settings legend {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0 0.25rem;
+}
+
+.td-close-block-hint {
+  font-size: 0.8rem;
+  margin: 0.25rem 0 0.5rem;
+  line-height: 1.35;
+}
+
+.td-close-block-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  margin: 0.35rem 0;
+  cursor: pointer;
+}
+
+.td-close-block-gap {
+  display: block;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.td-close-block-gap input {
+  display: block;
+  margin-top: 0.25rem;
+  width: 5rem;
+}
+
 .td-editor-layout {
   display: grid;
   grid-template-columns: 200px 1fr 260px;

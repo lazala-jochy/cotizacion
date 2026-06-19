@@ -5,6 +5,7 @@ import { createDefaultTemplateDefinition } from '@template-designer/defaultTempl
 import TemplatePresetGallery from '../components/TemplatePresetGallery';
 import ConfirmModal from '../components/ConfirmModal';
 import { SectionLoader } from '../components/loading';
+import { notifyTemplatesUpdated } from '../utils/templatesEvents';
 
 export default function TemplateDesignerList() {
   const navigate = useNavigate();
@@ -83,6 +84,7 @@ export default function TemplateDesignerList() {
     setError('');
     try {
       await api.templates.setDefault(id);
+      notifyTemplatesUpdated({ id, isDefault: true });
       await load();
     } catch (e) {
       setError(e.message);

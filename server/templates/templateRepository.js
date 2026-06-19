@@ -13,9 +13,21 @@ function parseDefinition(raw) {
   return createDefaultTemplateDefinition();
 }
 
+function prepareDefinitionForStorage(definition) {
+  if (!definition || definition.version !== 1 || !Array.isArray(definition.elements)) {
+    throw new Error('Definición de plantilla inválida');
+  }
+  return normalizeTemplateDefinition(
+    { ...definition, layoutLocked: true },
+    { allowAugment: false }
+  );
+}
+
 function rowToRecord(row) {
   if (!row) return null;
-  const definition = normalizeTemplateDefinition(parseDefinition(row.definition_json));
+  const definition = normalizeTemplateDefinition(parseDefinition(row.definition_json), {
+    allowAugment: false,
+  });
   return {
     id: row.id,
     user_id: row.user_id,
@@ -62,7 +74,8 @@ function clearDefault(userId) {
 
 function create(userId, { name, definition, isDefault = false }) {
   if (isDefault) clearDefault(userId);
-  const json = JSON.stringify(definition);
+  const storedDefinition = prepareDefinitionForStorage(definition);
+  const json = JSON.stringify(storedDefinition);
   const result = db
     .prepare(
       `INSERT INTO quote_templates (user_id, name, is_default, definition_json, updated_at)
@@ -77,8 +90,14 @@ function update(id, userId, { name, definition, isDefault }) {
   if (!existing) return null;
 
   const nextName = name !== undefined ? name.trim() : existing.name;
-  const nextDef = definition !== undefined ? definition : existing.definition;
+  const nextDef =
+    definition !== undefined ? prepareDefinitionForStorage(definition) : existing.definition;
   let nextDefault = isDefault !== undefined ? Boolean(isDefault) : existing.is_default;
+
+  const templateCount = db
+    .prepare('SELECT COUNT(*) AS n FROM quote_templates WHERE user_id = ?')
+    .get(userId).n;
+  if (templateCount <= 1) nextDefault = true;
 
   if (nextDefault) clearDefault(userId);
   else if (existing.is_default) nextDefault = true;
@@ -150,4 +169,5 @@ module.exports = {
   setDefault,
   ensureDefaultTemplate,
   parseDefinition,
+  prepareDefinitionForStorage,
 };

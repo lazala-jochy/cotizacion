@@ -6,4 +6,7 @@ export * from './presetTemplates';
 export * from './renderTemplateHtml';
 export * from './normalizeTemplateDefinition';
 export * from './augmentTemplateDefinition';
+export * from './closeBlockTypes';
+export * from './elementVisibility';
+export * from './resolveTemplateLayout';
 export * from './elementFieldLabels';
