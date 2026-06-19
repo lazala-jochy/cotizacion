@@ -2,8 +2,9 @@ import {
   getDefaultFieldLabel,
   isDataBoundField,
 } from '@template-designer/elementFieldLabels';
+import { canUseLayoutPin } from '@template-designer/closeBlockTypes';
 
-export default function ElementPropertiesPanel({ element, onChange, onDelete }) {
+export default function ElementPropertiesPanel({ element, onChange, onDelete, closeBlockMode }) {
   if (!element) {
     return (
       <aside className="td-props panel">
@@ -15,6 +16,8 @@ export default function ElementPropertiesPanel({ element, onChange, onDelete }) 
   const style = element.style || {};
   const isDataField = isDataBoundField(element.type);
   const defaultLabel = isDataField ? getDefaultFieldLabel(element.type) : '';
+  const showLayoutPin = canUseLayoutPin(element.type);
+  const isLine = element.type === 'horizontalLine';
 
   const patch = (partial) => {
     onChange({ ...element, ...partial });
@@ -52,7 +55,7 @@ export default function ElementPropertiesPanel({ element, onChange, onDelete }) 
         />
       </label>
       <label>
-        Alto
+        {isLine ? 'Grosor de línea (alto)' : 'Alto'}
         <input
           type="number"
           value={element.height}
@@ -67,6 +70,30 @@ export default function ElementPropertiesPanel({ element, onChange, onDelete }) 
           onChange={(e) => patch({ rotation: Number(e.target.value) })}
         />
       </label>
+      {showLayoutPin && (
+        <label>
+          Posición en PDF
+          <select
+            value={element.layoutPin === 'fixed' ? 'fixed' : 'follow'}
+            onChange={(e) =>
+              patch({
+                layoutPin: e.target.value === 'fixed' ? 'fixed' : undefined,
+              })
+            }
+          >
+            <option value="follow">
+              {closeBlockMode === 'followTable'
+                ? 'Automática (sigue la tabla)'
+                : 'Automática (colapsa campos vacíos)'}
+            </option>
+            <option value="fixed">Fija (siempre donde la diseñaste)</option>
+          </select>
+          <span className="muted td-props-hint">
+            Usa <strong>Fija</strong> para textos al pie, líneas o elementos que deben quedarse en
+            un lugar exacto aunque el bloque de cierre sea automático.
+          </span>
+        </label>
+      )}
       {isDataField && (
         <>
           <label className="checkbox-label">
@@ -137,6 +164,15 @@ export default function ElementPropertiesPanel({ element, onChange, onDelete }) 
         </label>
       )}
       <label>
+        {isLine ? 'Color de línea' : 'Color'}
+        <input
+          type="color"
+          value={style.color || (isLine ? '#94a3b8' : '#0f172a')}
+          onChange={(e) => patchStyle({ color: e.target.value })}
+        />
+      </label>
+      {!isLine && (
+      <label>
         Tamaño fuente
         <input
           type="number"
@@ -146,14 +182,9 @@ export default function ElementPropertiesPanel({ element, onChange, onDelete }) 
           onChange={(e) => patchStyle({ fontSize: Number(e.target.value) })}
         />
       </label>
-      <label>
-        Color
-        <input
-          type="color"
-          value={style.color || '#0f172a'}
-          onChange={(e) => patchStyle({ color: e.target.value })}
-        />
-      </label>
+      )}
+      {!isLine && (
+      <>
       <label>
         Alineación
         <select
@@ -181,6 +212,8 @@ export default function ElementPropertiesPanel({ element, onChange, onDelete }) 
         />
         Cursiva
       </label>
+      </>
+      )}
       <button type="button" className="btn-ghost btn-sm" onClick={onDelete}>
         Eliminar elemento
       </button>

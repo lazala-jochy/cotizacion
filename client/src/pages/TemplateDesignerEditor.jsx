@@ -254,6 +254,7 @@ export default function TemplateDesignerEditor() {
               );
             }}
             onDelete={removeElement}
+            closeBlockMode={definition.closeBlock?.mode ?? 'fixed'}
           />
         </CollapsiblePanel>
       </div>

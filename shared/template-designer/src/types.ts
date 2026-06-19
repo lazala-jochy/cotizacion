@@ -29,7 +29,8 @@ export type TemplateElementType =
   | 'customMessage'
   | 'freeText'
   | 'image'
-  | 'qrCode';
+  | 'qrCode'
+  | 'horizontalLine';
 
 export interface ElementStyle {
   fontFamily?: string;
@@ -59,6 +60,11 @@ export interface TemplateElement {
   /** URL data: o binding para image */
   src?: string;
   zIndex?: number;
+  /**
+   * En plantilla con bloque automático: `fixed` conserva X/Y del diseñador.
+   * Por defecto el elemento sigue la tabla y colapsa huecos vacíos.
+   */
+  layoutPin?: 'fixed' | 'follow';
 }
 
 export type CloseBlockMode = 'fixed' | 'followTable';

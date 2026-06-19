@@ -87,6 +87,27 @@ describe('resolveTemplateLayout', () => {
     const layout = resolveTemplateLayout(def, 3);
     assert.equal(layout.get(table.id).height, 'auto');
   });
+
+  test('layoutPin fixed mantiene Y en modo followTable', () => {
+    const def = createDefaultTemplateDefinition();
+    def.closeBlock = { mode: 'followTable', gapAfterTable: 20 };
+    const msg = def.elements.find((e) => e.type === 'customMessage');
+    msg.layoutPin = 'fixed';
+    const ctx = buildPlaceholderContext(
+      {
+        numero: 'COT-1',
+        items: [{ descripcion: 'A', cantidad: 1, precio_unitario: 100, total: 100 }],
+        subtotal: 100,
+        itbis: 18,
+        total: 118,
+      },
+      { nombre: 'Empresa', mensaje_pdf: 'Gracias por su confianza.' }
+    );
+    const layout = resolveTemplateLayout(def, 1, { context: ctx });
+    const total = def.elements.find((e) => e.type === 'total');
+    assert.equal(layout.get(msg.id).y, msg.y);
+    assert.ok(layout.get(total.id).y < total.y);
+  });
 });
 
 describe('renderTemplateBodyHtml layout adaptativo', () => {

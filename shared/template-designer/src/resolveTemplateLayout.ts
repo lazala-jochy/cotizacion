@@ -1,4 +1,4 @@
-import { getCloseBlockConfig, isCloseBlockType } from './closeBlockTypes';
+import { getCloseBlockConfig, isCloseBlockType, isLayoutPinned } from './closeBlockTypes';
 import { shouldRenderElement } from './elementVisibility';
 import type { PlaceholderContext, QuoteTemplateDefinition, TemplateElement } from './types';
 
@@ -125,7 +125,9 @@ function applyVisibilityReflow(
   const isVisible = (el: TemplateElement) => shouldRenderElement(el, context);
   const tableEl = definition.elements.find((el) => el.type === 'productTable');
   const closeConfig = getCloseBlockConfig(definition.closeBlock);
-  const closeEls = definition.elements.filter((el) => isCloseBlockType(el.type));
+  const closeEls = definition.elements.filter(
+    (el) => isCloseBlockType(el.type) && !isLayoutPinned(el)
+  );
 
   if (closeConfig.mode === 'followTable' && tableEl && closeEls.length) {
     const startY = tableEl.y + estimateTableHeight(itemCount) + closeConfig.gapAfterTable;
@@ -135,7 +137,9 @@ function applyVisibilityReflow(
     return;
   }
 
-  const reflowEls = definition.elements.filter((el) => el.type !== 'productTable');
+  const reflowEls = definition.elements.filter(
+    (el) => el.type !== 'productTable' && !isLayoutPinned(el)
+  );
   for (const columnEls of groupByColumn(reflowEls).values()) {
     reflowColumn(columnEls, resolved, isVisible);
   }
@@ -147,7 +151,10 @@ function clampCloseBlockToPage(
   context: PlaceholderContext
 ): void {
   const closeEls = definition.elements.filter(
-    (el) => isCloseBlockType(el.type) && shouldRenderElement(el, context)
+    (el) =>
+      isCloseBlockType(el.type) &&
+      shouldRenderElement(el, context) &&
+      !isLayoutPinned(el)
   );
   if (!closeEls.length) return;
 
@@ -188,7 +195,9 @@ export function resolveTemplateLayout(
     const tableEl = definition.elements.find((el) => el.type === 'productTable');
     const closeConfig = getCloseBlockConfig(definition.closeBlock);
     if (tableEl && closeConfig.mode === 'followTable') {
-      const closeEls = definition.elements.filter((el) => isCloseBlockType(el.type));
+      const closeEls = definition.elements.filter(
+        (el) => isCloseBlockType(el.type) && !isLayoutPinned(el)
+      );
       const startY = tableEl.y + estimateTableHeight(itemCount) + closeConfig.gapAfterTable;
       for (const columnEls of groupByColumn(closeEls).values()) {
         reflowColumn(columnEls, resolved, () => true, startY);

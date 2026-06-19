@@ -6,6 +6,7 @@ export type { QuoteTemplateDefinition, TemplateElement, TemplateElementType };
 
 export function createElement(type: TemplateElementType, x = 40, y = 40): TemplateElement {
   const entry = getCatalogEntry(type);
+  const isLine = type === 'horizontalLine';
   return {
     id: `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     type,
@@ -13,7 +14,10 @@ export function createElement(type: TemplateElementType, x = 40, y = 40): Templa
     y,
     width: entry.defaultWidth,
     height: entry.defaultHeight,
-    style: { fontSize: 12, color: '#0f172a' },
+    style: {
+      fontSize: isLine ? undefined : 12,
+      color: isLine ? '#94a3b8' : '#0f172a',
+    },
     ...(entry.defaultContent ? { content: entry.defaultContent } : {}),
     zIndex: 1,
   };

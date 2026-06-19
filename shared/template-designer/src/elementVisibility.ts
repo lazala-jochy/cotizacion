@@ -126,7 +126,7 @@ export function shouldRenderElement(
   if (type === 'image') {
     return emisorImageUrl(el.src || '').length > 0;
   }
-  if (type === 'productTable' || type === 'qrCode') {
+  if (type === 'productTable' || type === 'qrCode' || type === 'horizontalLine') {
     return true;
   }
 

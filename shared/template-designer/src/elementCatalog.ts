@@ -212,6 +212,13 @@ export const ELEMENT_CATALOG: ElementCatalogEntry[] = [
     placeholder: '{{mensaje_pdf}}',
   },
   { type: 'freeText', label: 'Texto libre', category: 'otros', defaultWidth: 200, defaultHeight: 40, defaultContent: 'Texto' },
+  {
+    type: 'horizontalLine',
+    label: 'Línea horizontal',
+    category: 'otros',
+    defaultWidth: 714,
+    defaultHeight: 4,
+  },
   { type: 'image', label: 'Imagen', category: 'otros', defaultWidth: 120, defaultHeight: 80 },
   { type: 'qrCode', label: 'Código QR', category: 'otros', defaultWidth: 96, defaultHeight: 96 },
 ];

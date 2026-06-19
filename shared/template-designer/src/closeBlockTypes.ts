@@ -31,3 +31,16 @@ export function getCloseBlockConfig(
 export function isCloseBlockType(type: TemplateElementType): boolean {
   return CLOSE_BLOCK_TYPES.has(type);
 }
+
+export function canUseLayoutPin(type: TemplateElementType): boolean {
+  return (
+    isCloseBlockType(type) ||
+    type === 'freeText' ||
+    type === 'customMessage' ||
+    type === 'horizontalLine'
+  );
+}
+
+export function isLayoutPinned(el: { layoutPin?: 'fixed' | 'follow' }): boolean {
+  return el.layoutPin === 'fixed';
+}

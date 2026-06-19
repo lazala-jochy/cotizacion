@@ -100,6 +100,13 @@ function renderElementHtml(
     return `<div class="td-el td-el-table"${dataType} style="${baseStyle}">${context.items_table_html}</div>`;
   }
 
+  if (type === 'horizontalLine') {
+    const color = el.style?.color || '#94a3b8';
+    const thickness = Math.max(1, Math.min(el.height, 12));
+    const offset = Math.max(0, Math.floor((el.height - thickness) / 2));
+    return `<div class="td-el td-el-line" style="${baseStyle}"><div class="td-el-line-rule" style="margin-top:${offset}px;border-top:${thickness}px solid ${escapeHtml(color)};width:100%"></div></div>`;
+  }
+
   if (type === 'qrCode') {
     const payload = encodeURIComponent(context.qr_payload || '');
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${payload}`;
@@ -149,6 +156,12 @@ export const TEMPLATE_PAGE_STYLES = `
   .td-el-table {
     overflow: visible;
     min-height: 0;
+  }
+  .td-el-line {
+    overflow: visible;
+  }
+  .td-el-line-rule {
+    box-sizing: border-box;
   }
   .td-items { width: 100%; border-collapse: collapse; font-size: 11px; }
   .td-items th, .td-items td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; }

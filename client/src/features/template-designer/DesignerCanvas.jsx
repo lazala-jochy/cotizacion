@@ -107,7 +107,15 @@ function CanvasElement({
           backgroundColor: el.style?.backgroundColor,
         }}
       >
-        <span className="td-canvas-element-type">{label}</span>
+        <span className="td-canvas-element-type">
+          {label}
+          {el.layoutPin === 'fixed' && (
+            <span className="td-canvas-pin-badge" title="Posición fija en PDF">
+              {' '}
+              · fijo
+            </span>
+          )}
+        </span>
         {el.type === 'productTable' ?
           <span className="muted">Tabla de ítems</span>
         : el.type === 'companyLogo' || el.type === 'image' || el.type === 'signature' || el.type === 'sello' ?
@@ -116,6 +124,11 @@ function CanvasElement({
           <span className="muted">QR</span>
         : el.type === 'customMessage' ?
           <span className="muted td-canvas-element-preview">Mensaje personalizado…</span>
+        : el.type === 'horizontalLine' ?
+          <span
+            className="td-canvas-line-preview"
+            style={{ borderTopColor: el.style?.color || '#94a3b8' }}
+          />
         : <span className="td-canvas-element-preview">
             {isDataBoundField(el.type)
               ? (el.showLabel === false
