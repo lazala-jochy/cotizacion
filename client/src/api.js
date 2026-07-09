@@ -326,6 +326,25 @@ export const api = {
     sendEmail: (id, body) =>
       request(`/api/quotes/${id}/send-email`, { method: 'POST', body: JSON.stringify(body) }),
   },
+  dashboard: {
+    summary: () => request('/api/dashboard/summary'),
+    executive: () => request('/api/dashboard/executive'),
+    analytics: () => request('/api/dashboard/analytics'),
+    notifications: () => request('/api/dashboard/notifications'),
+    insights: () => request('/api/dashboard/insights'),
+    pipeline: () => request('/api/dashboard/pipeline'),
+    movePipeline: (quoteId, stageId) =>
+      request(`/api/dashboard/pipeline/${quoteId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ stageId }),
+      }),
+    automations: () => request('/api/dashboard/automations'),
+    updateAutomations: (body) =>
+      request('/api/dashboard/automations', { method: 'PUT', body: JSON.stringify(body) }),
+    automationTasks: () => request('/api/dashboard/automations/tasks'),
+    clientsCrm: () => request('/api/dashboard/clients/crm'),
+    clientCrm: (id) => request(`/api/dashboard/clients/${id}/crm`),
+  },
   report_builder: {
     analyze: (body) =>
       request('/api/report-builder/analyze', { method: 'POST', body: JSON.stringify(body) }),

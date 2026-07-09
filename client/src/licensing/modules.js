@@ -11,6 +11,8 @@ export const APP_MODULES = [
 
 const CLIENT_ROUTE_MODULES = [
   { prefix: '/cotizaciones', module: 'cotizaciones' },
+  { prefix: '/clientes', module: 'cotizaciones' },
+  { prefix: '/pipeline', module: 'cotizaciones' },
   { prefix: '/facturas', module: 'facturas' },
   { prefix: '/compras', module: 'compras' },
   { prefix: '/finanzas', module: 'compras' },
@@ -28,6 +30,8 @@ export function moduleForClientPath(pathname) {
 export const NAV_ITEMS = [
   { to: '/', end: true, label: 'Inicio', shortLabel: '⌂', module: null },
   { to: '/cotizaciones/nueva', end: true, label: 'Nueva cotización', shortLabel: '+', module: 'cotizaciones' },
+  { to: '/clientes', end: true, label: 'Clientes', shortLabel: 'CL', module: 'cotizaciones' },
+  //{ to: '/pipeline', end: true, label: 'Pipeline', shortLabel: 'PL', module: 'cotizaciones' },
   { to: '/cotizaciones', end: true, label: 'Cotizaciones', shortLabel: 'C', module: 'cotizaciones' },
   { to: '/facturas', end: true, label: 'Facturas', shortLabel: 'F', module: 'facturas' },
   { to: '/reportes', end: false, label: 'Reportes', shortLabel: 'R', module: 'reportes' },

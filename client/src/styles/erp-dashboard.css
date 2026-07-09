@@ -1,0 +1,667 @@
+@import "tailwindcss";
+
+/* ERP Dashboard — scoped utilities + design tokens */
+.erp-dashboard {
+  --erp-card-bg: var(--bg-elevated);
+  --erp-border: var(--border);
+  max-width: 1400px;
+}
+
+.erp-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.erp-page-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.erp-page-header p {
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.erp-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.erp-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.erp-kpi-grid-compact {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
+.erp-kpi-card {
+  background: var(--erp-card-bg);
+  border: 1px solid var(--erp-border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.erp-kpi-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--erp-border));
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.erp-kpi-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.65rem;
+}
+
+.erp-kpi-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+}
+
+.erp-kpi-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.erp-kpi-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+.erp-kpi-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+}
+
+.erp-growth {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+}
+
+.erp-growth-up {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+
+.erp-growth-down {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.erp-growth-neutral {
+  color: var(--text-muted);
+  background: var(--bg-panel);
+}
+
+.erp-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.erp-panel {
+  background: var(--erp-card-bg);
+  border: 1px solid var(--erp-border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem;
+}
+
+.erp-panel-title,
+.erp-panel h2 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.85rem;
+}
+
+.erp-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.erp-panel-header h2 {
+  margin: 0;
+  flex: 1;
+}
+
+.erp-chart-wrap {
+  min-height: 240px;
+}
+
+.erp-empty-chart {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.erp-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.erp-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--accent);
+  color: #fff;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+
+.erp-muted {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+/* Insights */
+.erp-insights-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.erp-insight-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--erp-border);
+  background: var(--bg-panel);
+}
+
+.erp-insight-icon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.erp-insight-body strong {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.2rem;
+}
+
+.erp-insight-body p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.erp-insight-link {
+  display: inline-block;
+  font-size: 0.8rem;
+  margin-top: 0.35rem;
+}
+
+.erp-insight-warn .erp-insight-icon { color: #f59e0b; }
+.erp-insight-danger .erp-insight-icon { color: var(--danger); }
+.erp-insight-success .erp-insight-icon { color: var(--success); }
+.erp-insight-info .erp-insight-icon { color: var(--accent); }
+
+/* Automations */
+.erp-auto-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.erp-auto-toggle {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--erp-border);
+  cursor: pointer;
+}
+
+.erp-auto-toggle input {
+  margin-top: 0.35rem;
+  accent-color: var(--accent);
+}
+
+.erp-auto-toggle strong {
+  display: block;
+  font-size: 0.88rem;
+}
+
+.erp-auto-toggle p {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.erp-auto-tasks {
+  list-style: none;
+  margin-top: 1rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.erp-auto-tasks li {
+  padding: 0.35rem 0;
+  border-top: 1px solid var(--erp-border);
+}
+
+/* Notifications */
+.erp-notif-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  border: none;
+  z-index: 200;
+  cursor: pointer;
+}
+
+.erp-notif-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(400px, 100vw);
+  height: 100vh;
+  background: var(--bg-elevated);
+  border-left: 1px solid var(--erp-border);
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+}
+
+.erp-notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--erp-border);
+}
+
+.erp-notif-header > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.erp-notif-header h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.erp-notif-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 1rem 1.5rem;
+}
+
+.erp-notif-section {
+  margin-bottom: 1.25rem;
+}
+
+.erp-notif-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.erp-notif-section ul {
+  list-style: none;
+}
+
+.erp-notif-section li a {
+  display: block;
+  padding: 0.6rem 0.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.erp-notif-section li a:hover {
+  background: var(--bg-panel);
+  text-decoration: none;
+}
+
+.erp-notif-section strong {
+  display: block;
+  font-size: 0.88rem;
+}
+
+.erp-notif-section span {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.erp-notif-meta {
+  font-size: 0.75rem !important;
+}
+
+.erp-notif-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.erp-notif-bell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--erp-border);
+  background: var(--bg-panel);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.erp-notif-bell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: var(--danger);
+  color: #fff;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Skeleton */
+.erp-skeleton-block {
+  background: linear-gradient(90deg, var(--bg-panel) 25%, var(--bg-elevated) 50%, var(--bg-panel) 75%);
+  background-size: 200% 100%;
+  animation: erp-shimmer 1.2s infinite;
+  border-radius: var(--radius);
+  min-height: 88px;
+}
+
+.erp-skeleton-chart {
+  min-height: 260px;
+}
+
+.erp-skeleton-header {
+  height: 48px;
+  width: 280px;
+  margin-bottom: 1.5rem;
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+}
+
+@keyframes erp-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Quick links */
+.erp-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.erp-quick-link {
+  font-size: 0.88rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--erp-border);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  text-decoration: none;
+}
+
+.erp-quick-link:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+/* CRM table */
+.erp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--erp-border);
+  border-radius: var(--radius);
+}
+
+.erp-toolbar input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  outline: none;
+}
+
+.erp-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--erp-border);
+  border-radius: var(--radius);
+}
+
+.erp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.erp-table th,
+.erp-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--erp-border);
+}
+
+.erp-table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  background: var(--bg-panel);
+}
+
+.erp-table-sub {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.erp-table-empty {
+  padding: 2rem;
+  text-align: center;
+}
+
+.erp-status-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+}
+
+.erp-status-active { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
+.erp-status-new { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+.erp-status-idle { background: color-mix(in srgb, #f59e0b 18%, transparent); color: #f59e0b; }
+.erp-status-sleep { background: var(--bg-panel); color: var(--text-muted); }
+.erp-status-debt { background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); }
+
+.erp-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.erp-span-2 { grid-column: span 2; }
+
+.erp-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.erp-client-form {
+  margin-bottom: 1rem;
+}
+
+.erp-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.erp-timeline {
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.erp-timeline li {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--erp-border);
+}
+
+/* Kanban */
+.erp-kanban {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  min-height: 420px;
+}
+
+.erp-kanban-col {
+  flex: 0 0 260px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--erp-border);
+  border-radius: var(--radius);
+  border-top: 3px solid var(--kanban-accent, var(--accent));
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+}
+
+.erp-kanban-col-header {
+  padding: 0.75rem 0.85rem;
+  border-bottom: 1px solid var(--erp-border);
+}
+
+.erp-kanban-col-header h2 {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.erp-kanban-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-left: 0.35rem;
+}
+
+.erp-kanban-total {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+.erp-kanban-cards {
+  list-style: none;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.erp-kanban-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--erp-border);
+  border-radius: 8px;
+  cursor: grab;
+}
+
+.erp-kanban-card:active {
+  cursor: grabbing;
+}
+
+.erp-kanban-card a {
+  display: block;
+  padding: 0.65rem 0.75rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.erp-kanban-card strong {
+  display: block;
+  font-size: 0.85rem;
+}
+
+.erp-kanban-card span {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.erp-kanban-amount {
+  font-weight: 600;
+  color: var(--accent) !important;
+  margin-top: 0.25rem;
+}
+
+.erp-pipeline-page .erp-kanban {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .erp-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .erp-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .erp-span-2 {
+    grid-column: span 1;
+  }
+}

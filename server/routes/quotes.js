@@ -25,6 +25,7 @@ const {
   ITBIS_RATE_DEFAULT_PERCENT,
 } = require('../invoices/invoiceTotals');
 const expenseService = require('../expenses/expenseService');
+const { resolveOrCreateClient } = require('../clients/clientService');
 
 function itemsSubtotal(items) {
   return items.reduce((s, i) => s + Number(i.cantidad) * Number(i.precio_unitario), 0);
@@ -361,6 +362,15 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: 'Datos del cliente son requeridos' });
   }
 
+  const resolvedClient = resolveOrCreateClient(req.user.id, {
+    nombre: clientSnapshot.client_nombre,
+    rnc: clientSnapshot.client_rnc,
+    direccion: clientSnapshot.client_direccion,
+    telefono: clientSnapshot.client_telefono,
+    email: clientSnapshot.client_email,
+  });
+  const clientId = resolvedClient?.id ?? null;
+
   const normalizedItems = items.map((item, idx) => ({
     descripcion: String(item.descripcion || '').trim(),
     cantidad: Number(item.cantidad) || 0,
@@ -403,7 +413,7 @@ router.post('/', (req, res) => {
       )
       .run(
         req.user.id,
-        null,
+        clientId,
         quoteNumero,
         quoteFecha,
         validez_dias ?? 30,
@@ -512,6 +522,15 @@ router.put('/:id', (req, res) => {
     descuento
   );
 
+  const resolvedClient = resolveOrCreateClient(req.user.id, {
+    nombre: client_nombre?.trim(),
+    rnc: client_rnc?.trim() || null,
+    direccion: client_direccion?.trim() || null,
+    telefono: client_telefono?.trim() || null,
+    email: client_email?.trim() || null,
+  });
+  const clientId = resolvedClient?.id ?? null;
+
   const updateAll = db.transaction(() => {
     db.prepare(
       `UPDATE quotes SET
@@ -520,7 +539,7 @@ router.put('/:id', (req, res) => {
         itbis_rate=?, itbis_manual=?, ejecutivo=?, forma_pago=?, updated_at=datetime('now')
        WHERE id=? AND user_id=?`
     ).run(
-      null,
+      clientId,
       fecha,
       validez_dias ?? 30,
       notas?.trim() || null,

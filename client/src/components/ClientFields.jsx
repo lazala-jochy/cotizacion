@@ -10,8 +10,8 @@ export const EMPTY_CLIENT_FORM = {
 };
 
 /**
- * Datos del cliente en la cotización (sin tabla clients).
- * Autocompleta desde cotizaciones anteriores al escribir el nombre.
+ * Datos del cliente en la cotización.
+ * Autocompleta desde clientes registrados y cotizaciones anteriores.
  */
 export default function ClientFields({ suggestions = [], value, onChange }) {
   const [search, setSearch] = useState(value.nombre || '');
@@ -54,7 +54,7 @@ export default function ClientFields({ suggestions = [], value, onChange }) {
       {suggestions.length > 0 && (
         <div className="client-search-wrap">
           <label>
-            Buscar cliente (cotizaciones anteriores)
+            Buscar cliente (registrados o cotizaciones anteriores)
             <input
               type="search"
               value={search}

@@ -37,6 +37,9 @@ const ExpenseCategoriesPage = lazy(() => import('./pages/finance/ExpenseCategori
 const ExpenseReportPage = lazy(() => import('./pages/finance/ExpenseReportPage'));
 const IncomeStatementPage = lazy(() => import('./pages/finance/IncomeStatementPage'));
 const ReportBuilderPage = lazy(() => import('./pages/report_builder/ReportBuilderPage'));
+const ClientsPage = lazy(() => import('./pages/clients/ClientsPage'));
+const ClientDetailPage = lazy(() => import('./pages/clients/ClientDetailPage'));
+const PipelinePage = lazy(() => import('./pages/pipeline/PipelinePage'));
 
 function PageLoading() {
   return <AppLoadingScreen message="Cargando…" variant="page" />;
@@ -103,7 +106,36 @@ export default function App() {
         }
       >
         <Route index element={<Dashboard />} />
-        <Route path="clientes" element={<Navigate to="/cotizaciones" replace />} />
+        <Route
+          path="clientes"
+          element={
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <ClientsPage />
+              </Suspense>
+            </LicensedModuleRoute>
+          }
+        />
+        <Route
+          path="clientes/:id"
+          element={
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <ClientDetailPage />
+              </Suspense>
+            </LicensedModuleRoute>
+          }
+        />
+        <Route
+          path="pipeline"
+          element={
+            <LicensedModuleRoute>
+              <Suspense fallback={<PageLoading />}>
+                <PipelinePage />
+              </Suspense>
+            </LicensedModuleRoute>
+          }
+        />
         <Route path="configuracion" element={<Settings />} />
         <Route
           path="plantillas"

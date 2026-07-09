@@ -131,6 +131,20 @@ if (!emisorCols.some((c) => c.name === 'celular')) {
   db.exec('ALTER TABLE emisor_settings ADD COLUMN celular TEXT');
 }
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS automation_settings (
+    user_id INTEGER PRIMARY KEY,
+    auto_send_quotes INTEGER DEFAULT 0,
+    payment_reminders INTEGER DEFAULT 1,
+    quote_follow_up INTEGER DEFAULT 1,
+    follow_up_days INTEGER DEFAULT 7,
+    reminder_days_before INTEGER DEFAULT 3,
+    last_run_at TEXT,
+    updated_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+`);
+
 const { decrypt } = require('./utils/credentials');
 const emisorSmtpMigrate = db
   .prepare(

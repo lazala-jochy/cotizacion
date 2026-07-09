@@ -27,6 +27,8 @@ const API_MODULE_PREFIXES = [
 /** Rutas del cliente React → módulo requerido. */
 const CLIENT_ROUTE_MODULES = [
   { prefix: '/cotizaciones', module: 'cotizaciones' },
+  { prefix: '/clientes', module: 'cotizaciones' },
+  { prefix: '/pipeline', module: 'cotizaciones' },
   { prefix: '/facturas', module: 'facturas' },
   { prefix: '/compras', module: 'compras' },
   { prefix: '/finanzas', module: 'compras' },

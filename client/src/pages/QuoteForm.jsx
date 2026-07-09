@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { canEditQuoteContent } from '../constants/quoteEstados';
 import ClientFields, { EMPTY_CLIENT_FORM } from '../components/ClientFields';
 import FormaPagoFields from '../components/FormaPagoFields';
-import { buildQuoteClientSuggestions } from '../utils/quoteClientSuggestions';
+import { mergeClientSuggestions } from '../utils/quoteClientSuggestions';
 import { FORMA_PAGO_PRESETS } from '../utils/formaPago';
 import LoadingOverlay from '../components/LoadingOverlay';
 import { PageLoader } from '../components/loading';
@@ -41,10 +41,14 @@ export default function QuoteForm() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.quotes
-      .list()
-      .then((list) => setQuoteSuggestions(buildQuoteClientSuggestions(list)))
-      .catch(console.error);
+    Promise.all([
+      api.quotes.list().catch(() => []),
+      api.clients.list().catch(() => []),
+    ]).then(([quotes, clients]) => {
+      setQuoteSuggestions(
+        mergeClientSuggestions(clients, quotes)
+      );
+    });
     if (!isEdit) {
       api.quotes.nextNumber().then((r) => setNumero(r.numero)).catch(console.error);
     }

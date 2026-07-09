@@ -154,6 +154,14 @@ function ensureInvoiceFiscalColumns(db) {
   if (!tableHasColumn(db, 'invoices', 'fiscal_document_type_id')) {
     db.exec(`ALTER TABLE invoices ADD COLUMN fiscal_document_type_id INTEGER`);
   }
+  if (!tableHasColumn(db, 'invoices', 'client_id')) {
+    db.exec(`ALTER TABLE invoices ADD COLUMN client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL`);
+    db.exec(`
+      UPDATE invoices
+      SET client_id = (SELECT q.client_id FROM quotes q WHERE q.id = invoices.quote_id)
+      WHERE client_id IS NULL AND quote_id IS NOT NULL
+    `);
+  }
 
   db.exec(`
     UPDATE invoices
