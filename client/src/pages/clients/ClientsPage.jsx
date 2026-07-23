@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Search, Users } from 'lucide-react';
+import { Plus, Search, Trash2, Users } from 'lucide-react';
 import { api } from '../../api';
 import { useClientsCrm } from '../../features/dashboard/hooks/useDashboardData';
 import { formatMoney } from '../../utils/formatMoney';
 import DashboardSkeleton from '../../features/dashboard/components/DashboardSkeleton';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const STATUS_CLASS = {
   activo: 'erp-status-active',
@@ -21,6 +22,9 @@ export default function ClientsPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ nombre: '', rnc: '', email: '', telefono: '', direccion: '', notas: '' });
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -45,6 +49,21 @@ export default function ClientsPage() {
       alert(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteBusy(true);
+    setDeleteError('');
+    try {
+      await api.clients.remove(deleteTarget.id);
+      setDeleteTarget(null);
+      reload();
+    } catch (err) {
+      setDeleteError(err.message);
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -145,9 +164,23 @@ export default function ClientsPage() {
                 <td>{c.pendingInvoices > 0 ? `${c.pendingInvoices} (${formatMoney(c.pendingBalance)})` : '—'}</td>
                 <td>{c.quoteCount}</td>
                 <td>
-                  <Link to={`/clientes/${c.id}`} className="btn-ghost btn-sm">
-                    Ver
-                  </Link>
+                  <div className="row-actions">
+                    <Link to={`/clientes/${c.id}`} className="btn-ghost btn-sm">
+                      Ver
+                    </Link>
+                    <button
+                      type="button"
+                      className="btn-icon btn-icon-danger"
+                      onClick={() => {
+                        setDeleteError('');
+                        setDeleteTarget(c);
+                      }}
+                      title="Eliminar cliente"
+                      aria-label="Eliminar cliente"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </td>
               </motion.tr>
             ))}
@@ -155,6 +188,23 @@ export default function ClientsPage() {
         </table>
         {filtered.length === 0 && <p className="erp-muted erp-table-empty">No hay clientes registrados.</p>}
       </div>
+
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        onClose={() => !deleteBusy && setDeleteTarget(null)}
+        title="Eliminar cliente"
+        subtitle={deleteTarget?.nombre}
+        confirmLabel={deleteBusy ? 'Eliminando…' : 'Eliminar'}
+        onConfirm={handleConfirmDelete}
+        busy={deleteBusy}
+        error={deleteError}
+        confirmVariant="danger"
+      >
+        <p className="app-modal-message">
+          Se eliminará el cliente <strong>{deleteTarget?.nombre}</strong> de forma permanente. Sus
+          cotizaciones, facturas y gastos existentes se conservarán, pero quedarán sin cliente asociado.
+        </p>
+      </ConfirmModal>
     </div>
   );
 }

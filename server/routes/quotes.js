@@ -116,7 +116,13 @@ router.get('/:id/pdf', async (req, res) => {
 
   try {
     const emisor = getEmisorForUser(req.user.id);
-    const buffer = await generateInvoicePdf({ quote, emisor, userId: req.user.id });
+    const includeSignature = req.query.incluirFirma !== '0';
+    const buffer = await generateInvoicePdf({
+      quote,
+      emisor,
+      userId: req.user.id,
+      options: { includeSignature },
+    });
     const safeName = String(quote.numero).replace(/[^\w.-]+/g, '_');
     const filename = `Cotizacion-${safeName}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');

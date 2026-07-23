@@ -18,6 +18,7 @@ function renderHtmlForQuote(quote, emisor, userId, options = {}) {
   const definition = normalizeTemplateDefinition(rawDefinition);
   return renderQuoteWithTemplate(definition, quote, emisor, {
     estadoLabel: options.estadoLabel,
+    includeSignature: options.includeSignature,
   });
 }
 

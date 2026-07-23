@@ -26,6 +26,7 @@ const emisorRoutes = require('./routes/emisor');
 const templatesRoutes = require('./routes/templates');
 const publicRoutes = require('./routes/public');
 const licenseRoutes = require('./routes/license');
+const ocrRoutes = require('./routes/ocr');
 const { requireLicenseMiddleware } = require('./middleware/requireLicense');
 const { requireModuleMiddleware } = require('./middleware/requireModule');
 
@@ -53,6 +54,7 @@ app.use('/api/expenses', expensesRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/report-builder', reportBuilderRoutes);
+app.use('/api/ocr', ocrRoutes);
 
 app.use('/api', (req, res) => {
   res.status(404).json({ error: `Ruta no encontrada: ${req.method} ${req.originalUrl}` });

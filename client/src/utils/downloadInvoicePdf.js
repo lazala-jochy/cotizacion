@@ -1,9 +1,13 @@
 /**
  * Descarga el PDF de pre-factura generado en el servidor.
+ * @param {number|string} quoteId
+ * @param {string} quoteNumero
+ * @param {{ includeSignature?: boolean }} [opts]
  */
-export async function downloadInvoicePdf(quoteId, quoteNumero) {
+export async function downloadInvoicePdf(quoteId, quoteNumero, opts = {}) {
+  const { includeSignature = true } = opts;
   const token = localStorage.getItem('token');
-  const res = await fetch(`/api/quotes/${quoteId}/pdf`, {
+  const res = await fetch(`/api/quotes/${quoteId}/pdf?incluirFirma=${includeSignature ? '1' : '0'}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 

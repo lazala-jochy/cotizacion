@@ -71,9 +71,23 @@ El monto del gasto se desglosa en base gravable e ITBIS (18 %) para el archivo. 
 
 **Flujo en la app:**
 
-1. Registre gastos en **Compras → Gastos** con RNC, NCF, monto e ITBIS del proveedor (o use **+ Agregar compra** en el formato 606).
-2. Menú **DGII → Formato 606** → seleccione período → **Vista previa** (muestra el TXT del archivo antes de exportar).
-3. Corrija errores o complete gastos pendientes → **Exportar TXT**.
+1. Registre gastos en **Compras → Gastos** con RNC, NCF, monto e ITBIS del proveedor:
+   - **Opción A (Manual):** Complete todos los campos manualmente.
+   - **Opción B (Con OCR):** Suba una imagen de la factura física. El sistema extrae automáticamente RNC, NCF, fecha, montos e ITBIS usando OCR. Luego revise y edite si es necesario.
+2. O use **+ Agregar compra** en el formato 606 para crear gastos directo en ese flujo.
+3. Menú **DGII → Formato 606** → seleccione período → **Vista previa** (muestra el TXT del archivo antes de exportar).
+4. Corrija errores o complete gastos pendientes → **Exportar TXT**.
+
+**Extracción automática de datos (OCR):**
+
+Cuando sube una imagen de factura (PNG, JPG), el sistema intenta extraer automáticamente:
+- **RNC del proveedor** (patrones: "RNC: 123456789-1", "RNC 123456789-1", etc.)
+- **NCF** (Número de Comprobante Fiscal, patrón: "E310010000001")
+- **Fecha del comprobante** (formatos: DD/MM/YYYY, YYYY-MM-DD, etc.)
+- **Monto base** y **ITBIS** (busca líneas con "SUBTOTAL", "TOTAL", "ITBIS 18%", etc.)
+- **Razón social del proveedor** (busca líneas etiquetadas como "EMISOR", "PROVEEDOR", etc.)
+
+La extracción es automática pero no siempre perfecta; siempre revise que los datos sean correctos antes de guardar.
 
 **Campos principales:**
 

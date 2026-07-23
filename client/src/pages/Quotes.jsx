@@ -5,6 +5,7 @@ import { downloadInvoicePdf } from '../utils/downloadInvoicePdf';
 import { QuoteCard, QuoteTableRow } from '../components/QuoteListItem';
 import QuotePaymentModal from '../components/QuotePaymentModal';
 import QuoteEnviadaModal from '../components/QuoteEnviadaModal';
+import QuoteDownloadOptionsModal from '../components/QuoteDownloadOptionsModal';
 import ConfirmModal from '../components/ConfirmModal';
 import {
   QUOTE_ESTADOS,
@@ -46,6 +47,7 @@ export default function Quotes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [downloadingId, setDownloadingId] = useState(null);
+  const [downloadTarget, setDownloadTarget] = useState(null);
   const [savingEstadoId, setSavingEstadoId] = useState(null);
   const [paymentModalQuote, setPaymentModalQuote] = useState(null);
   const [enviadaModalQuote, setEnviadaModalQuote] = useState(null);
@@ -104,11 +106,14 @@ export default function Quotes() {
   const rangeStart = filtered.length === 0 ? 0 : (page - 1) * pageSize + 1;
   const rangeEnd = Math.min(page * pageSize, filtered.length);
 
-  const handleDownloadPdf = async (q) => {
+  const handleDownloadPdf = async (includeSignature) => {
+    const q = downloadTarget;
+    if (!q) return;
     setDownloadingId(q.id);
     setError('');
     try {
-      await downloadInvoicePdf(q.id, q.numero);
+      await downloadInvoicePdf(q.id, q.numero, { includeSignature });
+      setDownloadTarget(null);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -234,6 +239,13 @@ export default function Quotes() {
         />
       )}
 
+      <QuoteDownloadOptionsModal
+        open={Boolean(downloadTarget)}
+        onClose={() => !downloadingId && setDownloadTarget(null)}
+        onChoose={handleDownloadPdf}
+        busy={Boolean(downloadingId)}
+      />
+
       <ConfirmModal
         open={Boolean(deleteTarget)}
         onClose={() => !deleteBusy && setDeleteTarget(null)}
@@ -358,7 +370,7 @@ export default function Quotes() {
                       savingEstadoId={savingEstadoId}
                       downloadingId={downloadingId}
                       onEstadoChange={handleEstadoChange}
-                      onDownloadPdf={handleDownloadPdf}
+                      onDownloadPdf={setDownloadTarget}
                       onDelete={openDeleteConfirm}
                       onRegisterPayment={setPaymentModalQuote}
                     />

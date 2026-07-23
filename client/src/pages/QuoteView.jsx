@@ -6,6 +6,7 @@ import { canEditQuoteContent } from '../constants/quoteEstados';
 import QuoteWorkflow from '../components/QuoteWorkflow';
 import QuoteDocument from '../components/QuoteDocument';
 import QuoteSendEmailModal from '../components/QuoteSendEmailModal';
+import QuoteDownloadOptionsModal from '../components/QuoteDownloadOptionsModal';
 import QuoteConvertToInvoiceButton from '../components/QuoteConvertToInvoiceButton';
 import QuoteExpensesSection from '../components/finance/QuoteExpensesSection';
 import ProfitabilityPanel from '../components/finance/ProfitabilityPanel';
@@ -18,6 +19,7 @@ export default function QuoteView() {
   const [emisor, setEmisor] = useState(null);
   const [error, setError] = useState('');
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [sendSuccess, setSendSuccess] = useState('');
   const load = () =>
@@ -36,11 +38,12 @@ export default function QuoteView() {
     load();
   }, [id]);
 
-  const handleDownloadPdf = async () => {
+  const handleDownloadPdf = async (includeSignature) => {
     setPdfLoading(true);
     setError('');
     try {
-      await downloadInvoicePdf(id, quote?.numero);
+      await downloadInvoicePdf(id, quote?.numero, { includeSignature });
+      setDownloadModalOpen(false);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -77,7 +80,7 @@ export default function QuoteView() {
           <button
             type="button"
             className="btn-ghost btn-sm"
-            onClick={handleDownloadPdf}
+            onClick={() => setDownloadModalOpen(true)}
             disabled={pdfLoading}
           >
             Descargar PDF
@@ -122,6 +125,13 @@ export default function QuoteView() {
 
       {sendSuccess && <div className="alert alert-success no-print">{sendSuccess}</div>}
       {error && <div className="alert alert-error no-print">{error}</div>}
+
+      <QuoteDownloadOptionsModal
+        open={downloadModalOpen}
+        onClose={() => setDownloadModalOpen(false)}
+        onChoose={handleDownloadPdf}
+        busy={pdfLoading}
+      />
 
       {sendModalOpen && (
         <QuoteSendEmailModal

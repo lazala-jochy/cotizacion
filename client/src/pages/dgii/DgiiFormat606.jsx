@@ -6,6 +6,7 @@ import DgiiTxtPreview from '../../components/dgii/DgiiTxtPreview';
 import { formatDgiiPeriodLabel } from '../../utils/dgiiPeriod';
 import { SectionLoader } from '../../components/loading';
 import LoadingOverlay from '../../components/LoadingOverlay';
+import BulkInvoiceUploadModal from '../../components/finance/BulkInvoiceUploadModal';
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-DO', {
@@ -30,6 +31,7 @@ export default function DgiiFormat606() {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
 
   const period = buildPeriod(year, month);
 
@@ -73,6 +75,10 @@ export default function DgiiFormat606() {
     }
   };
 
+  const handleInvoicesSaved = () => {
+    if (period) loadPreview();
+  };
+
   return (
     <>
       <LoadingOverlay show={exporting} fixed message="Exportando TXT…" />
@@ -87,6 +93,9 @@ export default function DgiiFormat606() {
         <DgiiPeriodField year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
 
         <div className="form-actions" style={{ marginTop: '1rem' }}>
+          <button type="button" className="btn-ghost" onClick={() => setBulkUploadOpen(true)}>
+            📎 Adjuntar facturas
+          </button>
           <Link to="/compras/gastos" className="btn-ghost">
             + Agregar compra
           </Link>
@@ -104,6 +113,12 @@ export default function DgiiFormat606() {
         </div>
       </section>
 
+      <BulkInvoiceUploadModal
+        open={bulkUploadOpen}
+        onClose={() => setBulkUploadOpen(false)}
+        onSaved={handleInvoicesSaved}
+      />
+
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
@@ -111,7 +126,7 @@ export default function DgiiFormat606() {
 
       {!preview && !loading && period && (
         <p className="muted">
-          Seleccione el período y pulse <strong>Vista previa</strong> para ver el contenido del TXT.
+             Seleccione el período y pulse <strong>Vista previa</strong> para ver el contenido del TXT.
         </p>
       )}
 

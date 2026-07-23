@@ -129,8 +129,9 @@ function escapeHtml(value: string): string {
 export function buildPlaceholderContext(
   quote: QuoteLike,
   emisor: EmisorLike,
-  options?: { estadoLabel?: string; documentType?: 'quote' | 'invoice' }
+  options?: { estadoLabel?: string; documentType?: 'quote' | 'invoice'; includeSignature?: boolean }
 ): PlaceholderContext {
+  const includeSignature = options?.includeSignature !== false;
   const subtotal = Number(quote.subtotal) || 0;
   const tax = Number(quote.itbis) || 0;
   const disc = Number(quote.descuento) || 0;
@@ -190,8 +191,8 @@ export function buildPlaceholderContext(
     company_tax_info: labeledField(PLACEHOLDER_FIELD_LABELS.company_tax_info, companyRncRaw),
     company_tax_info_raw: companyRncRaw,
     company_logo: emisorImageUrl(emisor.logo),
-    firma_image: emisorImageUrl(emisor.firma),
-    sello_image: emisorImageUrl(emisor.sello),
+    firma_image: includeSignature ? emisorImageUrl(emisor.firma) : '',
+    sello_image: includeSignature ? emisorImageUrl(emisor.sello) : '',
     client_name: labeledField(PLACEHOLDER_FIELD_LABELS.client_name, clientNameRaw),
     client_name_raw: clientNameRaw,
     client_rnc: labeledField(PLACEHOLDER_FIELD_LABELS.client_rnc, clientRncRaw),
@@ -225,7 +226,7 @@ export function buildPlaceholderContext(
     notes_raw: notesRaw,
     mensaje_pdf: mensajePdfRaw,
     mensaje_pdf_raw: mensajePdfRaw,
-    signature: ejecutivoRaw ? `Atentamente, ${ejecutivoRaw}` : '',
+    signature: includeSignature && ejecutivoRaw ? `Atentamente, ${ejecutivoRaw}` : '',
     ejecutivo: labeledField(PLACEHOLDER_FIELD_LABELS.ejecutivo, ejecutivoRaw),
     ejecutivo_raw: ejecutivoRaw,
     forma_pago: labeledField(PLACEHOLDER_FIELD_LABELS.forma_pago, formaPagoRaw),

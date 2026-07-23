@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../api';
 import { formatMoney } from '../../utils/formatMoney';
 import ExpenseFormModal from '../../components/finance/ExpenseFormModal';
+import BulkInvoiceUploadModal from '../../components/finance/BulkInvoiceUploadModal';
 import ExpenseRowActions from '../../components/finance/ExpenseRowActions';
 import ExpenseAttachmentViewer from '../../components/finance/ExpenseAttachmentViewer';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -19,6 +20,7 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -94,9 +96,14 @@ export default function ExpensesPage() {
       <section className="panel">
         <div className="panel-header-row">
           <h2 className="panel-title">Gastos</h2>
-          <button type="button" className="btn-primary btn-sm" onClick={openCreate}>
-            + Nuevo gasto
-          </button>
+          <div className="form-actions" style={{ margin: 0 }}>
+            <button type="button" className="btn-ghost btn-sm" onClick={() => setBulkUploadOpen(true)}>
+              📎 Subir facturas (OCR)
+            </button>
+            <button type="button" className="btn-primary btn-sm" onClick={openCreate}>
+              + Nuevo gasto
+            </button>
+          </div>
         </div>
 
         <div className="quotes-filters-bar" role="group" aria-label="Filtros de gastos">
@@ -191,6 +198,12 @@ export default function ExpensesPage() {
           setEditTarget(null);
           load();
         }}
+      />
+
+      <BulkInvoiceUploadModal
+        open={bulkUploadOpen}
+        onClose={() => setBulkUploadOpen(false)}
+        onSaved={load}
       />
 
       <ExpenseAttachmentViewer

@@ -4,6 +4,7 @@ import AppModal from '../AppModal';
 import ExpenseAttachmentField from './ExpenseAttachmentField';
 import { getAttachmentSource } from '../../utils/expenseAttachment';
 import { formatItbisInput, splitAmountWithItbis } from '../../utils/expenseItbis';
+import { useInvoiceOcr } from '../../hooks/useInvoiceOcr';
 
 const EMPTY_DEFAULTS = {};
 
@@ -34,6 +35,8 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
   const [clearAttachment, setClearAttachment] = useState(false);
   const itbisManualRef = useRef(false);
   const defaultsRef = useRef(defaults);
+  const { extractFromImage, processing: ocrProcessing, error: ocrError, setError: setOcrError } = useInvoiceOcr();
+  const [showOcrSuccess, setShowOcrSuccess] = useState(false);
   defaultsRef.current = defaults;
 
   useEffect(() => {
@@ -107,7 +110,7 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
     setForm((prev) => ({ ...prev, itbis: value }));
   };
 
-  const handleFile = (e) => {
+  const handleFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const allowed = ['application/pdf', 'image/jpeg', 'image/png'];
@@ -120,7 +123,7 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       setAttachment({
         attachment_name: file.name,
         attachment_mime: file.type,
@@ -128,6 +131,42 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
       });
       setClearAttachment(false);
       setError('');
+      setOcrError('');
+
+      // Procesar OCR si es imagen
+      if (file.type.startsWith('image/')) {
+        try {
+          setShowOcrSuccess(false);
+          const result = await extractFromImage(reader.result);
+          
+          if (result.success && result.data) {
+            const data = result.data;
+            
+            // Auto-llenar campos extraídos
+            const updates = {};
+            
+            if (data.rnc) updates.rnc = data.rnc;
+            if (data.ncf) updates.ncf = data.ncf;
+            if (data.descripcion) updates.description = data.descripcion;
+            if (data.fecha_comprobante) updates.expense_date = data.fecha_comprobante;
+            
+            if (data.monto_base) {
+              const base = Number(data.monto_base);
+              const itbisVal = data.itbis != null ? Number(data.itbis) : Math.round(base * 0.18 * 100) / 100;
+              updates.amount = String(Math.round((base + itbisVal) * 100) / 100);
+              itbisManualRef.current = true;
+              updates.itbis = String(itbisVal);
+            }
+            
+            if (Object.keys(updates).length > 0) {
+              setForm((prev) => ({ ...prev, ...updates }));
+              setShowOcrSuccess(true);
+            }
+          }
+        } catch (err) {
+          console.error('Error en OCR:', err);
+        }
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -189,6 +228,13 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
       }
     >
       {error && <div className="alert alert-error">{error}</div>}
+      {ocrError && <div className="alert alert-error">OCR: {ocrError}</div>}
+      {ocrProcessing && <div className="alert alert-info">Procesando imagen con OCR…</div>}
+      {showOcrSuccess && !ocrError && (
+        <div className="alert alert-success">
+          ✓ Datos extraídos de la factura. Revise los campos y complete los que falten.
+        </div>
+      )}
       <form id="expense-form" className="form-grid" onSubmit={handleSubmit}>
         <label>
           RNC

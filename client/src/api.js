@@ -371,4 +371,11 @@ export const api = {
       return res.blob();
     },
   },
+  ocr: {
+    extractInvoice: (imageData) =>
+      request('/api/ocr/extract-invoice', {
+        method: 'POST',
+        body: JSON.stringify({ image: imageData }),
+      }),
+  },
 };
