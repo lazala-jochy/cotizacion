@@ -3,6 +3,7 @@ const path = require('path');
 const db = require('../db');
 const { validatePeriod } = require('./utils/validatePeriod');
 const { validateAnnulmentReason } = require('./utils/validateNcf');
+const { cleanDigits } = require('./utils/validateRnc');
 const { writeTxtFile } = require('./utils/generateTxt');
 const dgiiRepo = require('./dgiiRepository');
 const build607 = require('./builders/build607');
@@ -23,7 +24,9 @@ class DgiiError extends Error {
 
 function getEmitterRnc(userId) {
   const row = db.prepare('SELECT rnc FROM emisor_settings WHERE user_id = ?').get(userId);
-  return row?.rnc?.trim() || '';
+  // El encabezado de los formatos 606/607/608 exige el RNC limpio (solo dígitos,
+  // sin guiones ni espacios); en Empresa se admite el RNC con formato visual.
+  return cleanDigits(row?.rnc);
 }
 
 function assertNoBlockingErrors(errors, recordCount = 0) {
@@ -126,6 +129,17 @@ function readReportFile(report) {
   return fs.readFileSync(report.file_path, 'utf8');
 }
 
+function deleteReport(userId, id) {
+  const report = dgiiRepo.getReportById(id, userId);
+  if (!report) {
+    throw new DgiiError('Reporte no encontrado.', 'NOT_FOUND');
+  }
+  dgiiRepo.removeReport(id, userId);
+  if (report.file_path) {
+    fs.rm(report.file_path, { force: true }, () => {});
+  }
+}
+
 function syncCancelledFromAnnul(userId, invoiceId, motivo, cancelledAt) {
   const reason = validateAnnulmentReason(motivo || '04');
   const at = cancelledAt || new Date().toISOString().slice(0, 19).replace('T', ' ');
@@ -166,6 +180,7 @@ module.exports = {
   preview606,
   export606,
   readReportFile,
+  deleteReport,
   syncCancelledFromAnnul,
   backfillCancelledInvoices,
   catalogs: {

@@ -23,6 +23,20 @@ function formatDateYmd(dateStr) {
   return d.length === 8 ? d : '';
 }
 
+/**
+ * Encabezado de los formatos 606/607/608: código de formato ("606"/"607"/"608"),
+ * RNC/Cédula del emisor, Período (AAAAMM) y Cantidad de Registros — 4 campos,
+ * tal como lo genera la herramienta Excel oficial de la DGII:
+ *   strHeader = "606|" & strRNC & "|" & strPeriodo & "|" & strREgistros
+ * (verificado extrayendo la macro VBA `GenerarArchivo` del archivo oficial
+ * "Formato de Envío 606" de la DGII, módulo modServicios). El validador
+ * exige explícitamente estos 4 campos; con solo 3 (sin el código de formato)
+ * rechaza el archivo con "La Longitud del encabezado... Debe Tener 4 campos".
+ */
+function buildHeaderLine(formatCode, emitterRnc, period, recordCount) {
+  return [String(formatCode), emitterRnc || '', period, String(recordCount)].join('|');
+}
+
 function buildPipeFile({ headerLine, detailLines }) {
   const lines = [];
   if (headerLine) lines.push(headerLine);
@@ -53,6 +67,7 @@ module.exports = {
   escapeField,
   formatAmount,
   formatDateYmd,
+  buildHeaderLine,
   buildPipeFile,
   writeTxtFile,
   ensureExportDir,

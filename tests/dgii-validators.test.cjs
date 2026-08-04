@@ -1,6 +1,6 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert');
-const { validateRnc } = require('../server/dgii/utils/validateRnc');
+const { validateRnc, cleanDigits } = require('../server/dgii/utils/validateRnc');
 const { resolveBuyerIdentification } = require('../server/dgii/utils/identifyTaxId');
 const { validateCedula } = require('../server/dgii/utils/validateCedula');
 const { validateNcf, validateAnnulmentReason } = require('../server/dgii/utils/validateNcf');
@@ -17,6 +17,11 @@ describe('validateRnc', () => {
   test('rechaza RNC vacío', () => {
     const r = validateRnc('');
     assert.strictEqual(r.ok, false);
+  });
+
+  test('cleanDigits quita guiones y espacios (RNC del emisor para el encabezado 606/607/608)', () => {
+    assert.strictEqual(cleanDigits('133-74651-4'), '133746514');
+    assert.strictEqual(cleanDigits(' 131 880681 '), '131880681');
   });
 });
 

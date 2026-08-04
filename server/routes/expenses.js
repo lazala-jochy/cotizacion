@@ -135,6 +135,14 @@ router.post('/', (req, res) => {
     expenseService.validateExpensePayload(req.body);
     const cat = expenseService.repo.getCategory(Number(req.body.category_id), req.user.id);
     if (!cat) return res.status(400).json({ error: 'Categoría no válida.' });
+    if (req.body.ncf?.trim()) {
+      const dup = expenseService.repo.findExpenseByNcf(req.user.id, req.body.ncf);
+      if (dup) {
+        return res.status(400).json({
+          error: `Ya existe un gasto (#${dup.id}, ${dup.expense_date}) con este mismo NCF. Verifique que no sea la misma factura antes de guardarla otra vez.`,
+        });
+      }
+    }
     const expense = expenseService.repo.insertExpense(req.user.id, req.body, req.user.id);
     res.status(201).json(expense);
   } catch (err) {
@@ -150,6 +158,14 @@ router.put('/:id', (req, res) => {
     if (req.body.category_id) {
       const cat = expenseService.repo.getCategory(Number(req.body.category_id), req.user.id);
       if (!cat) return res.status(400).json({ error: 'Categoría no válida.' });
+    }
+    if (req.body.ncf !== undefined && req.body.ncf?.trim()) {
+      const dup = expenseService.repo.findExpenseByNcf(req.user.id, req.body.ncf, existing.id);
+      if (dup) {
+        return res.status(400).json({
+          error: `Ya existe otro gasto (#${dup.id}, ${dup.expense_date}) con este mismo NCF.`,
+        });
+      }
     }
     const payload = {
       category_id: req.body.category_id ?? existing.category_id,

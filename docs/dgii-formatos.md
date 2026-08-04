@@ -98,7 +98,13 @@ La extracción es automática pero no siempre perfecta; siempre revise que los d
 
 ## Estructura TXT
 
-Los archivos generados usan **campos separados por pipe (`|`)** y codificación UTF-8, alineados a los instructivos post–Norma 07-2018. La DGII puede exigir longitudes fijas o separadores exactos según la versión del pre-validador; **siempre ejecute el pre-validador oficial** antes del envío.
+Los archivos generados usan **campos separados por pipe (`|`)** y codificación UTF-8.
+
+**Encabezado (línea 1):** `Código de formato ("606"/"607"/"608") | RNC o Cédula del emisor | Período (AAAAMM) | Cantidad de registros` — 4 campos, verificado extrayendo la macro VBA `GenerarArchivo` de la herramienta Excel oficial de la DGII (`strHeader = "606|" & strRNC & "|" & strPeriodo & "|" & strREgistros`, módulo `modServicios`). El RNC se limpia automáticamente de guiones/espacios antes de escribirse (la DGII exige el RNC "limpio"); si el RNC de **Empresa** se guardó con guiones, el encabezado igual se genera correcto. Sin el código de formato como primer campo, el pre-validador rechaza el archivo con "La Longitud del encabezado... Debe Tener 4 campos".
+
+**Detalle 606 (23 campos, Instructivo DGII vigente):** RNC/Cédula proveedor, Tipo Id, Tipo Bienes y Servicios, NCF, NCF Modificado, Fecha Comprobante, Fecha Pago, Monto Facturado Servicios, Monto Facturado Bienes, Total Monto Facturado, ITBIS Facturado, ITBIS Retenido, ITBIS sujeto a Proporcionalidad, ITBIS llevado al Costo, ITBIS por Adelantar, ITBIS percibido en compras, Tipo Retención ISR, Monto Retención Renta, ISR percibido en compras, Impuesto Selectivo al Consumo, Otros Impuestos/Tasas, Monto Propina Legal, Forma de Pago. Los campos que la app no captura (proporcionalidad Art. 349, ITBIS llevado al costo, ISC, otros impuestos, propina legal) se envían en `0.00`.
+
+La DGII puede actualizar longitudes o catálogos según la versión del pre-validador; **siempre ejecute el pre-validador oficial** antes del envío.
 
 Ruta local de exportación:
 
@@ -127,7 +133,9 @@ Tabla `dgii_reports`: tipo (606/607/608), período, ruta del archivo, cantidad d
 | Monto exento / gravado desglosado | Parcial | Se usa subtotal − descuento como monto facturado |
 | e-CF campos extendidos | Parcial | Validación NCF básica; campos XML e-CF no incluidos |
 | Compras (606) | Manual | No hay módulo de cuentas por pagar integrado |
-| Tipo de pago DGII codificado | Parcial | Se envía texto de `forma_pago` si existe |
+| Tipo de pago DGII codificado (606) | Implementado | Se mapea `forma_pago`/`payment_method` al código 01–07; sin dato asume Efectivo (01) |
+| Bienes vs. Servicios (606, col. 8/9) | Heurística | Se infiere del código de "Tipo Bienes y Servicios" (activos/costo de venta → Bienes); no hay campo propio |
+| Tipo Retención ISR (606, col. 17) | No capturado | Se envía en blanco; monto de retención si existe |
 
 ## Pruebas
 

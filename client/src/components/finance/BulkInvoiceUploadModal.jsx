@@ -18,10 +18,19 @@ function emptyForm(defaultCategoryId) {
     description: '',
     category_id: defaultCategoryId ? String(defaultCategoryId) : '',
     expense_date: todayIso(),
+    subtotal: '',
     amount: '',
     itbis: '',
     payment_method: 'Efectivo',
   };
+}
+
+/** Recalcula el Monto total (subtotal + ITBIS) a partir de los otros dos campos. */
+function withRecalculatedAmount(form) {
+  const subtotal = Number(form.subtotal) || 0;
+  const itbis = Number(form.itbis) || 0;
+  const amount = subtotal || itbis ? String(Math.round((subtotal + itbis) * 100) / 100) : '';
+  return { ...form, amount };
 }
 
 function readAsDataUrl(file) {
@@ -147,7 +156,7 @@ export default function BulkInvoiceUploadModal({ open, onClose, onSaved, default
           const d = result.data;
           const base = d.monto_base != null ? Number(d.monto_base) : null;
           const itbis = d.itbis != null ? Number(d.itbis) : base != null ? Math.round(base * 0.18 * 100) / 100 : null;
-          const total = base != null && itbis != null ? Math.round((base + itbis) * 100) / 100 : '';
+          const total = base != null && itbis != null ? Math.round((base + itbis) * 100) / 100 : null;
           updateRow(id, {
             status: 'ready',
             form: {
@@ -155,9 +164,13 @@ export default function BulkInvoiceUploadModal({ open, onClose, onSaved, default
               rnc: d.rnc || '',
               ncf: d.ncf || '',
               description: d.descripcion || file.name.replace(/\.[^.]+$/, ''),
-              expense_date: d.fecha_comprobante || todayIso(),
-              amount: total !== '' ? String(total) : '',
-              itbis: itbis != null ? String(itbis) : '',
+              // Si el OCR no detectó la fecha, se deja vacía a propósito (en vez de
+              // poner la de hoy) para forzar que se confirme a mano; de lo
+              // contrario el gasto podría quedar en el período fiscal equivocado.
+              expense_date: d.fecha_comprobante || '',
+              subtotal: base != null ? base.toFixed(2) : '',
+              amount: total != null ? total.toFixed(2) : '',
+              itbis: itbis != null ? itbis.toFixed(2) : '',
             },
           });
         } else {
@@ -198,6 +211,13 @@ export default function BulkInvoiceUploadModal({ open, onClose, onSaved, default
     );
   };
 
+  /** Para Subtotal/ITBIS: además de guardar el campo, recalcula el Monto total. */
+  const setRowAmountField = (id, field, value) => {
+    setRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, form: withRecalculatedAmount({ ...r.form, [field]: value }) } : r))
+    );
+  };
+
   const savableRows = rows.filter((r) => r.status === 'ready' || r.status === 'failed');
   const stillProcessing = rows.some((r) => r.status === 'ocr');
 
@@ -211,8 +231,9 @@ export default function BulkInvoiceUploadModal({ open, onClose, onSaved, default
       }
       updateRow(row.id, { status: 'saving', error: '' });
       try {
+        const { subtotal, ...formToSave } = row.form;
         const body = {
-          ...row.form,
+          ...formToSave,
           category_id: Number(row.form.category_id),
           amount: Number(row.form.amount),
           itbis: row.form.itbis !== '' ? Number(row.form.itbis) : null,
@@ -312,8 +333,9 @@ export default function BulkInvoiceUploadModal({ open, onClose, onSaved, default
                 <th>Descripción</th>
                 <th>Categoría</th>
                 <th>Fecha</th>
-                <th className="num">Monto total</th>
+                <th className="num">Subtotal</th>
                 <th className="num">ITBIS</th>
+                <th className="num">Monto total</th>
                 <th>Estado</th>
                 <th />
               </tr>
@@ -375,8 +397,8 @@ export default function BulkInvoiceUploadModal({ open, onClose, onSaved, default
                         type="number"
                         min="0.01"
                         step="0.01"
-                        value={row.form.amount}
-                        onChange={(e) => setRowForm(row.id, 'amount', e.target.value)}
+                        value={row.form.subtotal}
+                        onChange={(e) => setRowAmountField(row.id, 'subtotal', e.target.value)}
                         disabled={disabled}
                         style={{ width: '6rem' }}
                       />
@@ -387,11 +409,12 @@ export default function BulkInvoiceUploadModal({ open, onClose, onSaved, default
                         min="0"
                         step="0.01"
                         value={row.form.itbis}
-                        onChange={(e) => setRowForm(row.id, 'itbis', e.target.value)}
+                        onChange={(e) => setRowAmountField(row.id, 'itbis', e.target.value)}
                         disabled={disabled}
                         style={{ width: '5.5rem' }}
                       />
                     </td>
+                    <td className="num">{row.form.amount || '—'}</td>
                     <td>
                       {row.status === 'ocr' && <span className="muted">⏳ Leyendo…</span>}
                       {row.status === 'ready' && !row.error && <span>Lista para revisar</span>}

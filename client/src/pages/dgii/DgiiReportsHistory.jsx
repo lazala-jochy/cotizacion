@@ -51,6 +51,16 @@ export default function DgiiReportsHistory() {
     }
   };
 
+  const handleDelete = async (id, filename) => {
+    if (!confirm(`¿Eliminar el archivo "${filename}"? Esta acción no se puede deshacer.`)) return;
+    try {
+      await api.dgii.deleteReport(id);
+      setReports((prev) => prev.filter((r) => r.id !== id));
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
   return (
     <section className="panel quotes-panel">
       <h2 className="panel-title">Historial de reportes</h2>
@@ -110,13 +120,21 @@ export default function DgiiReportsHistory() {
                   <td>
                     <code>{r.filename}</code>
                   </td>
-                  <td>
+                  <td className="row-actions">
                     <button
                       type="button"
                       className="btn-ghost btn-sm"
                       onClick={() => handleDownload(r.id, r.filename)}
                     >
                       Descargar
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-icon-danger btn-sm"
+                      onClick={() => handleDelete(r.id, r.filename)}
+                      title="Eliminar archivo"
+                    >
+                      Eliminar
                     </button>
                   </td>
                 </tr>

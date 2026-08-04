@@ -1,6 +1,6 @@
 const { periodDateRange } = require('../utils/validatePeriod');
 const { validateNcf, validateAnnulmentReason } = require('../utils/validateNcf');
-const { formatDateYmd, buildPipeFile } = require('../utils/generateTxt');
+const { formatDateYmd, buildHeaderLine, buildPipeFile } = require('../utils/generateTxt');
 const { MAX_RECORDS_608 } = require('../constants');
 
 function listCancelledFor608(userId, period) {
@@ -69,9 +69,9 @@ function build608DetailRow(row) {
 }
 
 function build608Txt(preview) {
-  const header = [preview.emitterRnc || '', preview.period, String(preview.recordCount)];
+  const headerLine = buildHeaderLine('608', preview.emitterRnc, preview.period, preview.recordCount);
   const detailLines = preview.rows.map(build608DetailRow);
-  return buildPipeFile({ headerLine: header.join('|'), detailLines });
+  return buildPipeFile({ headerLine, detailLines });
 }
 
 module.exports = {

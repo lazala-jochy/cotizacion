@@ -49,6 +49,15 @@ router.get('/reports/:id/download', (req, res) => {
   }
 });
 
+router.delete('/reports/:id', (req, res) => {
+  try {
+    dgiiService.deleteReport(req.user.id, Number(req.params.id));
+    res.json({ ok: true });
+  } catch (err) {
+    return handleDgiiError(err, res);
+  }
+});
+
 router.post('/backfill-cancelled', (req, res) => {
   dgiiService.backfillCancelledInvoices(req.user.id);
   res.json({ ok: true });

@@ -34,6 +34,13 @@ function listReports(userId, filters = {}) {
   return getDb().prepare(sql).all(...params);
 }
 
+function removeReport(id, userId) {
+  const result = getDb()
+    .prepare('DELETE FROM dgii_reports WHERE id = ? AND user_id = ?')
+    .run(id, userId);
+  return result.changes > 0;
+}
+
 function upsertCancelledInvoice(userId, invoiceId, cancelReason, cancelledAt) {
   getDb().prepare(
     `INSERT INTO cancelled_invoices (user_id, invoice_id, cancel_reason, cancelled_at, updated_at)
@@ -130,6 +137,7 @@ module.exports = {
   insertReport,
   getReportById,
   listReports,
+  removeReport,
   upsertCancelledInvoice,
   listSuppliers,
   getSupplier,

@@ -1,6 +1,6 @@
 const { periodDateRange } = require('../utils/validatePeriod');
 const { resolveBuyerIdentification } = require('../utils/identifyTaxId');
-const { formatAmount, formatDateYmd, buildPipeFile } = require('../utils/generateTxt');
+const { formatAmount, formatDateYmd, buildHeaderLine, buildPipeFile } = require('../utils/generateTxt');
 const { MAX_RECORDS_607 } = require('../constants');
 
 function listSalesFor607(userId, period) {
@@ -109,13 +109,9 @@ function build607DetailRow(row) {
 }
 
 function build607Txt(preview) {
-  const header = [
-    preview.emitterRnc || '',
-    preview.period,
-    String(preview.recordCount),
-  ];
+  const headerLine = buildHeaderLine('607', preview.emitterRnc, preview.period, preview.recordCount);
   const detailLines = preview.rows.map(build607DetailRow);
-  return buildPipeFile({ headerLine: header.join('|'), detailLines });
+  return buildPipeFile({ headerLine, detailLines });
 }
 
 module.exports = {

@@ -110,6 +110,15 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
     setForm((prev) => ({ ...prev, itbis: value }));
   };
 
+  // Subtotal = Monto total - ITBIS, solo para referencia visual (no se envía al backend).
+  const subtotalDisplay = (() => {
+    const amount = Number(form.amount);
+    if (!amount) return '';
+    const itbis = form.itbis !== '' ? Number(form.itbis) : splitAmountWithItbis(amount).itbis;
+    if (Number.isNaN(itbis)) return '';
+    return (Math.round((amount - itbis) * 100) / 100).toFixed(2);
+  })();
+
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -153,9 +162,9 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
             if (data.monto_base) {
               const base = Number(data.monto_base);
               const itbisVal = data.itbis != null ? Number(data.itbis) : Math.round(base * 0.18 * 100) / 100;
-              updates.amount = String(Math.round((base + itbisVal) * 100) / 100);
+              updates.amount = (Math.round((base + itbisVal) * 100) / 100).toFixed(2);
               itbisManualRef.current = true;
-              updates.itbis = String(itbisVal);
+              updates.itbis = itbisVal.toFixed(2);
             }
             
             if (Object.keys(updates).length > 0) {
@@ -306,6 +315,10 @@ export default function ExpenseFormModal({ open, onClose, onSaved, expense, defa
             value={form.itbis}
             onChange={(e) => handleItbisChange(e.target.value)}
           />
+        </label>
+        <label>
+          Subtotal (RD$)
+          <input type="text" value={subtotalDisplay} disabled readOnly />
         </label>
         <label>
           Método de pago

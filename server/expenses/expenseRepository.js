@@ -224,6 +224,20 @@ function updateExpense(id, userId, data) {
   return getExpense(id, userId);
 }
 
+/** Busca otro gasto del usuario con el mismo NCF (case/espacios-insensible). */
+function findExpenseByNcf(userId, ncf, excludeId) {
+  const normalized = String(ncf || '').trim().toUpperCase();
+  if (!normalized) return null;
+  let sql =
+    'SELECT id, expense_date, description FROM expenses WHERE user_id = ? AND UPPER(TRIM(ncf)) = ?';
+  const params = [userId, normalized];
+  if (excludeId) {
+    sql += ' AND id != ?';
+    params.push(excludeId);
+  }
+  return db.prepare(sql).get(...params);
+}
+
 function deleteExpense(id, userId) {
   const r = db.prepare('DELETE FROM expenses WHERE id = ? AND user_id = ?').run(id, userId);
   return r.changes > 0;
@@ -250,6 +264,7 @@ module.exports = {
   insertExpense,
   updateExpense,
   deleteExpense,
+  findExpenseByNcf,
   expensesByQuote,
   expensesByInvoice,
 };

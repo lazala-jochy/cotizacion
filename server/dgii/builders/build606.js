@@ -1,11 +1,35 @@
 const { periodDateRange } = require('../utils/validatePeriod');
 const { validateNcf } = require('../utils/validateNcf');
 const { resolveBuyerIdentification } = require('../utils/identifyTaxId');
-const { formatAmount, formatDateYmd, buildPipeFile } = require('../utils/generateTxt');
+const { formatAmount, formatDateYmd, buildHeaderLine, buildPipeFile } = require('../utils/generateTxt');
 const {
   splitAmountWithItbis,
   resolveExpenseAmounts,
 } = require('../../expenses/expenseItbis');
+
+/** Tipos de bien/servicio (columna 3) que representan bienes en vez de servicios. */
+const GOODS_TYPE_CODES = new Set(['04', '09', '10']);
+
+function splitServiciosBienes(tipoBienesServicios, montoFacturado) {
+  const monto = Number(montoFacturado) || 0;
+  if (GOODS_TYPE_CODES.has(tipoBienesServicios)) {
+    return { servicios: 0, bienes: monto };
+  }
+  return { servicios: monto, bienes: 0 };
+}
+
+/** Mapea forma de pago libre (gastos/compras) al código 606 (columna 23). */
+function mapFormaPagoCode(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw || raw === 'efectivo') return '01';
+  if (/nota.*cr[eé]dito/.test(raw)) return '06';
+  if (/permuta/.test(raw)) return '05';
+  if (/cr[eé]dito/.test(raw)) return '04';
+  if (/transfer|cheque|dep[oó]sito/.test(raw)) return '02';
+  if (/tarjeta/.test(raw)) return '03';
+  if (/mixto/.test(raw)) return '07';
+  return '01';
+}
 
 function listPurchasesFor606(userId, period) {
   const db = require('../../db');
@@ -121,6 +145,7 @@ function purchaseTo606Row(p, seenNcf) {
       itbisFacturado: Number(p.itbis_facturado) || 0,
       itbisRetenido: Number(p.itbis_retenido) || 0,
       isrRetenido: Number(p.isr_retenido) || 0,
+      formaPago: p.forma_pago || '',
     },
   };
 }
@@ -172,6 +197,7 @@ function expenseTo606Row(expense, seenNcf) {
       itbisFacturado,
       itbisRetenido: 0,
       isrRetenido: 0,
+      formaPago: expense.payment_method || '',
     },
   };
 }
@@ -234,27 +260,48 @@ function list606PeriodEntries(userId, period) {
   };
 }
 
+/**
+ * Línea detalle 606 — 23 campos según el Instructivo vigente DGII
+ * (Llenado y Remisión del Formato de Envío de Compras de Bienes y Servicios, 606).
+ * Los campos no capturados por la app (proporcionalidad, ITBIS llevado al costo,
+ * ISC, otros impuestos, propina legal) se envían en 0.00 según lo permite el formato.
+ */
 function build606DetailRow(row) {
+  const { servicios, bienes } = splitServiciosBienes(row.tipoBienesServicios, row.montoFacturado);
+  const totalMontoFacturado = servicios + bienes;
+  const itbisLlevadoCosto = 0;
+  const itbisPorAdelantar = (Number(row.itbisFacturado) || 0) - itbisLlevadoCosto;
   return [
+    row.idValue,
+    row.tipoIdentificacion,
     row.tipoBienesServicios,
     row.ncf,
     row.ncfModificado,
-    row.tipoIdentificacion,
-    row.idValue,
     formatDateYmd(row.fechaComprobante),
     formatDateYmd(row.fechaPago),
-    formatAmount(row.montoFacturado),
+    formatAmount(servicios),
+    formatAmount(bienes),
+    formatAmount(totalMontoFacturado),
     formatAmount(row.itbisFacturado),
     formatAmount(row.itbisRetenido),
+    formatAmount(0),
+    formatAmount(itbisLlevadoCosto),
+    formatAmount(itbisPorAdelantar),
+    formatAmount(0),
+    '',
     formatAmount(row.isrRetenido),
-    '01',
+    formatAmount(0),
+    formatAmount(0),
+    formatAmount(0),
+    formatAmount(0),
+    mapFormaPagoCode(row.formaPago),
   ];
 }
 
 function build606Txt(preview) {
-  const header = [preview.emitterRnc || '', preview.period, String(preview.recordCount)];
+  const headerLine = buildHeaderLine('606', preview.emitterRnc, preview.period, preview.recordCount);
   const detailLines = preview.rows.map(build606DetailRow);
-  return buildPipeFile({ headerLine: header.join('|'), detailLines });
+  return buildPipeFile({ headerLine, detailLines });
 }
 
 module.exports = {

@@ -290,6 +290,7 @@ export const api = {
       a.click();
       URL.revokeObjectURL(url);
     },
+    deleteReport: (id) => request(`/api/dgii/reports/${id}`, { method: 'DELETE' }),
     preview607: (period) => request(`/api/dgii/607/preview?period=${encodeURIComponent(period)}`),
     export607: (period) =>
       request('/api/dgii/607/export', { method: 'POST', body: JSON.stringify({ period }) }),
